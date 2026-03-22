@@ -496,8 +496,8 @@ function renderDashCards() {
             document.getElementById('dash-progress-summary').textContent = 'No assessments yet';
         }
     } else {
-        document.getElementById('dash-progress-value').textContent = '--';
-        document.getElementById('dash-progress-summary').textContent = 'Assessments will appear here';
+        document.getElementById('dash-progress-value').textContent = 'Coming Soon';
+        document.getElementById('dash-progress-summary').textContent = 'Data collection pending';
     }
 
     // STUDIO CLASS — show next upcoming studio class

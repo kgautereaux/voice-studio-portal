@@ -1174,6 +1174,114 @@ input[type="checkbox"] {
 }
 
 /* ============================================================
+   FEEDBACK WIDGET
+   ============================================================ */
+
+.feedback-fab {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: var(--bg-white);
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    box-shadow: 0 2px 12px rgba(44, 36, 32, 0.2);
+    transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feedback-fab:hover {
+    transform: scale(1.08);
+    background: var(--primary-color);
+    box-shadow: 0 4px 16px rgba(44, 36, 32, 0.3);
+}
+
+.feedback-fab.open {
+    transform: rotate(45deg);
+    background: var(--text-muted);
+}
+
+.feedback-panel {
+    position: fixed;
+    bottom: 5rem;
+    right: 1.5rem;
+    width: 320px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-hover);
+    padding: 1.5rem;
+    z-index: 199;
+    display: none;
+    animation: feedbackSlideUp 0.25s ease-out;
+}
+
+.feedback-panel.visible {
+    display: block;
+}
+
+@keyframes feedbackSlideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-panel h3 {
+    margin-top: 0;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.feedback-panel p {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.feedback-panel textarea {
+    min-height: 80px;
+    font-size: 13.5px;
+    margin-bottom: 0.75rem;
+}
+
+.feedback-panel .btn {
+    width: 100%;
+}
+
+.feedback-success {
+    text-align: center;
+    padding: 1rem 0;
+    color: var(--success-color);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@media (max-width: 480px) {
+    .feedback-panel {
+        right: 0.75rem;
+        left: 0.75rem;
+        width: auto;
+        bottom: 4.5rem;
+    }
+    .feedback-fab {
+        bottom: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+}
+
+/* ============================================================
    SMOOTH LOADING
    ============================================================ */
 

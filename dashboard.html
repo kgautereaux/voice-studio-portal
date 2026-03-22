@@ -113,12 +113,43 @@
             <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
             <h2>Active Repertoire</h2>
             <div id="repertoire-content"><p class="text-muted">Loading...</p></div>
+
+            <h3 style="margin-top: 2rem;">Add a Piece</h3>
+            <form id="add-rep-form" style="border: 1px solid var(--border-color); padding: 1.25rem; margin-top: 0.5rem;">
+                <div class="form-group">
+                    <label for="rep-title">Title</label>
+                    <input type="text" id="rep-title" required placeholder="Song or aria title">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div class="form-group">
+                        <label for="rep-composer">Composer</label>
+                        <input type="text" id="rep-composer" placeholder="Composer name">
+                    </div>
+                    <div class="form-group">
+                        <label for="rep-style">Style</label>
+                        <select id="rep-style">
+                            <option value="">Select...</option>
+                            <option value="classical">Classical</option>
+                            <option value="MT">Musical Theater</option>
+                            <option value="pop-rock">Pop/Rock</option>
+                            <option value="jazz">Jazz</option>
+                            <option value="folk">Folk</option>
+                            <option value="art song">Art Song</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
+            </form>
         </div>
 
         <div class="detail-panel" id="detail-studio" style="display:none;">
             <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-            <h2>Studio Class Feedback</h2>
+            <h2>Studio Class</h2>
             <div id="studio-feedback-content"><p class="text-muted">Loading...</p></div>
+
+            <h3 style="margin-top: 2rem;">Upcoming Studio Class</h3>
+            <div id="studio-class-plan"><p class="text-muted">Loading...</p></div>
         </div>
 
     </main>

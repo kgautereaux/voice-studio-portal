@@ -235,6 +235,14 @@ async function loadStudentData() {
         .order('date');
 
     studentData.events = events || [];
+
+    // Load studio class plans
+    const { data: studioPlans } = await sb
+        .from('studio_class_plans')
+        .select('*')
+        .order('studio_class_date');
+
+    studentData.studioPlans = studioPlans || [];
 }
 
 // ============================================================
@@ -375,19 +383,33 @@ function renderUpcomingEvents() {
 }
 
 function renderDashCards() {
-    // LATEST LESSON
-    const lessons = studentData.lessonLogs || [];
-    if (lessons.length > 0) {
-        const l = lessons[0];
-        const d = new Date(l.date + 'T12:00:00');
+    // NEXT LESSON (from events) + LATEST LESSON (from logs)
+    const events = studentData.events || [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextLesson = events.find(e =>
+        e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
+    );
+    if (nextLesson) {
+        const d = new Date(nextLesson.date + 'T12:00:00');
         document.getElementById('dash-lesson-date').textContent =
-            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+            d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         document.getElementById('dash-lesson-summary').textContent =
-            rep.length > 0 ? rep.map(r => r.split('—')[0].split('(')[0].trim()).join(', ') : 'Lesson recorded';
+            nextLesson.notes || 'Scheduled';
     } else {
-        document.getElementById('dash-lesson-date').textContent = '--';
-        document.getElementById('dash-lesson-summary').textContent = 'No lessons yet';
+        // Fall back to most recent lesson log
+        const lessons = studentData.lessonLogs || [];
+        if (lessons.length > 0) {
+            const l = lessons[0];
+            const d = new Date(l.date + 'T12:00:00');
+            document.getElementById('dash-lesson-date').textContent =
+                'Last: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+            document.getElementById('dash-lesson-summary').textContent =
+                rep.length > 0 ? rep.map(r => r.split('—')[0].split('(')[0].trim()).join(', ') : 'Lesson recorded';
+        } else {
+            document.getElementById('dash-lesson-date').textContent = '--';
+            document.getElementById('dash-lesson-summary').textContent = 'No lessons scheduled';
+        }
     }
 
     // PRACTICE PLAN
@@ -452,18 +474,19 @@ function renderDashCards() {
         document.getElementById('dash-progress-summary').textContent = 'Assessments will appear here';
     }
 
-    // STUDIO CLASS
-    const studioFeedback = studentData.studioFeedback || [];
-    if (studioFeedback.length > 0) {
-        const f = studioFeedback[0];
-        const d = new Date(f.studio_class_date + 'T12:00:00');
+    // STUDIO CLASS — show next upcoming studio class
+    const studioPlans = studentData.studioPlans || [];
+    const today = new Date().toISOString().split('T')[0];
+    const nextStudio = studioPlans.find(p => p.studio_class_date >= today);
+    if (nextStudio) {
+        const d = new Date(nextStudio.studio_class_date + 'T12:00:00');
         document.getElementById('dash-studio-date').textContent =
             d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         document.getElementById('dash-studio-summary').textContent =
-            f.repertoire_performed ? escapeHtml(f.repertoire_performed) : 'Feedback available';
+            (nextStudio.time || '') + (nextStudio.location ? ' · ' + nextStudio.location : '');
     } else {
         document.getElementById('dash-studio-date').textContent = '--';
-        document.getElementById('dash-studio-summary').textContent = 'No studio class feedback yet';
+        document.getElementById('dash-studio-summary').textContent = 'No upcoming studio class';
     }
 }
 
@@ -513,8 +536,8 @@ function setupCardNavigation() {
 function renderDetailPanel(panelId) {
     if (panelId === 'detail-lesson') renderLessonDebrief();
     else if (panelId === 'detail-plan') { renderPracticePlan(); renderPastPlans(); }
-    else if (panelId === 'detail-repertoire') renderRepertoire();
-    else if (panelId === 'detail-studio') renderStudioFeedback();
+    else if (panelId === 'detail-repertoire') { renderRepertoire(); setupRepForm(); }
+    else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
 }
 
 function renderLessonDebrief() {
@@ -1079,6 +1102,220 @@ function addVocalLoadEntry() {
         </div>
     `;
     container.appendChild(entry);
+}
+
+// ============================================================
+// REPERTOIRE FORM
+// ============================================================
+
+function setupRepForm() {
+    const form = document.getElementById('add-rep-form');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentUser) return;
+
+        const title = document.getElementById('rep-title').value.trim();
+        const composer = document.getElementById('rep-composer').value.trim();
+        const style = document.getElementById('rep-style').value;
+
+        if (!title) return;
+
+        const { data, error } = await sb
+            .from('repertoire')
+            .insert({
+                student_id: currentUser.id,
+                title: title,
+                composer: composer || null,
+                style: style || null,
+                status: 'in_progress',
+                assignment_type: 'short_term',
+            });
+
+        if (error) {
+            alert('Error adding piece: ' + error.message);
+            return;
+        }
+
+        form.reset();
+        await loadStudentData();
+        renderRepertoire();
+    });
+}
+
+// ============================================================
+// STUDIO CLASS PLAN (in student dashboard)
+// ============================================================
+
+function renderStudioClassPlan() {
+    const container = document.getElementById('studio-class-plan');
+    if (!container || !studentData) return;
+
+    const plans = studentData.studioPlans || [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextPlan = plans.find(p => p.studio_class_date >= todayStr);
+
+    if (!nextPlan) {
+        container.innerHTML = '<p class="text-muted">No upcoming studio class scheduled.</p>';
+        return;
+    }
+
+    const d = new Date(nextPlan.studio_class_date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric'
+    });
+
+    const lineup = typeof nextPlan.lineup === 'string'
+        ? JSON.parse(nextPlan.lineup) : (nextPlan.lineup || []);
+    lineup.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    // Find this student in the lineup
+    const myEntry = lineup.find(e => e.student_id === currentUser.id);
+    const myRep = myEntry ? (myEntry.repertoire || []) : [];
+
+    let html = `
+        <div class="card">
+            <p class="card-title">${dateStr}</p>
+            <p class="text-small">${escapeHtml(nextPlan.time || '')} · ${escapeHtml(nextPlan.location || '')}</p>
+
+            <h3 style="margin-top: 1rem;">Lineup</h3>
+            <table style="width: 100%; font-size: 14px;">
+    `;
+
+    lineup.forEach(entry => {
+        const isMe = entry.student_id === currentUser.id;
+        const rep = entry.repertoire || [];
+        const repStr = rep.length > 0
+            ? rep.map(r => escapeHtml(r.title || r) + (r.composer ? ' (' + escapeHtml(r.composer) + ')' : '')).join(', ')
+            : '<span class="text-muted">Not yet selected</span>';
+
+        html += `<tr style="${isMe ? 'font-weight: 500;' : ''}">
+            <td style="padding: 0.4rem 0; width: 30px;">${entry.order || ''}</td>
+            <td style="padding: 0.4rem 0.5rem;">${escapeHtml(entry.student_name)}${isMe ? ' (you)' : ''}</td>
+            <td style="padding: 0.4rem 0;">${repStr}</td>
+        </tr>`;
+    });
+
+    html += '</table>';
+
+    // If this student hasn't selected rep yet, show selector
+    if (myEntry && myRep.length === 0) {
+        html += `
+            <h3 style="margin-top: 1rem;">Select Your Repertoire</h3>
+            <p class="text-small text-muted">Choose what you'll sing at studio class.</p>
+            <form id="studio-rep-form">
+                <div class="form-group">
+                    <label for="studio-rep-select">Piece</label>
+                    <select id="studio-rep-select">
+                        <option value="">Choose from your repertoire...</option>
+        `;
+
+        const myRepertoire = studentData.repertoire || [];
+        myRepertoire.forEach(r => {
+            html += `<option value="${escapeHtml(r.id)}" data-title="${escapeHtml(r.title)}" data-composer="${escapeHtml(r.composer || '')}">${escapeHtml(r.title)}${r.composer ? ' (' + escapeHtml(r.composer) + ')' : ''}</option>`;
+        });
+
+        html += `
+                        <option value="__new__">+ Add a new piece...</option>
+                    </select>
+                </div>
+                <div id="studio-new-piece" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group">
+                            <label for="studio-new-title">Title</label>
+                            <input type="text" id="studio-new-title">
+                        </div>
+                        <div class="form-group">
+                            <label for="studio-new-composer">Composer</label>
+                            <input type="text" id="studio-new-composer">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-small">Confirm Selection</button>
+            </form>
+        `;
+    }
+
+    html += '</div>';
+
+    // View full plan link
+    html += `<p style="margin-top: 0.75rem;"><a href="studio-class.html" target="_blank" class="text-small">View full studio class plan</a></p>`;
+
+    container.innerHTML = html;
+
+    // Set up rep select handler
+    const select = document.getElementById('studio-rep-select');
+    if (select) {
+        select.addEventListener('change', () => {
+            const newPiece = document.getElementById('studio-new-piece');
+            if (newPiece) {
+                newPiece.style.display = select.value === '__new__' ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Set up form submission
+    const form = document.getElementById('studio-rep-form');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await submitStudioRep(nextPlan, myEntry);
+        });
+    }
+}
+
+async function submitStudioRep(plan, myEntry) {
+    const select = document.getElementById('studio-rep-select');
+    if (!select) return;
+
+    let title, composer;
+
+    if (select.value === '__new__') {
+        title = document.getElementById('studio-new-title').value.trim();
+        composer = document.getElementById('studio-new-composer').value.trim();
+        if (!title) { alert('Please enter a title.'); return; }
+
+        // Add to student's repertoire
+        await sb.from('repertoire').insert({
+            student_id: currentUser.id,
+            title: title,
+            composer: composer || null,
+            status: 'in_progress',
+            assignment_type: 'short_term',
+        });
+    } else if (select.value) {
+        const opt = select.selectedOptions[0];
+        title = opt.dataset.title;
+        composer = opt.dataset.composer;
+    } else {
+        alert('Please select a piece.');
+        return;
+    }
+
+    // Update the lineup in the studio class plan
+    const lineup = typeof plan.lineup === 'string'
+        ? JSON.parse(plan.lineup) : (plan.lineup || []);
+
+    const entry = lineup.find(e => e.student_id === currentUser.id);
+    if (entry) {
+        entry.repertoire = [{ title, composer: composer || '' }];
+        entry.confirmed = true;
+    }
+
+    const { error } = await sb
+        .from('studio_class_plans')
+        .update({ lineup: JSON.stringify(lineup) })
+        .eq('id', plan.id);
+
+    if (error) {
+        alert('Error saving selection: ' + error.message);
+        return;
+    }
+
+    await loadStudentData();
+    renderStudioClassPlan();
 }
 
 // ============================================================

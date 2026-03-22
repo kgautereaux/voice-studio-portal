@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Studio Class Plan — Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .lineup-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        .lineup-table th { text-align: left; padding: 0.75rem; border-bottom: 2px solid var(--border-color);
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+        .lineup-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .lineup-order { font-weight: 500; color: var(--text-muted); width: 40px; }
+        .lineup-name { font-weight: 500; color: var(--primary-color); }
+        .lineup-rep { font-size: 14px; }
+        .lineup-rep-item { margin-bottom: 0.25rem; }
+        .lineup-rep-composer { color: var(--text-muted); font-size: 13px; }
+        .lineup-status { font-size: 12px; }
+        .lineup-status .confirmed { color: var(--success-color); }
+        .lineup-status .pending { color: var(--text-muted); }
+        .class-header { margin-bottom: 2rem; }
+        .class-meta { font-size: 14px; color: var(--text-muted); margin-top: 0.25rem; }
+        .class-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .class-nav-btn { padding: 0.4rem 1rem; font-size: 13px; border: 1px solid var(--border-color);
+            background: var(--bg-white); cursor: pointer; font-family: inherit;
+            text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+        .class-nav-btn.active { border-color: var(--primary-color); color: var(--primary-color); font-weight: 500; }
+        .class-nav-btn:hover { border-color: var(--accent-color); }
+        .no-rep { color: var(--text-muted); font-style: italic; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand">Voice Studio</a>
+        <span class="text-muted" style="font-size: 13px;">Studio Class Plan</span>
+    </div>
+</nav>
+
+<main class="container">
+    <div id="loading"><p class="text-muted">Loading studio class plan...</p></div>
+    <div id="content" style="display: none;">
+        <div class="class-header">
+            <h1 id="class-title">Studio Class</h1>
+            <div class="class-meta">
+                <span id="class-date"></span> · <span id="class-time"></span> · <span id="class-location"></span>
+            </div>
+        </div>
+
+        <div class="class-nav" id="class-nav"></div>
+
+        <div id="class-notes"></div>
+
+        <table class="lineup-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Singer</th>
+                    <th>Repertoire</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="lineup-body">
+            </tbody>
+        </table>
+    </div>
+    <div id="error" style="display: none;">
+        <p>Studio class plan not found. Check the link and try again.</p>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>Kayla Gautereaux — Voice Studio</p>
+    </div>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allPlans = [];
+
+async function init() {
+    // Get token from URL
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    // Load all studio class plans (if token provided, show that one first; otherwise show nearest upcoming)
+    const { data: plans, error } = await sb
+        .from('studio_class_plans')
+        .select('*')
+        .order('studio_class_date');
+
+    if (error || !plans || plans.length === 0) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        return;
+    }
+
+    allPlans = plans;
+
+    // Build navigation tabs
+    const nav = document.getElementById('class-nav');
+    plans.forEach((plan, i) => {
+        const d = new Date(plan.studio_class_date + 'T12:00:00');
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const btn = document.createElement('button');
+        btn.className = 'class-nav-btn';
+        btn.textContent = label;
+        btn.dataset.index = i;
+        btn.addEventListener('click', () => showPlan(i));
+        nav.appendChild(btn);
+    });
+
+    // Show the token-matched plan or the nearest upcoming
+    let targetIndex = 0;
+    if (token) {
+        const idx = plans.findIndex(p => p.share_token === token);
+        if (idx >= 0) targetIndex = idx;
+    } else {
+        const today = new Date().toISOString().split('T')[0];
+        const upcoming = plans.findIndex(p => p.studio_class_date >= today);
+        if (upcoming >= 0) targetIndex = upcoming;
+    }
+
+    showPlan(targetIndex);
+}
+
+function showPlan(index) {
+    const plan = allPlans[index];
+    if (!plan) return;
+
+    // Update nav active state
+    document.querySelectorAll('.class-nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+    });
+
+    // Update header
+    const d = new Date(plan.studio_class_date + 'T12:00:00');
+    document.getElementById('class-title').textContent =
+        plan.notes || 'Studio Class';
+    document.getElementById('class-date').textContent =
+        d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('class-time').textContent = plan.time || '';
+    document.getElementById('class-location').textContent = plan.location || '';
+
+    // Render lineup
+    const lineup = typeof plan.lineup === 'string' ? JSON.parse(plan.lineup) : (plan.lineup || []);
+    const tbody = document.getElementById('lineup-body');
+    tbody.innerHTML = '';
+
+    // Sort by order
+    lineup.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    lineup.forEach(entry => {
+        const tr = document.createElement('tr');
+
+        // Order
+        const tdOrder = document.createElement('td');
+        tdOrder.className = 'lineup-order';
+        tdOrder.textContent = entry.order || '';
+        tr.appendChild(tdOrder);
+
+        // Name
+        const tdName = document.createElement('td');
+        tdName.className = 'lineup-name';
+        tdName.textContent = entry.student_name || '';
+        tr.appendChild(tdName);
+
+        // Repertoire
+        const tdRep = document.createElement('td');
+        tdRep.className = 'lineup-rep';
+        const rep = entry.repertoire || [];
+        if (rep.length > 0) {
+            rep.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'lineup-rep-item';
+                div.innerHTML = escapeHtml(r.title || r) +
+                    (r.composer ? ' <span class="lineup-rep-composer">(' + escapeHtml(r.composer) + ')</span>' : '');
+                tdRep.appendChild(div);
+            });
+        } else {
+            tdRep.innerHTML = '<span class="no-rep">Not yet selected</span>';
+        }
+        tr.appendChild(tdRep);
+
+        // Status
+        const tdStatus = document.createElement('td');
+        tdStatus.className = 'lineup-status';
+        tdStatus.innerHTML = entry.confirmed
+            ? '<span class="confirmed">Confirmed</span>'
+            : '<span class="pending">Pending</span>';
+        tr.appendChild(tdStatus);
+
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+init();
+</script>
+
+</body>
+</html>

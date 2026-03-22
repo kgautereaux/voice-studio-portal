@@ -17,22 +17,24 @@
        Secondary: muted sage from brand identity
        Warm neutrals bridge all three sites
        -------------------------------------------------------- */
+    /* From _brand.yml (headshot-derived, authoritative) */
+    --color-plum-deep: #4E2A4A;
     --color-plum: #6B3A65;
-    --color-plum-light: #8B5A85;
-    --color-plum-dark: #4E2649;
+    --color-plum-soft: #8B5F85;
+    --color-sage-dark: #4B544D;
     --color-sage: #7A8B72;
-    --color-sage-light: #9AAE92;
-    --color-sage-dark: #5E6E57;
+    --color-sage-light: #A8B5A0;
+    --color-sage-pale: #D4DDD0;
 
-    /* Warm neutrals (shared across all sites) */
-    --color-cream: #FAF7F3;
-    --color-linen: #F5F0EA;
-    --color-warm-white: #FDFCFA;
+    /* Warm neutrals (from _brand.yml) */
+    --color-cream: #F7F4F0;
+    --color-linen: #EDE8E2;
+    --color-warm-white: #FEFDFB;
     --color-taupe: #E4DBD2;
     --color-taupe-light: rgba(228, 219, 210, 0.6);
-    --color-warm-gray: #8A7E76;
-    --color-espresso: #3D3530;
-    --color-night: #2C2420;
+    --color-warm-gray: #9E9690;
+    --color-espresso: #3A3330;
+    --color-night: #2A2523;
 
     /* Accent (warm bronze, used for interactive elements) */
     --color-bronze: #9C7C5C;

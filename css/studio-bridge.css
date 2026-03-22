@@ -2,14 +2,10 @@
    Studio Portal Bridge
    ============================================================
    Maps shared design tokens to the studio portal's existing
-   variable names. Import this AFTER variables.css in the portal.
-
-   When the portal variables change, update them HERE
-   (not in the portal's styles.css).
+   variable names. Imported after variables.css in the portal.
    ============================================================ */
 
 :root {
-    /* Map shared palette to portal semantic names */
     --primary-color: var(--color-night);
     --text-color: var(--color-espresso);
     --text-muted: var(--color-warm-gray);

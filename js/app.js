@@ -434,13 +434,29 @@ function renderDashCards() {
     const latestPlanDate = plans.length > 0 ? new Date(plans[0].date_generated) : null;
     const hasRecentReflection = latestPlanDate && reflections.some(r => new Date(r.date_submitted) > latestPlanDate);
 
+    // Find next lesson date to calculate reflection due date (day before)
+    const events = studentData.events || [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextLessonEvent = events.find(e =>
+        e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
+    );
+
+    let reflectionDueStr = '';
+    if (nextLessonEvent) {
+        const lessonDate = new Date(nextLessonEvent.date + 'T12:00:00');
+        const dueDate = new Date(lessonDate);
+        dueDate.setDate(dueDate.getDate() - 1);
+        reflectionDueStr = dueDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
     if (hasRecentReflection) {
         document.getElementById('dash-reflection-status').textContent = 'Submitted';
         const latest = reflections[0];
         document.getElementById('dash-reflection-summary').textContent =
             `Voice: ${latest.voice_feeling || '-'}/10 · Confidence: ${latest.artistic_confidence || '-'}/10`;
     } else {
-        document.getElementById('dash-reflection-status').textContent = 'Due';
+        document.getElementById('dash-reflection-status').textContent =
+            reflectionDueStr ? 'Due ' + reflectionDueStr : 'Due';
         document.getElementById('dash-reflection-summary').textContent =
             'Submit before your next lesson';
     }

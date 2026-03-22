@@ -28,6 +28,58 @@
             border-radius: 2px; padding: 2rem 2.5rem; margin-top: 0.5rem;
         }
         @media (max-width: 768px) { .dash-detail-wrap { padding: 1.5rem; } }
+
+        /* Repertoire form classes */
+        .dash-rep-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .form-section-heading {
+            font-weight: 400;
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
+            color: var(--primary-color);
+            margin: 2.5rem 0 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-section-heading:first-of-type {
+            margin-top: 0;
+        }
+        .form-slider-group {
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            background: var(--bg-light);
+        }
+        .form-submit-area {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .form-submit-note {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .rep-select {
+            font-size: 12px;
+            padding: 0.2rem 0.4rem;
+        }
+        @media (max-width: 768px) {
+            .dash-rep-grid {
+                grid-template-columns: 1fr;
+            }
+            .rep-select {
+                min-height: 44px;
+                font-size: 14px;
+                padding: 0.4rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -217,6 +269,7 @@
         <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
         <h2>Active Repertoire</h2>
         <div class="dash-detail-wrap">
+            <div class="table-scroll">
             <table>
                 <thead>
                     <tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Due</th></tr>
@@ -224,7 +277,7 @@
                 <tbody>
                     <tr>
                         <td><strong>Somewhere Over the Rainbow</strong><br><span class="text-muted text-small">Harold Arlen</span></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;" onchange="demoPhaseChange(this)">
+                        <td><select class="rep-select" onchange="demoPhaseChange(this)">
                             <option>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
                             <option>Melody + Text + Rhythm</option>
@@ -232,7 +285,7 @@
                             <option>Memorization</option>
                             <option>Performance Ready</option>
                         </select></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Assigned</option>
                             <option selected>In Progress</option>
                             <option>Performance Ready</option>
@@ -242,7 +295,7 @@
                     </tr>
                     <tr>
                         <td><strong>Come to My Garden</strong><br><span class="text-muted text-small">Lucy Simon</span></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
                             <option selected>Melody + Text + Rhythm</option>
@@ -250,7 +303,7 @@
                             <option>Memorization</option>
                             <option>Performance Ready</option>
                         </select></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Assigned</option>
                             <option selected>In Progress</option>
                             <option>Performance Ready</option>
@@ -260,7 +313,7 @@
                     </tr>
                     <tr>
                         <td><strong>Caro mio ben</strong><br><span class="text-muted text-small">Tommaso Giordani</span></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
                             <option>Melody + Text + Rhythm</option>
@@ -268,7 +321,7 @@
                             <option selected>Memorization</option>
                             <option>Performance Ready</option>
                         </select></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Assigned</option>
                             <option selected>In Progress</option>
                             <option>Performance Ready</option>
@@ -278,7 +331,7 @@
                     </tr>
                     <tr>
                         <td><strong>I Feel the Earth Move</strong><br><span class="text-muted text-small">Carole King</span></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
                             <option>Melody + Text + Rhythm</option>
@@ -286,7 +339,7 @@
                             <option>Memorization</option>
                             <option selected>Performance Ready</option>
                         </select></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Assigned</option>
                             <option>In Progress</option>
                             <option selected>Performance Ready</option>
@@ -296,7 +349,7 @@
                     </tr>
                     <tr>
                         <td><strong>Widmung</strong><br><span class="text-muted text-small">Robert Schumann</span></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option selected>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
                             <option>Melody + Text + Rhythm</option>
@@ -304,7 +357,7 @@
                             <option>Memorization</option>
                             <option>Performance Ready</option>
                         </select></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option selected>Assigned</option>
                             <option>In Progress</option>
                             <option>Performance Ready</option>
@@ -314,7 +367,7 @@
                     </tr>
                     <tr>
                         <td><strong>She Used to Be Mine</strong><br><span class="text-muted text-small">Sara Bareilles</span></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Translation + Characterization</option>
                             <option selected>Text + Rhythm</option>
                             <option>Melody + Text + Rhythm</option>
@@ -322,7 +375,7 @@
                             <option>Memorization</option>
                             <option>Performance Ready</option>
                         </select></td>
-                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                        <td><select class="rep-select">
                             <option>Assigned</option>
                             <option selected>In Progress</option>
                             <option>Performance Ready</option>
@@ -332,6 +385,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
 
             <h3 style="margin-top: 2rem;">Previous Repertoire</h3>
             <table>
@@ -356,7 +410,7 @@
                     <label>Title</label>
                     <input type="text" placeholder="Song or aria title">
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div class="dash-rep-grid">
                     <div class="form-group">
                         <label>Composer</label>
                         <input type="text" placeholder="Composer name">
@@ -391,7 +445,7 @@
         </p>
 
         <form onsubmit="event.preventDefault(); demoSubmit();">
-            <h2 style="font-weight: 400; font-size: 1.2rem; margin-top: 0; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Practice Reflection</h2>
+            <h2 class="form-section-heading">Practice Reflection</h2>
 
             <div class="form-group">
                 <label>What did you focus on in practice?
@@ -414,7 +468,7 @@
                 <textarea rows="2"></textarea>
             </div>
 
-            <h2 style="font-weight: 400; font-size: 1.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Vocal Load This Week</h2>
+            <h2 class="form-section-heading">Vocal Load This Week</h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Log each vocal activity from your week.</p>
 
             <div class="vocal-load-entry">
@@ -444,7 +498,7 @@
                 </div>
             </div>
 
-            <h2 style="font-weight: 400; font-size: 1.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Self-Perception</h2>
+            <h2 class="form-section-heading">Self-Perception</h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Quick check-in. Move each slider to where it feels right.</p>
 
             <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
@@ -468,7 +522,7 @@
                 <div class="range-value">8</div>
             </div>
 
-            <h2 style="font-weight: 400; font-size: 1.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Open</h2>
+            <h2 class="form-section-heading">Open</h2>
 
             <div class="form-group">
                 <label>Questions or concerns for your next lesson</label>

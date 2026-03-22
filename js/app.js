@@ -720,8 +720,20 @@ function renderLessonDebrief() {
             html += `<h3>Breakthroughs</h3><p>${escapeHtml(l.breakthroughs)}</p>`;
         }
 
+        // Areas for growth: drawn from hand observations, motor learning phase, ease assessment
+        const growthParts = [];
+        if (l.hand_observations) growthParts.push(l.hand_observations);
+        if (l.motor_learning_phase) growthParts.push(l.motor_learning_phase);
+        if (l.ease_assessment) growthParts.push(l.ease_assessment);
+        if (growthParts.length > 0) {
+            html += '<h3>Areas for Growth</h3>';
+            for (const g of growthParts) {
+                html += `<p>${escapeHtml(g)}</p>`;
+            }
+        }
+
         if (l.plan_for_next_lesson) {
-            html += `<h3>Plan for Next Lesson</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
+            html += `<h3>What We Are Working Toward</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
         }
 
         html += `<p class="plan-signoff">Prof. G</p></div></div>`;

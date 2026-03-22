@@ -422,8 +422,16 @@ function renderDashCards() {
         document.getElementById('dash-plan-date').textContent =
             d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const repFocus = typeof p.repertoire_focus === 'string' ? JSON.parse(p.repertoire_focus) : (p.repertoire_focus || []);
+        const exercises = typeof p.exercises === 'string' ? JSON.parse(p.exercises) : (p.exercises || []);
+        const parts = [];
+        if (exercises.length > 0) {
+            parts.push(exercises.length + ' exercise' + (exercises.length > 1 ? 's' : ''));
+        }
+        if (repFocus.length > 0) {
+            parts.push(repFocus.map(r => r.title || r).join(', '));
+        }
         document.getElementById('dash-plan-summary').textContent =
-            repFocus.length > 0 ? repFocus.map(r => r.title || r).join(', ') : 'Plan available';
+            parts.length > 0 ? parts.join(' · ') : 'Plan available';
     } else {
         document.getElementById('dash-plan-date').textContent = '--';
         document.getElementById('dash-plan-summary').textContent = 'Check back after your next lesson';

@@ -409,6 +409,94 @@ td {
 }
 
 /* ============================================================
+   DASHBOARD GRID
+   ============================================================ */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.dash-card {
+    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.dash-card:hover {
+    border-color: var(--accent-color);
+    background: var(--bg-light);
+}
+
+.dash-card-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.dash-card-value {
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--primary-color);
+    letter-spacing: 0.01em;
+    margin-bottom: 0.3rem;
+}
+
+.dash-card-summary {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.dash-card-action {
+    border-left: 3px solid var(--success-color);
+}
+
+.dash-card-action .dash-card-label {
+    color: var(--success-color);
+}
+
+/* Upcoming events banner */
+.upcoming-events {
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent-color);
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 13px;
+}
+
+.upcoming-events strong {
+    color: var(--primary-color);
+}
+
+/* Detail panels */
+.detail-panel {
+    margin-top: 1rem;
+}
+
+.detail-back {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
    PROGRESS DASHBOARD
    ============================================================ */
 

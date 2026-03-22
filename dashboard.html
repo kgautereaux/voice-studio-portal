@@ -56,48 +56,71 @@
     <main class="container">
         <h1>Welcome, <span id="welcome-name"></span></h1>
 
-        <!-- PRACTICE PLAN -->
-        <!-- CURRENT PRACTICE PLAN -->
-        <h2>Current Practice Plan</h2>
-        <div id="practice-plan-content">
-            <p class="text-muted">Loading...</p>
+        <!-- UPCOMING EVENTS -->
+        <div id="upcoming-events"></div>
+
+        <!-- DASHBOARD CARDS -->
+        <div class="dashboard-grid" id="dashboard-grid">
+            <div class="dash-card" data-detail="detail-lesson">
+                <div class="dash-card-label">Latest Lesson</div>
+                <div class="dash-card-value" id="dash-lesson-date">--</div>
+                <div class="dash-card-summary" id="dash-lesson-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-plan">
+                <div class="dash-card-label">Practice Plan</div>
+                <div class="dash-card-value" id="dash-plan-date">--</div>
+                <div class="dash-card-summary" id="dash-plan-summary">Loading...</div>
+            </div>
+            <div class="dash-card dash-card-action" data-detail="page-reflect">
+                <div class="dash-card-label">Reflection</div>
+                <div class="dash-card-value" id="dash-reflection-status">--</div>
+                <div class="dash-card-summary" id="dash-reflection-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-repertoire">
+                <div class="dash-card-label">Repertoire</div>
+                <div class="dash-card-value" id="dash-rep-count">--</div>
+                <div class="dash-card-summary" id="dash-rep-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="page-progress">
+                <div class="dash-card-label">Vocal Progress</div>
+                <div class="dash-card-value" id="dash-progress-value">--</div>
+                <div class="dash-card-summary" id="dash-progress-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-studio">
+                <div class="dash-card-label">Studio Class</div>
+                <div class="dash-card-value" id="dash-studio-date">--</div>
+                <div class="dash-card-summary" id="dash-studio-summary">Loading...</div>
+            </div>
         </div>
 
-        <!-- REFLECTION PROMPT -->
-        <div id="reflection-prompt" class="reflection-prompt" style="display: none;">
-            <h3>Before Your Next Lesson</h3>
-            <p>Take a few minutes to reflect on your practice this week. Your reflection goes directly into your next pre-lesson brief, so Prof. G arrives prepared to pick up where you are, not where she left off.</p>
-            <p>This replaces the Voice Journal. Submitting counts for participation.</p>
-            <a href="#" data-nav="reflect" class="btn btn-primary">Submit Reflection</a>
+        <!-- DETAIL PANELS (hidden by default, shown on card click) -->
+
+        <div class="detail-panel" id="detail-lesson" style="display:none;">
+            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+            <h2>Lesson Debrief</h2>
+            <div id="lesson-debrief-content"><p class="text-muted">Loading...</p></div>
         </div>
 
-        <!-- PAST PRACTICE PLANS -->
-        <h2>Past Practice Plans</h2>
-        <div id="past-plans-content">
-            <p class="text-muted">Loading...</p>
+        <div class="detail-panel" id="detail-plan" style="display:none;">
+            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+            <h2>Practice Plan</h2>
+            <div id="practice-plan-content"><p class="text-muted">Loading...</p></div>
+            <h3 style="margin-top: 2rem;">Past Practice Plans</h3>
+            <div id="past-plans-content"><p class="text-muted">Loading...</p></div>
         </div>
 
-        <!-- REPERTOIRE -->
-        <h2>Active Repertoire</h2>
-        <div id="repertoire-content">
-            <p class="text-muted">Loading...</p>
+        <div class="detail-panel" id="detail-repertoire" style="display:none;">
+            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+            <h2>Active Repertoire</h2>
+            <div id="repertoire-content"><p class="text-muted">Loading...</p></div>
         </div>
 
-        <!-- STUDIO CLASS FEEDBACK -->
-        <h2>Studio Class Feedback</h2>
-        <div id="studio-feedback-content">
-            <p class="text-muted">Loading...</p>
+        <div class="detail-panel" id="detail-studio" style="display:none;">
+            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+            <h2>Studio Class Feedback</h2>
+            <div id="studio-feedback-content"><p class="text-muted">Loading...</p></div>
         </div>
 
-        <!-- RECENT REFLECTIONS -->
-        <h2>Your Recent Reflections</h2>
-        <div id="reflections-content">
-            <p class="text-muted">Loading...</p>
-        </div>
-
-        <div style="margin-top: 2rem;">
-            <a href="#" data-nav="progress" class="btn btn-secondary">View Vocal Progress</a>
-        </div>
     </main>
 </div>
 

@@ -216,6 +216,25 @@ async function loadStudentData() {
         .limit(3);
 
     studentData.studioFeedback = studioFeedback || [];
+
+    // Load lesson logs (student-visible fields)
+    const { data: lessonLogs } = await sb
+        .from('lesson_logs')
+        .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, breakthroughs, next_steps, plan_for_next_lesson, exercise_categories_addressed')
+        .eq('student_id', currentUser.id)
+        .order('date', { ascending: false })
+        .limit(10);
+
+    studentData.lessonLogs = lessonLogs || [];
+
+    // Load upcoming events
+    const { data: events } = await sb
+        .from('performance_events')
+        .select('*')
+        .eq('student_id', currentUser.id)
+        .order('date');
+
+    studentData.events = events || [];
 }
 
 // ============================================================
@@ -309,31 +328,246 @@ function updateNavActive(page) {
 function renderDashboard() {
     if (!studentData) return;
 
-    // Welcome
     const welcomeEl = document.getElementById('welcome-name');
     if (welcomeEl) {
         welcomeEl.textContent = studentData.student.name;
     }
 
-    // Current practice plan
-    renderPracticePlan();
+    // Hide all detail panels, show the grid
+    document.querySelectorAll('.detail-panel').forEach(p => p.style.display = 'none');
+    const grid = document.getElementById('dashboard-grid');
+    if (grid) grid.style.display = 'grid';
 
-    // Reflection prompt (show if there's a practice plan but no reflection since)
-    renderReflectionPrompt();
+    // Upcoming events
+    renderUpcomingEvents();
 
-    // Past practice plans
-    renderPastPlans();
+    // Populate dashboard cards
+    renderDashCards();
 
-    // Repertoire status
-    renderRepertoire();
-
-    // Recent reflections
-    renderRecentReflections();
-
-    // Studio class feedback
-    renderStudioFeedback();
+    // Set up card click handlers
+    setupCardNavigation();
 
     updateNavActive('dashboard');
+}
+
+function renderUpcomingEvents() {
+    const container = document.getElementById('upcoming-events');
+    if (!container) return;
+
+    // We'll load events from Supabase if available
+    // For now, check if studentData has events (we'll add this to loadStudentData)
+    const events = studentData.events || [];
+    const upcoming = events.filter(e => e.status === 'upcoming').slice(0, 3);
+
+    if (upcoming.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const items = upcoming.map(e => {
+        const d = new Date(e.date + 'T12:00:00');
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `<strong>${dayName} ${dateStr}</strong>: ${escapeHtml(e.title)}${e.notes ? ' (' + escapeHtml(e.notes) + ')' : ''}`;
+    });
+
+    container.innerHTML = `<div class="upcoming-events">${items.join(' &nbsp;·&nbsp; ')}</div>`;
+}
+
+function renderDashCards() {
+    // LATEST LESSON
+    const lessons = studentData.lessonLogs || [];
+    if (lessons.length > 0) {
+        const l = lessons[0];
+        const d = new Date(l.date + 'T12:00:00');
+        document.getElementById('dash-lesson-date').textContent =
+            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+        document.getElementById('dash-lesson-summary').textContent =
+            rep.length > 0 ? rep.map(r => r.split('—')[0].split('(')[0].trim()).join(', ') : 'Lesson recorded';
+    } else {
+        document.getElementById('dash-lesson-date').textContent = '--';
+        document.getElementById('dash-lesson-summary').textContent = 'No lessons yet';
+    }
+
+    // PRACTICE PLAN
+    const plans = studentData.practicePlans || [];
+    if (plans.length > 0) {
+        const p = plans[0];
+        const d = new Date(p.date_generated + 'T12:00:00');
+        document.getElementById('dash-plan-date').textContent =
+            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const repFocus = typeof p.repertoire_focus === 'string' ? JSON.parse(p.repertoire_focus) : (p.repertoire_focus || []);
+        document.getElementById('dash-plan-summary').textContent =
+            repFocus.length > 0 ? repFocus.map(r => r.title || r).join(', ') : 'Plan available';
+    } else {
+        document.getElementById('dash-plan-date').textContent = '--';
+        document.getElementById('dash-plan-summary').textContent = 'Check back after your next lesson';
+    }
+
+    // REFLECTION
+    const reflections = studentData.reflections || [];
+    const latestPlanDate = plans.length > 0 ? new Date(plans[0].date_generated) : null;
+    const hasRecentReflection = latestPlanDate && reflections.some(r => new Date(r.date_submitted) > latestPlanDate);
+
+    if (hasRecentReflection) {
+        document.getElementById('dash-reflection-status').textContent = 'Submitted';
+        const latest = reflections[0];
+        document.getElementById('dash-reflection-summary').textContent =
+            `Voice: ${latest.voice_feeling || '-'}/10 · Confidence: ${latest.artistic_confidence || '-'}/10`;
+    } else {
+        document.getElementById('dash-reflection-status').textContent = 'Due';
+        document.getElementById('dash-reflection-summary').textContent =
+            'Submit before your next lesson';
+    }
+
+    // REPERTOIRE
+    const rep = studentData.repertoire || [];
+    document.getElementById('dash-rep-count').textContent =
+        rep.length > 0 ? rep.length + ' pieces' : '--';
+    if (rep.length > 0) {
+        const nearest = rep.filter(r => r.timeline).sort((a, b) => a.timeline.localeCompare(b.timeline))[0];
+        document.getElementById('dash-rep-summary').textContent =
+            nearest ? 'Next: ' + new Date(nearest.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    } else {
+        document.getElementById('dash-rep-summary').textContent = 'No repertoire tracked yet';
+    }
+
+    // VOCAL PROGRESS
+    const acoustics = studentData.acoustics || [];
+    if (acoustics.length > 0) {
+        const sv = acoustics.filter(a => a.task_type === 'sv');
+        if (sv.length > 0) {
+            const latest = sv[sv.length - 1];
+            document.getElementById('dash-progress-value').textContent =
+                latest.f0_range_st ? latest.f0_range_st.toFixed(1) + ' st range' : 'Data available';
+            document.getElementById('dash-progress-summary').textContent =
+                sv.length + ' assessment' + (sv.length > 1 ? 's' : '');
+        } else {
+            document.getElementById('dash-progress-value').textContent = '--';
+            document.getElementById('dash-progress-summary').textContent = 'No assessments yet';
+        }
+    } else {
+        document.getElementById('dash-progress-value').textContent = '--';
+        document.getElementById('dash-progress-summary').textContent = 'Assessments will appear here';
+    }
+
+    // STUDIO CLASS
+    const studioFeedback = studentData.studioFeedback || [];
+    if (studioFeedback.length > 0) {
+        const f = studioFeedback[0];
+        const d = new Date(f.studio_class_date + 'T12:00:00');
+        document.getElementById('dash-studio-date').textContent =
+            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        document.getElementById('dash-studio-summary').textContent =
+            f.repertoire_performed ? escapeHtml(f.repertoire_performed) : 'Feedback available';
+    } else {
+        document.getElementById('dash-studio-date').textContent = '--';
+        document.getElementById('dash-studio-summary').textContent = 'No studio class feedback yet';
+    }
+}
+
+function setupCardNavigation() {
+    document.querySelectorAll('.dash-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const target = card.dataset.detail;
+            if (!target) return;
+
+            // If it's a page (reflection, progress), navigate to that page
+            if (target.startsWith('page-')) {
+                if (target === 'page-reflect') showReflection();
+                else if (target === 'page-progress') showProgress();
+                return;
+            }
+
+            // Otherwise show the detail panel
+            const grid = document.getElementById('dashboard-grid');
+            const events = document.getElementById('upcoming-events');
+            if (grid) grid.style.display = 'none';
+            if (events) events.style.display = 'none';
+
+            // Hide all detail panels
+            document.querySelectorAll('.detail-panel').forEach(p => p.style.display = 'none');
+
+            // Show the target panel and render its content
+            const panel = document.getElementById(target);
+            if (panel) {
+                panel.style.display = 'block';
+                renderDetailPanel(target);
+            }
+        });
+    });
+
+    // Back buttons
+    document.querySelectorAll('.detail-back').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.detail-panel').forEach(p => p.style.display = 'none');
+            const grid = document.getElementById('dashboard-grid');
+            const events = document.getElementById('upcoming-events');
+            if (grid) grid.style.display = 'grid';
+            if (events) events.style.display = '';
+        });
+    });
+}
+
+function renderDetailPanel(panelId) {
+    if (panelId === 'detail-lesson') renderLessonDebrief();
+    else if (panelId === 'detail-plan') { renderPracticePlan(); renderPastPlans(); }
+    else if (panelId === 'detail-repertoire') renderRepertoire();
+    else if (panelId === 'detail-studio') renderStudioFeedback();
+}
+
+function renderLessonDebrief() {
+    const container = document.getElementById('lesson-debrief-content');
+    if (!container) return;
+
+    const lessons = studentData.lessonLogs || [];
+    if (lessons.length === 0) {
+        container.innerHTML = '<p class="text-muted">No lesson logs available yet.</p>';
+        return;
+    }
+
+    let html = '';
+    for (const l of lessons) {
+        const dateStr = new Date(l.date + 'T12:00:00').toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+
+        html += `<div class="lesson-debrief-entry">
+            <div class="practice-plan-letter">
+                <p class="plan-date">${dateStr}${l.duration_minutes ? ' · ' + l.duration_minutes + ' min' : ''}</p>`;
+
+        if (rep.length > 0) {
+            html += '<h3>What We Worked On</h3><ul>';
+            for (const r of rep) html += `<li>${escapeHtml(r)}</li>`;
+            html += '</ul>';
+        }
+
+        if (l.head_observations || l.heart_observations || l.hand_observations) {
+            html += '<h3>Observations</h3>';
+            if (l.head_observations) html += `<p><strong>Intention + Learning:</strong> ${escapeHtml(l.head_observations)}</p>`;
+            if (l.heart_observations) html += `<p><strong>Expression:</strong> ${escapeHtml(l.heart_observations)}</p>`;
+            if (l.hand_observations) html += `<p><strong>Function:</strong> ${escapeHtml(l.hand_observations)}</p>`;
+        }
+
+        if (l.warmth_brightness_notes) {
+            html += `<h3>Warmth + Brightness</h3><p>${escapeHtml(l.warmth_brightness_notes)}</p>`;
+        }
+
+        if (l.breakthroughs) {
+            html += `<h3>Breakthroughs</h3><p>${escapeHtml(l.breakthroughs)}</p>`;
+        }
+
+        if (l.plan_for_next_lesson) {
+            html += `<h3>Plan for Next Lesson</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
+        }
+
+        html += `<p class="plan-signoff">Prof. G</p></div></div>`;
+    }
+
+    container.innerHTML = html;
 }
 
 function markdownToHtml(md) {

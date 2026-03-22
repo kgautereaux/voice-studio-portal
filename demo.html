@@ -45,6 +45,7 @@
             <li><a href="#" id="nav-dashboard" class="active">Dashboard</a></li>
             <li><a href="#" id="nav-plan">Practice Plan</a></li>
             <li><a href="#" id="nav-debrief">Lesson Debrief</a></li>
+            <li><a href="#" id="nav-repertoire">Repertoire</a></li>
             <li><a href="#" id="nav-reflection">Reflection</a></li>
         </ul>
     </div>
@@ -82,7 +83,7 @@
                 <div class="dash-card-value">Due Sun Apr 6</div>
                 <div class="dash-card-summary">Submit before Monday Apr 7 lesson</div>
             </div>
-            <div class="dash-card">
+            <div class="dash-card" onclick="showView('repertoire')">
                 <div class="dash-card-label">Repertoire</div>
                 <div class="dash-card-value">6 pieces</div>
                 <div class="dash-card-summary">Next: Apr 25 (jury)</div>
@@ -208,6 +209,174 @@
 
                 <p class="plan-signoff">Prof. G</p>
             </div>
+        </div>
+    </div>
+
+    <!-- REPERTOIRE VIEW -->
+    <div id="view-repertoire" style="display: none;">
+        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
+        <h2>Active Repertoire</h2>
+        <div class="dash-detail-wrap">
+            <table>
+                <thead>
+                    <tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Due</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Somewhere Over the Rainbow</strong><br><span class="text-muted text-small">Harold Arlen</span></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;" onchange="demoPhaseChange(this)">
+                            <option>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option selected>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option>Performance Ready</option>
+                        </select></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Assigned</option>
+                            <option selected>In Progress</option>
+                            <option>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 25</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Come to My Garden</strong><br><span class="text-muted text-small">Lucy Simon</span></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option selected>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option>Performance Ready</option>
+                        </select></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Assigned</option>
+                            <option selected>In Progress</option>
+                            <option>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 25</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Caro mio ben</strong><br><span class="text-muted text-small">Tommaso Giordani</span></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option selected>Memorization</option>
+                            <option>Performance Ready</option>
+                        </select></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Assigned</option>
+                            <option selected>In Progress</option>
+                            <option>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 25</td>
+                    </tr>
+                    <tr>
+                        <td><strong>I Feel the Earth Move</strong><br><span class="text-muted text-small">Carole King</span></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option selected>Performance Ready</option>
+                        </select></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Assigned</option>
+                            <option>In Progress</option>
+                            <option selected>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 11</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Widmung</strong><br><span class="text-muted text-small">Robert Schumann</span></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option selected>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option>Performance Ready</option>
+                        </select></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option selected>Assigned</option>
+                            <option>In Progress</option>
+                            <option>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 25</td>
+                    </tr>
+                    <tr>
+                        <td><strong>She Used to Be Mine</strong><br><span class="text-muted text-small">Sara Bareilles</span></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Translation + Characterization</option>
+                            <option selected>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option>Performance Ready</option>
+                        </select></td>
+                        <td><select style="font-size: 12px; padding: 0.2rem 0.4rem;">
+                            <option>Assigned</option>
+                            <option selected>In Progress</option>
+                            <option>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 25</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem;">Previous Repertoire</h3>
+            <table>
+                <thead><tr><th>Piece</th><th>Status</th><th>Style</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Think of Me <span class="text-muted">(Andrew Lloyd Webber)</span></td>
+                        <td><span class="tag">Shelved</span></td>
+                        <td class="text-muted">MT</td>
+                    </tr>
+                    <tr>
+                        <td>Voi che sapete <span class="text-muted">(W.A. Mozart)</span></td>
+                        <td><span class="tag">Shelved</span></td>
+                        <td class="text-muted">Classical</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem;">Add a Piece</h3>
+            <form onsubmit="event.preventDefault(); demoSubmit();" style="border: 1px solid var(--border-color); border-radius: 2px; padding: 1.5rem; background: var(--bg-white);">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" placeholder="Song or aria title">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div class="form-group">
+                        <label>Composer</label>
+                        <input type="text" placeholder="Composer name">
+                    </div>
+                    <div class="form-group">
+                        <label>Style</label>
+                        <select>
+                            <option value="">Select...</option>
+                            <option>Classical</option>
+                            <option>Musical Theater</option>
+                            <option>Pop/Rock</option>
+                            <option>Jazz</option>
+                            <option>Folk</option>
+                            <option>Art Song</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
+            </form>
         </div>
     </div>
 
@@ -342,10 +511,17 @@
         alert('This is a demo. In the real portal, your reflection would be saved and appear in your dashboard.');
     }
 
+    function demoPhaseChange(el) {
+        // Visual feedback that the change "saved"
+        el.style.borderColor = 'var(--success-color)';
+        setTimeout(() => { el.style.borderColor = ''; }, 1000);
+    }
+
     // Nav clicks
     document.getElementById('nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); showView('dashboard'); });
     document.getElementById('nav-plan').addEventListener('click', (e) => { e.preventDefault(); showView('plan'); });
     document.getElementById('nav-debrief').addEventListener('click', (e) => { e.preventDefault(); showView('debrief'); });
+    document.getElementById('nav-repertoire').addEventListener('click', (e) => { e.preventDefault(); showView('repertoire'); });
     document.getElementById('nav-reflection').addEventListener('click', (e) => { e.preventDefault(); showView('reflection'); });
 
     // Card clicks on dashboard

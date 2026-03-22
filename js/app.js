@@ -198,8 +198,7 @@ async function loadStudentData() {
     const allRep = allRepertoire || [];
     studentData.repertoire = allRep.filter(r =>
         ['assigned', 'in_progress', 'performance_ready'].includes(r.status));
-    studentData.previousRepertoire = allRep.filter(r =>
-        ['performed', 'shelved'].includes(r.status));
+    studentData.previousRepertoire = allRep.filter(r => r.status === 'shelved');
 
     // Load acoustic measurements
     const { data: acoustics } = await sb
@@ -788,7 +787,6 @@ function renderRepertoire() {
         ['assigned', 'Assigned'],
         ['in_progress', 'In Progress'],
         ['performance_ready', 'Performance Ready'],
-        ['performed', 'Performed'],
         ['shelved', 'Shelved'],
     ];
 
@@ -841,7 +839,7 @@ function renderRepertoire() {
         html += '<h3 style="margin-top: 2rem;">Previous Repertoire</h3>';
         html += '<table><thead><tr><th>Piece</th><th>Status</th><th>Style</th></tr></thead><tbody>';
         for (const r of prevRep) {
-            const statusLabel = r.status === 'performed' ? 'Performed' : 'Shelved';
+            const statusLabel = 'Shelved';
             html += `<tr>
                 <td>${escapeHtml(r.title)}${r.composer ? ' <span class="text-muted">(' + escapeHtml(r.composer) + ')</span>' : ''}</td>
                 <td><span class="tag${r.status === 'performed' ? ' tag-success' : ''}">${statusLabel}</span></td>
@@ -867,8 +865,8 @@ function renderRepertoire() {
             const repId = select.dataset.repId;
             const newStatus = select.value;
             await updateRepertoireField(repId, 'status', newStatus);
-            // If moved to performed/shelved, reload to shift it to previous section
-            if (['performed', 'shelved'].includes(newStatus)) {
+            // If shelved, reload to shift it to previous section
+            if (newStatus === 'shelved') {
                 await loadStudentData();
                 renderRepertoire();
             }

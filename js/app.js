@@ -188,15 +188,18 @@ async function loadStudentData() {
 
     studentData.reflections = reflections || [];
 
-    // Load repertoire
-    const { data: repertoire } = await sb
+    // Load all repertoire (active + previous)
+    const { data: allRepertoire } = await sb
         .from('repertoire')
         .select('*')
         .eq('student_id', currentUser.id)
-        .in('status', ['assigned', 'in_progress', 'performance_ready'])
         .order('timeline');
 
-    studentData.repertoire = repertoire || [];
+    const allRep = allRepertoire || [];
+    studentData.repertoire = allRep.filter(r =>
+        ['assigned', 'in_progress', 'performance_ready'].includes(r.status));
+    studentData.previousRepertoire = allRep.filter(r =>
+        ['performed', 'shelved'].includes(r.status));
 
     // Load acoustic measurements
     const { data: acoustics } = await sb
@@ -772,35 +775,116 @@ function renderRepertoire() {
     const container = document.getElementById('repertoire-content');
     if (!container) return;
 
-    const rep = studentData.repertoire;
-    if (!rep || rep.length === 0) {
-        container.innerHTML = '<p class="text-muted">No active repertoire tracked yet.</p>';
+    const phaseOptions = [
+        ['translation_characterization', 'Translation + Characterization'],
+        ['text_rhythm', 'Text + Rhythm'],
+        ['melody_text_rhythm', 'Melody + Text + Rhythm'],
+        ['characterization_integration', 'Characterization Integration'],
+        ['memorization', 'Memorization'],
+        ['performance_ready', 'Performance Ready'],
+    ];
+
+    const statusOptions = [
+        ['assigned', 'Assigned'],
+        ['in_progress', 'In Progress'],
+        ['performance_ready', 'Performance Ready'],
+        ['performed', 'Performed'],
+        ['shelved', 'Shelved'],
+    ];
+
+    const rep = studentData.repertoire || [];
+    const prevRep = studentData.previousRepertoire || [];
+
+    if (rep.length === 0 && prevRep.length === 0) {
+        container.innerHTML = '<p class="text-muted">No repertoire tracked yet.</p>';
         return;
     }
 
-    const phaseLabels = {
-        'translation_characterization': 'Translation + Characterization',
-        'text_rhythm': 'Text + Rhythm',
-        'melody_text_rhythm': 'Melody + Text + Rhythm',
-        'characterization_integration': 'Characterization Integration',
-        'memorization': 'Memorization',
-        'performance_ready': 'Performance Ready',
-    };
+    let html = '';
 
-    let html = '<table><thead><tr><th>Piece</th><th>Phase</th><th>Due</th></tr></thead><tbody>';
-    for (const r of rep) {
-        const phase = phaseLabels[r.learning_phase] || r.learning_phase;
-        const timeline = r.timeline
-            ? new Date(r.timeline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            : '';
-        html += `<tr>
-            <td><strong>${escapeHtml(r.title)}</strong>${r.composer ? ' (' + escapeHtml(r.composer) + ')' : ''}</td>
-            <td><span class="tag">${escapeHtml(phase)}</span></td>
-            <td>${timeline}</td>
-        </tr>`;
+    // Active repertoire
+    if (rep.length > 0) {
+        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Due</th></tr></thead><tbody>';
+        for (const r of rep) {
+            const timeline = r.timeline
+                ? new Date(r.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : '';
+
+            // Phase dropdown
+            let phaseSelect = `<select class="rep-phase-select" data-rep-id="${r.id}" style="font-size: 12px; padding: 0.2rem 0.4rem;">`;
+            for (const [val, label] of phaseOptions) {
+                phaseSelect += `<option value="${val}"${r.learning_phase === val ? ' selected' : ''}>${label}</option>`;
+            }
+            phaseSelect += '</select>';
+
+            // Status dropdown
+            let statusSelect = `<select class="rep-status-select" data-rep-id="${r.id}" style="font-size: 12px; padding: 0.2rem 0.4rem;">`;
+            for (const [val, label] of statusOptions) {
+                statusSelect += `<option value="${val}"${r.status === val ? ' selected' : ''}>${label}</option>`;
+            }
+            statusSelect += '</select>';
+
+            html += `<tr>
+                <td><strong>${escapeHtml(r.title)}</strong>${r.composer ? '<br><span class="text-muted text-small">' + escapeHtml(r.composer) + '</span>' : ''}</td>
+                <td>${phaseSelect}</td>
+                <td>${statusSelect}</td>
+                <td>${timeline}</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+    } else {
+        html += '<p class="text-muted">No active repertoire.</p>';
     }
-    html += '</tbody></table>';
+
+    // Previous repertoire
+    if (prevRep.length > 0) {
+        html += '<h3 style="margin-top: 2rem;">Previous Repertoire</h3>';
+        html += '<table><thead><tr><th>Piece</th><th>Status</th><th>Style</th></tr></thead><tbody>';
+        for (const r of prevRep) {
+            const statusLabel = r.status === 'performed' ? 'Performed' : 'Shelved';
+            html += `<tr>
+                <td>${escapeHtml(r.title)}${r.composer ? ' <span class="text-muted">(' + escapeHtml(r.composer) + ')</span>' : ''}</td>
+                <td><span class="tag${r.status === 'performed' ? ' tag-success' : ''}">${statusLabel}</span></td>
+                <td class="text-muted">${escapeHtml(r.style || '')}</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+    }
+
     container.innerHTML = html;
+
+    // Attach change handlers for phase and status dropdowns
+    container.querySelectorAll('.rep-phase-select').forEach(select => {
+        select.addEventListener('change', async () => {
+            const repId = select.dataset.repId;
+            const newPhase = select.value;
+            await updateRepertoireField(repId, 'learning_phase', newPhase);
+        });
+    });
+
+    container.querySelectorAll('.rep-status-select').forEach(select => {
+        select.addEventListener('change', async () => {
+            const repId = select.dataset.repId;
+            const newStatus = select.value;
+            await updateRepertoireField(repId, 'status', newStatus);
+            // If moved to performed/shelved, reload to shift it to previous section
+            if (['performed', 'shelved'].includes(newStatus)) {
+                await loadStudentData();
+                renderRepertoire();
+            }
+        });
+    });
+}
+
+async function updateRepertoireField(repId, field, value) {
+    const { error } = await sb
+        .from('repertoire')
+        .update({ [field]: value })
+        .eq('id', repId);
+
+    if (error) {
+        alert('Error updating: ' + error.message);
+    }
 }
 
 function renderRecentReflections() {

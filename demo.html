@@ -501,21 +501,21 @@
             <h2 class="form-section-heading">Self-Perception</h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Quick check-in. Move each slider to where it feels right.</p>
 
-            <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
+            <div class="form-slider-group">
                 <label>How does your voice feel right now?</label>
                 <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
                 <input type="range" min="1" max="10" value="7">
                 <div class="range-value">7</div>
             </div>
 
-            <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
+            <div class="form-slider-group">
                 <label>Artistic confidence</label>
                 <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
                 <input type="range" min="1" max="10" value="6">
                 <div class="range-value">6</div>
             </div>
 
-            <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
+            <div class="form-slider-group">
                 <label>Connection to the art form</label>
                 <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
                 <input type="range" min="1" max="10" value="8">
@@ -534,9 +534,9 @@
                 <textarea rows="2" placeholder="Something that went well this week, big or small."></textarea>
             </div>
 
-            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <div class="form-submit-area">
                 <button type="submit" class="btn btn-primary">Submit Reflection</button>
-                <span style="font-size: 12px; color: var(--text-muted); margin-left: 1rem;">Submitted reflections appear in your dashboard.</span>
+                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
             </div>
         </form>
     </div>

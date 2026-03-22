@@ -159,6 +159,10 @@
             text-align: center;
             color: var(--text-muted);
         }
+        @media (max-width: 480px) {
+            .dash-meta-sep { display: none; }
+            .class-meta { flex-direction: column; gap: 0.15rem; }
+        }
     </style>
 </head>
 <body>
@@ -189,6 +193,7 @@
         <div id="class-notes" class="dash-class-notes"></div>
 
         <div class="dash-lineup-wrap">
+            <div class="table-scroll">
             <table class="lineup-table">
                 <thead>
                     <tr>
@@ -201,6 +206,7 @@
                 <tbody id="lineup-body">
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
     <div id="error" class="dash-error" style="display: none;">

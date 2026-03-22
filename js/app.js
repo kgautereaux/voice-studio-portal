@@ -443,8 +443,6 @@ function renderDashCards() {
     const hasRecentReflection = latestPlanDate && reflections.some(r => new Date(r.date_submitted) > latestPlanDate);
 
     // Find next lesson date to calculate reflection due date (day before)
-    const events = studentData.events || [];
-    const todayStr = new Date().toISOString().split('T')[0];
     const nextLessonEvent = events.find(e =>
         e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
     );

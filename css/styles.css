@@ -1,0 +1,619 @@
+/* ============================================================
+   Voice Studio Portal — Styles
+   Matches research.kaylagautereaux.com aesthetic:
+   Inter font, achromatic palette, geometric minimalism
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    --primary-color: #1a1a1a;
+    --text-color: #333;
+    --text-muted: #666;
+    --accent-color: #555;
+    --border-color: #e0e0e0;
+    --bg-light: #fafafa;
+    --bg-white: #ffffff;
+    --success-color: #2d7d46;
+    --warning-color: #b8860b;
+    --error-color: #c0392b;
+    --max-width: 900px;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-color);
+    letter-spacing: 0.01em;
+    background: var(--bg-white);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration-color: var(--border-color);
+    transition: text-decoration-color 0.2s;
+}
+
+a:hover {
+    text-decoration-color: var(--primary-color);
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+
+.container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.page {
+    display: none;
+    min-height: 100vh;
+}
+
+.page.active {
+    display: block;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+nav {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.nav-brand {
+    font-weight: 500;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+}
+
+.nav-links a {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color);
+}
+
+.nav-user {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.nav-user button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0;
+}
+
+.nav-user button:hover {
+    color: var(--primary-color);
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+h1 {
+    font-weight: 300;
+    font-size: 2rem;
+    letter-spacing: 0.02em;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-weight: 400;
+    font-size: 1.3rem;
+    letter-spacing: 0.02em;
+    color: var(--primary-color);
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+h3 {
+    font-weight: 500;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    color: var(--primary-color);
+    margin: 1.5rem 0 0.5rem;
+}
+
+p {
+    margin-bottom: 0.75rem;
+}
+
+.text-muted {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.text-small {
+    font-size: 13px;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.card {
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent-color);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background: var(--bg-white);
+}
+
+.card-title {
+    font-weight: 500;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.card-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.card-body {
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary-color);
+    margin-bottom: 0.4rem;
+}
+
+label .hint {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    display: block;
+    margin-top: 0.15rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-family: inherit;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    background: var(--bg-white);
+    transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+input[type="range"] {
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.range-value {
+    text-align: center;
+    font-weight: 500;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    margin: 0.25rem 0;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--primary-color);
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: var(--bg-white);
+}
+
+.btn-primary:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-secondary {
+    background: var(--bg-white);
+    color: var(--primary-color);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-light);
+}
+
+.btn-small {
+    padding: 0.3rem 0.75rem;
+    font-size: 12px;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 14px;
+}
+
+th {
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ============================================================
+   TAGS / BADGES
+   ============================================================ */
+
+.tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.tag-success {
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.tag-warning {
+    border-color: var(--warning-color);
+    color: var(--warning-color);
+}
+
+/* ============================================================
+   VOCAL LOAD ENTRY
+   ============================================================ */
+
+.vocal-load-entry {
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.vocal-load-entry label {
+    margin-bottom: 0.25rem;
+}
+
+.vocal-load-entry input,
+.vocal-load-entry select {
+    font-size: 13px;
+    padding: 0.4rem 0.5rem;
+}
+
+/* ============================================================
+   PROGRESS DASHBOARD
+   ============================================================ */
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.metric-card {
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--primary-color);
+    letter-spacing: 0.02em;
+}
+
+.metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.metric-trend {
+    font-size: 12px;
+    margin-top: 0.25rem;
+}
+
+.trend-up {
+    color: var(--success-color);
+}
+
+.trend-down {
+    color: var(--warning-color);
+}
+
+/* ============================================================
+   PRACTICE PLAN DISPLAY
+   ============================================================ */
+
+.practice-plan {
+    line-height: 1.8;
+}
+
+.practice-plan h3 {
+    margin-top: 1.5rem;
+}
+
+.practice-plan ul {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0;
+}
+
+.practice-plan li {
+    margin-bottom: 0.25rem;
+}
+
+.exercise-card {
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    margin: 0.75rem 0;
+}
+
+.exercise-name {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.exercise-purpose {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* ============================================================
+   LOGIN PAGE
+   ============================================================ */
+
+.login-container {
+    max-width: 400px;
+    margin: 15vh auto;
+    padding: 0 1.5rem;
+}
+
+.login-container h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-error {
+    color: var(--error-color);
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+/* ============================================================
+   PUBLIC PAGE (studio landing)
+   ============================================================ */
+
+.hero {
+    padding: 4rem 0 3rem;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+}
+
+.hero .subtitle {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.studio-section {
+    margin: 3rem 0;
+}
+
+.studio-section h2 {
+    text-align: center;
+    border: none;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.value-card {
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent-color);
+    padding: 1.25rem;
+}
+
+.value-card h3 {
+    margin-top: 0;
+}
+
+.achievement-list {
+    list-style: none;
+}
+
+.achievement-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.achievement-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+footer {
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .vocal-load-entry {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+
+    .nav-links {
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .vocal-load-entry {
+        grid-template-columns: 1fr;
+    }
+
+    nav .container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard — Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand">Voice Studio</a>
+        <ul class="nav-links" id="nav-authenticated" style="display: none;">
+            <li><a href="#" data-nav="dashboard" class="active">Dashboard</a></li>
+            <li><a href="#" data-nav="reflect">Reflection</a></li>
+            <li><a href="#" data-nav="progress">Progress</a></li>
+        </ul>
+        <div class="nav-user" id="nav-authenticated">
+            <button id="btn-logout">Sign Out</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ============================================================
+     LOGIN PAGE
+     ============================================================ -->
+<div class="page active" id="page-login">
+    <div class="login-container">
+        <h1>Student Portal</h1>
+        <div id="login-error" class="login-error"></div>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="first.last" required autocapitalize="none" autocorrect="off">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+        </form>
+        <p class="text-muted" style="text-align: center; margin-top: 1.5rem;">
+            Contact Prof. Gautereaux for portal access.
+        </p>
+    </div>
+</div>
+
+<!-- ============================================================
+     DASHBOARD PAGE
+     ============================================================ -->
+<div class="page" id="page-dashboard">
+    <main class="container">
+        <h1>Welcome, <span id="welcome-name"></span></h1>
+
+        <!-- PRACTICE PLAN -->
+        <h2>Current Practice Plan</h2>
+        <div id="practice-plan-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+
+        <!-- REPERTOIRE -->
+        <h2>Active Repertoire</h2>
+        <div id="repertoire-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+
+        <!-- STUDIO CLASS FEEDBACK -->
+        <h2>Studio Class Feedback</h2>
+        <div id="studio-feedback-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+
+        <!-- RECENT REFLECTIONS -->
+        <h2>Recent Reflections</h2>
+        <div id="reflections-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <a href="#" data-nav="reflect" class="btn btn-primary">Submit Reflection</a>
+            <a href="#" data-nav="progress" class="btn btn-secondary" style="margin-left: 0.5rem;">View Progress</a>
+        </div>
+    </main>
+</div>
+
+<!-- ============================================================
+     REFLECTION PAGE
+     ============================================================ -->
+<div class="page" id="page-reflect">
+    <main class="container">
+        <h1>Whole-Singer Reflection</h1>
+        <p class="text-muted">Submit before your next lesson. Your responses shape the pre-lesson brief and practice plans.</p>
+
+        <form id="reflection-form">
+
+            <h2>Practice Reflection</h2>
+
+            <div class="form-group">
+                <label for="practice-focus">
+                    What did you focus on in practice?
+                    <span class="hint">What exercises, repertoire sections, or skills did you work on?</span>
+                </label>
+                <textarea id="practice-focus" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="self-observations">
+                    What did you notice?
+                    <span class="hint">Self-listening observations: warmth, brightness, ease, effort, anything that shifted.</span>
+                </label>
+                <textarea id="self-observations" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="fatigue-notes">
+                    Fatigue notes
+                    <span class="hint">When/if fatigue set in during practice, how it felt.</span>
+                </label>
+                <textarea id="fatigue-notes" rows="2"></textarea>
+            </div>
+
+            <h2>Vocal Load This Week</h2>
+            <p class="text-muted">Add each vocal activity from your week.</p>
+
+            <div id="vocal-load-entries">
+                <div class="vocal-load-entry">
+                    <div class="form-group">
+                        <label>Activity</label>
+                        <input type="text" name="vl-activity" placeholder="Choir rehearsal, show, practice...">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (min)</label>
+                        <input type="number" name="vl-duration" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Intensity</label>
+                        <select name="vl-intensity">
+                            <option value="low">Low</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="high">High</option>
+                            <option value="very_demanding">Very demanding</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fatigue?</label>
+                        <select name="vl-fatigue">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-vocal-load" class="btn btn-secondary btn-small">+ Add Activity</button>
+
+            <h2>Self-Perception</h2>
+
+            <div class="form-group">
+                <label for="voice-feeling">How does your voice feel right now?</label>
+                <div class="range-labels"><span>1 — Strained</span><span>10 — Great</span></div>
+                <input type="range" id="voice-feeling" min="1" max="10" value="5">
+                <div class="range-value" id="voice-feeling-value">5</div>
+            </div>
+
+            <div class="form-group">
+                <label for="artistic-confidence">Artistic confidence</label>
+                <div class="range-labels"><span>1 — Low</span><span>10 — High</span></div>
+                <input type="range" id="artistic-confidence" min="1" max="10" value="5">
+                <div class="range-value" id="artistic-confidence-value">5</div>
+            </div>
+
+            <div class="form-group">
+                <label for="engagement">Connection to the art form</label>
+                <div class="range-labels"><span>1 — Disconnected</span><span>10 — Deeply connected</span></div>
+                <input type="range" id="engagement" min="1" max="10" value="5">
+                <div class="range-value" id="engagement-value">5</div>
+            </div>
+
+            <h2>Open</h2>
+
+            <div class="form-group">
+                <label for="questions">Questions or concerns for your next lesson</label>
+                <textarea id="questions" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="wins">Wins or celebrations</label>
+                <textarea id="wins" rows="2"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Submit Reflection</button>
+        </form>
+    </main>
+</div>
+
+<!-- ============================================================
+     PROGRESS PAGE
+     ============================================================ -->
+<div class="page" id="page-progress">
+    <main class="container">
+        <h1>Vocal Progress</h1>
+        <p class="text-muted">Acoustic assessments from your beginning, middle, and end-of-semester sessions.</p>
+        <div id="progress-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+    </main>
+</div>
+
+<footer>
+    <div class="container">
+        <p>Kayla Gautereaux — Voice Studio</p>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>

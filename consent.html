@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Terms and Consent — Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand">Voice Studio</a>
+    </div>
+</nav>
+
+<main class="container" style="max-width: 700px; margin-top: 2rem;">
+
+    <h1>Voice Studio Portal</h1>
+    <h2 style="border: none; margin-top: 0.5rem;">Terms of Use and Data Consent</h2>
+
+    <p>Welcome to Prof. Gautereaux's Voice Studio portal. Before you begin, please review how the portal works and how your data is handled.</p>
+
+    <h3>What the Portal Does</h3>
+    <p>The Voice Studio portal supports your learning between lessons. Through the portal you will:</p>
+    <ul style="padding-left: 1.25rem; margin: 0.5rem 0 1rem;">
+        <li>Receive written practice plans after each lesson</li>
+        <li>Submit reflections on your practice and vocal load</li>
+        <li>View your active repertoire and learning phase</li>
+        <li>Track your acoustic vocal development over time</li>
+        <li>Receive studio class feedback summaries</li>
+    </ul>
+
+    <h3>How Your Data Is Handled</h3>
+
+    <p><strong>Lesson recordings</strong> are stored on password-protected cloud storage (Google Drive) and downloaded to Prof. Gautereaux's computer for processing. Audio files are never sent to third-party transcription services; transcription happens locally on Prof. Gautereaux's machine.</p>
+
+    <p><strong>Lesson transcripts</strong> are sent to Anthropic's Claude AI for analysis and practice plan generation. When transcripts are sent, your name is replaced with a student identifier. Anthropic does not use API inputs for model training.</p>
+
+    <p><strong>Structured data</strong> you enter through the portal (reflections, repertoire progress, self-assessments) and data Prof. Gautereaux enters about your lessons (lesson logs, observations, acoustic measurements) are stored in a secure cloud database (Supabase). This data is used to generate your practice plans, pre-lesson briefs, and progress tracking.</p>
+
+    <p><strong>You see only your own data.</strong> Other students cannot see your lesson logs, reflections, practice plans, or acoustic measurements.</p>
+
+    <p><strong>Acoustic recordings</strong> from assessment sessions are used for educational progress tracking within the studio. They are not used for research purposes. If Prof. Gautereaux wishes to use any studio data for research, separate IRB-approved consent will be obtained.</p>
+
+    <h3>Terms of Use</h3>
+
+    <p><strong>Your account is personal.</strong> Do not share your login credentials with anyone.</p>
+
+    <p><strong>Practice plans and lesson summaries are for your personal use.</strong> They are generated specifically for you based on your lessons and should not be shared or distributed.</p>
+
+    <p><strong>Your reflections are honest input, not graded writing.</strong> The whole-singer reflection replaces the Voice Journal from the syllabus. Submitting reflections counts for participation. There are no wrong answers; the goal is self-awareness, not performance.</p>
+
+    <p><strong>AI-generated content is reviewed by Prof. Gautereaux.</strong> Practice plans and feedback are generated with AI assistance and reviewed before delivery. If anything seems off, flag it and it will be addressed.</p>
+
+    <h3>Your Rights</h3>
+
+    <p><strong>Participation is voluntary.</strong> Using the portal does not affect your standing in the studio. If you prefer not to use the portal, talk to Prof. Gautereaux about alternative arrangements.</p>
+
+    <p><strong>You can request data deletion.</strong> At any time, you can ask Prof. Gautereaux to delete your portal data. Lesson recordings on Prof. Gautereaux's local machine are managed separately.</p>
+
+    <p><strong>You can withdraw consent.</strong> If you change your mind about portal participation, let Prof. Gautereaux know. Your account will be deactivated and your data can be deleted on request.</p>
+
+    <div style="margin: 2rem 0; padding: 1.25rem; border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color);">
+        <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; text-transform: none; letter-spacing: 0;">
+            <input type="checkbox" id="consent-checkbox" style="width: auto; margin-top: 0.25rem;">
+            <span style="font-weight: 400; font-size: 14px; line-height: 1.6;">
+                I have read and understand the terms of use and data handling practices described above. I consent to participating in the Voice Studio portal.
+            </span>
+        </label>
+    </div>
+
+    <button id="consent-accept" class="btn btn-primary" disabled style="width: 100%;">
+        Accept and Continue
+    </button>
+
+    <p class="text-muted" style="text-align: center; margin-top: 1rem;">
+        Questions? Contact Prof. Gautereaux directly.
+    </p>
+
+</main>
+
+<footer>
+    <div class="container">
+        <p>Kayla Gautereaux — Voice Studio</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script>
+    // Enable button when checkbox is checked
+    const checkbox = document.getElementById('consent-checkbox');
+    const acceptBtn = document.getElementById('consent-accept');
+
+    checkbox.addEventListener('change', () => {
+        acceptBtn.disabled = !checkbox.checked;
+    });
+
+    acceptBtn.addEventListener('click', async () => {
+        if (!checkbox.checked) return;
+        acceptBtn.disabled = true;
+        acceptBtn.textContent = 'Saving...';
+
+        const accepted = await acceptConsent();
+        if (accepted) {
+            window.location.href = 'dashboard.html';
+        } else {
+            acceptBtn.disabled = false;
+            acceptBtn.textContent = 'Accept and Continue';
+        }
+    });
+</script>
+
+</body>
+</html>

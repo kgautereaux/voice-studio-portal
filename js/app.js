@@ -500,6 +500,41 @@ function renderDashCards() {
         document.getElementById('dash-progress-summary').textContent = 'Data collection pending';
     }
 
+    // VOCAL PROGRESS (qualitative wins)
+    const lessonLogs = studentData.lessonLogs || [];
+    const allReflections = studentData.reflections || [];
+    const studioFb = studentData.studioFeedback || [];
+
+    // Collect wins from all sources
+    const wins = [];
+    for (const l of lessonLogs) {
+        if (l.breakthroughs) {
+            wins.push({ date: l.date, type: 'lesson', text: l.breakthroughs });
+        }
+    }
+    for (const r of allReflections) {
+        if (r.wins) {
+            const d = r.date_submitted ? r.date_submitted.split('T')[0] : '';
+            wins.push({ date: d, type: 'reflection', text: r.wins });
+        }
+    }
+    for (const f of studioFb) {
+        if (f.kayla_feedback) {
+            wins.push({ date: f.studio_class_date, type: 'studio', text: f.kayla_feedback });
+        }
+    }
+    wins.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    if (wins.length > 0) {
+        document.getElementById('dash-wins-value').textContent = wins.length + ' highlight' + (wins.length > 1 ? 's' : '');
+        const latest = wins[0];
+        const preview = latest.text.length > 60 ? latest.text.substring(0, 60) + '...' : latest.text;
+        document.getElementById('dash-wins-summary').textContent = preview;
+    } else {
+        document.getElementById('dash-wins-value').textContent = '--';
+        document.getElementById('dash-wins-summary').textContent = 'Wins and breakthroughs will appear here';
+    }
+
     // STUDIO CLASS — show next upcoming studio class
     const studioPlans = studentData.studioPlans || [];
     const today = new Date().toISOString().split('T')[0];
@@ -563,7 +598,83 @@ function renderDetailPanel(panelId) {
     if (panelId === 'detail-lesson') renderLessonDebrief();
     else if (panelId === 'detail-plan') { renderPracticePlan(); renderPastPlans(); }
     else if (panelId === 'detail-repertoire') { renderRepertoire(); setupRepForm(); }
+    else if (panelId === 'detail-wins') renderWins();
     else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
+}
+
+function renderWins() {
+    const container = document.getElementById('wins-content');
+    if (!container || !studentData) return;
+
+    const lessonLogs = studentData.lessonLogs || [];
+    const reflections = studentData.reflections || [];
+    const studioFb = studentData.studioFeedback || [];
+
+    // Collect all wins/breakthroughs
+    const items = [];
+
+    for (const l of lessonLogs) {
+        if (l.breakthroughs) {
+            items.push({
+                date: l.date,
+                source: 'Lesson',
+                text: l.breakthroughs,
+            });
+        }
+    }
+
+    for (const r of reflections) {
+        if (r.wins) {
+            const d = r.date_submitted ? r.date_submitted.split('T')[0] : '';
+            items.push({
+                date: d,
+                source: 'Your Reflection',
+                text: r.wins,
+            });
+        }
+    }
+
+    for (const f of studioFb) {
+        if (f.kayla_feedback) {
+            items.push({
+                date: f.studio_class_date,
+                source: 'Studio Class',
+                text: f.kayla_feedback,
+            });
+        }
+        if (f.performance_observations) {
+            items.push({
+                date: f.studio_class_date,
+                source: 'Studio Class',
+                text: f.performance_observations,
+            });
+        }
+    }
+
+    // Sort newest first
+    items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    if (items.length === 0) {
+        container.innerHTML = '<p class="text-muted">No highlights recorded yet. Breakthroughs from lessons, wins from your reflections, and studio class feedback will appear here as they accumulate.</p>';
+        return;
+    }
+
+    let html = '';
+    for (const item of items) {
+        const dateStr = item.date
+            ? new Date(item.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : '';
+
+        html += `<div class="card" style="margin-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem;">
+                <span class="tag">${escapeHtml(item.source)}</span>
+                <span class="text-muted text-small">${dateStr}</span>
+            </div>
+            <p style="margin: 0; font-size: 14px; line-height: 1.7;">${escapeHtml(item.text)}</p>
+        </div>`;
+    }
+
+    container.innerHTML = html;
 }
 
 function renderLessonDebrief() {

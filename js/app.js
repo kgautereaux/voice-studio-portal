@@ -752,12 +752,12 @@ function markdownToHtml(md) {
         // Headings
         if (line.match(/^### (.+)$/)) {
             if (inList) { html += '</ul>'; inList = false; }
-            html += '<h3>' + line.replace(/^### /, '') + '</h3>';
+            html += '<h3>' + escapeHtml(line.replace(/^### /, '')) + '</h3>';
             continue;
         }
         if (line.match(/^## (.+)$/)) {
             if (inList) { html += '</ul>'; inList = false; }
-            html += '<h2>' + line.replace(/^## /, '') + '</h2>';
+            html += '<h2>' + escapeHtml(line.replace(/^## /, '')) + '</h2>';
             continue;
         }
         if (line.match(/^# (.+)$/)) {
@@ -801,6 +801,7 @@ function markdownToHtml(md) {
 }
 
 function inlineFormat(text) {
+    text = escapeHtml(text);
     // Bold
     text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     // Italic
@@ -970,7 +971,11 @@ function renderRepertoire() {
             // Sheet music link
             let sheetMusic = '';
             if (r.sheet_music_url) {
-                sheetMusic = `<a href="${escapeHtml(r.sheet_music_url)}" target="_blank" class="btn btn-secondary btn-small" style="font-size: 11px;">View PDF</a>`;
+                if (/^https?:\/\//i.test(r.sheet_music_url)) {
+                    sheetMusic = `<a href="${escapeHtml(r.sheet_music_url)}" target="_blank" class="btn btn-secondary btn-small" style="font-size: 11px;">View PDF</a>`;
+                } else {
+                    sheetMusic = `<span class="text-muted" style="font-size: 11px;">${escapeHtml(r.sheet_music_url)}</span>`;
+                }
             } else {
                 sheetMusic = `<button class="btn btn-secondary btn-small rep-add-link" data-rep-id="${r.id}" style="font-size: 11px;">+ Add Link</button>`;
             }
@@ -1033,6 +1038,10 @@ function renderRepertoire() {
             const repId = btn.dataset.repId;
             const url = prompt('Paste a link to the sheet music (Google Drive, Dropbox, etc.):');
             if (url && url.trim()) {
+                if (!/^https?:\/\//i.test(url.trim())) {
+                    alert('Please enter a valid URL starting with http:// or https://');
+                    return;
+                }
                 await updateRepertoireField(repId, 'sheet_music_url', url.trim());
                 await loadStudentData();
                 renderRepertoire();
@@ -1045,7 +1054,8 @@ async function updateRepertoireField(repId, field, value) {
     const { error } = await sb
         .from('repertoire')
         .update({ [field]: value })
-        .eq('id', repId);
+        .eq('id', repId)
+        .eq('student_id', currentUser.id);
 
     if (error) {
         alert('Error updating: ' + error.message);
@@ -1626,20 +1636,12 @@ async function submitStudioRep(plan, myEntry) {
         return;
     }
 
-    // Update the lineup in the studio class plan
-    const lineup = typeof plan.lineup === 'string'
-        ? JSON.parse(plan.lineup) : (plan.lineup || []);
-
-    const entry = lineup.find(e => e.student_id === currentUser.id);
-    if (entry) {
-        entry.repertoire = [{ title, composer: composer || '' }];
-        entry.confirmed = true;
-    }
-
-    const { error } = await sb
-        .from('studio_class_plans')
-        .update({ lineup: JSON.stringify(lineup) })
-        .eq('id', plan.id);
+    // Update only this student's lineup entry via secure RPC function
+    const rep = JSON.stringify([{ title, composer: composer || '' }]);
+    const { error } = await sb.rpc('update_my_lineup_entry', {
+        plan_id: plan.id,
+        rep: rep,
+    });
 
     if (error) {
         alert('Error saving selection: ' + error.message);

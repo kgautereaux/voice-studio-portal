@@ -7,6 +7,203 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        /* ============================================================
+           DASHBOARD ENHANCEMENTS
+           ============================================================ */
+
+        /* Login warmth */
+        .dash-login-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 2rem 1.5rem;
+        }
+        .dash-login-inner {
+            max-width: 380px;
+            width: 100%;
+        }
+        .dash-login-greeting {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            color: var(--primary-color);
+        }
+        .dash-login-subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .dash-login-inner .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .dash-login-inner input[type="text"],
+        .dash-login-inner input[type="password"] {
+            padding: 0.75rem 0.85rem;
+            font-size: 15px;
+            border-radius: 2px;
+        }
+        .dash-login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Dashboard welcome area */
+        .dash-welcome {
+            padding: 1.5rem 0 0.5rem;
+        }
+        .dash-welcome h1 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+        .dash-welcome-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        /* Card grid polish */
+        .dashboard-grid {
+            margin: 1.75rem 0 2rem;
+        }
+        .dash-card {
+            border-radius: 2px;
+            position: relative;
+            padding: 1.5rem;
+        }
+        .dash-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0.75rem;
+            right: 0.75rem;
+            width: 16px;
+            height: 16px;
+            border-right: 1.5px solid var(--border-color);
+            border-bottom: 1.5px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        .dash-card:hover::after {
+            border-color: var(--accent-color);
+        }
+        .dash-card-label {
+            margin-bottom: 0.6rem;
+        }
+        .dash-card-value {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Detail panels: distinct from dashboard */
+        .dash-detail-wrap {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 2rem 2.5rem;
+            margin-top: 0.5rem;
+        }
+        .dash-detail-wrap h2 {
+            margin-top: 0.5rem;
+        }
+        .dash-detail-wrap .detail-back {
+            margin-bottom: 1.25rem;
+        }
+
+        /* Add repertoire form */
+        .dash-add-rep {
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 1.5rem;
+            margin-top: 0.75rem;
+            background: var(--bg-white);
+        }
+        .dash-rep-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        /* Reflection page feel */
+        .form-section-intro {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.75rem;
+        }
+        .form-section-heading {
+            font-weight: 400;
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
+            color: var(--primary-color);
+            margin: 2.5rem 0 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-section-heading:first-of-type {
+            margin-top: 0;
+        }
+        .form-section-note {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+        }
+        .form-vocal-load-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .form-slider-group {
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            background: var(--bg-light);
+        }
+        .form-slider-group label {
+            margin-bottom: 0.5rem;
+        }
+        .form-open-section {
+            margin-top: 0.5rem;
+        }
+        .form-submit-area {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .form-submit-note {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Progress page */
+        .dash-progress-intro {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .dash-detail-wrap {
+                padding: 1.5rem;
+            }
+            .dash-rep-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -29,23 +226,31 @@
      LOGIN PAGE
      ============================================================ -->
 <div class="page active" id="page-login">
-    <div class="login-container">
-        <h1>Student Portal</h1>
-        <div id="login-error" class="login-error"></div>
-        <form id="login-form">
-            <div class="form-group">
-                <label for="login-username">Username</label>
-                <input type="text" id="login-username" placeholder="first.last" required autocapitalize="none" autocorrect="off">
+    <div class="dash-login-wrap">
+        <div class="dash-login-inner">
+            <div class="login-container" style="margin: 0; max-width: none; padding: 0;">
+                <h1 class="dash-login-greeting">Welcome Back</h1>
+                <p class="dash-login-subtitle">Sign in to your Voice Studio portal.</p>
+
+                <div id="login-error" class="login-error"></div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" placeholder="first.last" required autocapitalize="none" autocorrect="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                </form>
+
+                <p class="dash-login-footer">
+                    Need access? Contact Prof. Gautereaux.
+                </p>
             </div>
-            <div class="form-group">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" required>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
-        </form>
-        <p class="text-muted" style="text-align: center; margin-top: 1.5rem;">
-            Contact Prof. Gautereaux for portal access.
-        </p>
+        </div>
     </div>
 </div>
 
@@ -54,7 +259,10 @@
      ============================================================ -->
 <div class="page" id="page-dashboard">
     <main class="container">
-        <h1>Welcome, <span id="welcome-name"></span></h1>
+        <div class="dash-welcome">
+            <h1>Welcome, <span id="welcome-name"></span></h1>
+            <p class="dash-welcome-sub">Here is what is happening in your studio this week.</p>
+        </div>
 
         <!-- UPCOMING EVENTS -->
         <div id="upcoming-events"></div>
@@ -96,60 +304,68 @@
         <!-- DETAIL PANELS (hidden by default, shown on card click) -->
 
         <div class="detail-panel" id="detail-lesson" style="display:none;">
-            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-            <h2>Lesson Debrief</h2>
-            <div id="lesson-debrief-content"><p class="text-muted">Loading...</p></div>
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Lesson Debrief</h2>
+                <div id="lesson-debrief-content"><p class="text-muted">Loading...</p></div>
+            </div>
         </div>
 
         <div class="detail-panel" id="detail-plan" style="display:none;">
-            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-            <h2>Practice Plan</h2>
-            <div id="practice-plan-content"><p class="text-muted">Loading...</p></div>
-            <h3 style="margin-top: 2rem;">Past Practice Plans</h3>
-            <div id="past-plans-content"><p class="text-muted">Loading...</p></div>
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Practice Plan</h2>
+                <div id="practice-plan-content"><p class="text-muted">Loading...</p></div>
+                <h3 style="margin-top: 2rem;">Past Practice Plans</h3>
+                <div id="past-plans-content"><p class="text-muted">Loading...</p></div>
+            </div>
         </div>
 
         <div class="detail-panel" id="detail-repertoire" style="display:none;">
-            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-            <h2>Active Repertoire</h2>
-            <div id="repertoire-content"><p class="text-muted">Loading...</p></div>
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Active Repertoire</h2>
+                <div id="repertoire-content"><p class="text-muted">Loading...</p></div>
 
-            <h3 style="margin-top: 2rem;">Add a Piece</h3>
-            <form id="add-rep-form" style="border: 1px solid var(--border-color); padding: 1.25rem; margin-top: 0.5rem;">
-                <div class="form-group">
-                    <label for="rep-title">Title</label>
-                    <input type="text" id="rep-title" required placeholder="Song or aria title">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <h3 style="margin-top: 2rem;">Add a Piece</h3>
+                <form id="add-rep-form" class="dash-add-rep">
                     <div class="form-group">
-                        <label for="rep-composer">Composer</label>
-                        <input type="text" id="rep-composer" placeholder="Composer name">
+                        <label for="rep-title">Title</label>
+                        <input type="text" id="rep-title" required placeholder="Song or aria title">
                     </div>
-                    <div class="form-group">
-                        <label for="rep-style">Style</label>
-                        <select id="rep-style">
-                            <option value="">Select...</option>
-                            <option value="classical">Classical</option>
-                            <option value="MT">Musical Theater</option>
-                            <option value="pop-rock">Pop/Rock</option>
-                            <option value="jazz">Jazz</option>
-                            <option value="folk">Folk</option>
-                            <option value="art song">Art Song</option>
-                            <option value="other">Other</option>
-                        </select>
+                    <div class="dash-rep-grid">
+                        <div class="form-group">
+                            <label for="rep-composer">Composer</label>
+                            <input type="text" id="rep-composer" placeholder="Composer name">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-style">Style</label>
+                            <select id="rep-style">
+                                <option value="">Select...</option>
+                                <option value="classical">Classical</option>
+                                <option value="MT">Musical Theater</option>
+                                <option value="pop-rock">Pop/Rock</option>
+                                <option value="jazz">Jazz</option>
+                                <option value="folk">Folk</option>
+                                <option value="art song">Art Song</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
-            </form>
+                    <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
+                </form>
+            </div>
         </div>
 
         <div class="detail-panel" id="detail-studio" style="display:none;">
-            <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-            <h2>Studio Class</h2>
-            <div id="studio-feedback-content"><p class="text-muted">Loading...</p></div>
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Studio Class</h2>
+                <div id="studio-feedback-content"><p class="text-muted">Loading...</p></div>
 
-            <h3 style="margin-top: 2rem;">Upcoming Studio Class</h3>
-            <div id="studio-class-plan"><p class="text-muted">Loading...</p></div>
+                <h3 style="margin-top: 2rem;">Upcoming Studio Class</h3>
+                <div id="studio-class-plan"><p class="text-muted">Loading...</p></div>
+            </div>
         </div>
 
     </main>
@@ -161,11 +377,15 @@
 <div class="page" id="page-reflect">
     <main class="container">
         <h1>Whole-Singer Reflection</h1>
-        <p class="text-muted">Submit before your next lesson. Your responses shape the pre-lesson brief and practice plans.</p>
+        <p class="form-section-intro">
+            This is your space to check in before your next lesson.
+            There are no wrong answers. Your responses help shape your practice plans
+            and give Prof. G a window into how things are going between lessons.
+        </p>
 
         <form id="reflection-form">
 
-            <h2>Practice Reflection</h2>
+            <h2 class="form-section-heading">Practice Reflection</h2>
 
             <div class="form-group">
                 <label for="practice-focus">
@@ -186,13 +406,13 @@
             <div class="form-group">
                 <label for="fatigue-notes">
                     Fatigue notes
-                    <span class="hint">When/if fatigue set in during practice, how it felt.</span>
+                    <span class="hint">When or if fatigue set in during practice, how it felt.</span>
                 </label>
                 <textarea id="fatigue-notes" rows="2"></textarea>
             </div>
 
-            <h2>Vocal Load This Week</h2>
-            <p class="text-muted">Add each vocal activity from your week.</p>
+            <h2 class="form-section-heading">Vocal Load This Week</h2>
+            <p class="form-section-note">Log each vocal activity from your week. Include rehearsals, performances, practice, gigs, anything that used your voice.</p>
 
             <div id="vocal-load-entries">
                 <div class="vocal-load-entry">
@@ -224,42 +444,54 @@
             </div>
             <button type="button" id="add-vocal-load" class="btn btn-secondary btn-small">+ Add Activity</button>
 
-            <h2>Self-Perception</h2>
+            <h2 class="form-section-heading">Self-Perception</h2>
+            <p class="form-section-note">Quick check-in. Move each slider to where it feels right.</p>
 
-            <div class="form-group">
-                <label for="voice-feeling">How does your voice feel right now?</label>
-                <div class="range-labels"><span>1 — Strained</span><span>10 — Great</span></div>
-                <input type="range" id="voice-feeling" min="1" max="10" value="5">
-                <div class="range-value" id="voice-feeling-value">5</div>
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="voice-feeling">How does your voice feel right now?</label>
+                    <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
+                    <input type="range" id="voice-feeling" min="1" max="10" value="5">
+                    <div class="range-value" id="voice-feeling-value">5</div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="artistic-confidence">Artistic confidence</label>
-                <div class="range-labels"><span>1 — Low</span><span>10 — High</span></div>
-                <input type="range" id="artistic-confidence" min="1" max="10" value="5">
-                <div class="range-value" id="artistic-confidence-value">5</div>
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="artistic-confidence">Artistic confidence</label>
+                    <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
+                    <input type="range" id="artistic-confidence" min="1" max="10" value="5">
+                    <div class="range-value" id="artistic-confidence-value">5</div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="engagement">Connection to the art form</label>
-                <div class="range-labels"><span>1 — Disconnected</span><span>10 — Deeply connected</span></div>
-                <input type="range" id="engagement" min="1" max="10" value="5">
-                <div class="range-value" id="engagement-value">5</div>
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="engagement">Connection to the art form</label>
+                    <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
+                    <input type="range" id="engagement" min="1" max="10" value="5">
+                    <div class="range-value" id="engagement-value">5</div>
+                </div>
             </div>
 
-            <h2>Open</h2>
+            <h2 class="form-section-heading">Open</h2>
 
-            <div class="form-group">
-                <label for="questions">Questions or concerns for your next lesson</label>
-                <textarea id="questions" rows="2"></textarea>
+            <div class="form-open-section">
+                <div class="form-group">
+                    <label for="questions">Questions or concerns for your next lesson</label>
+                    <textarea id="questions" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="wins">Wins or celebrations</label>
+                    <textarea id="wins" rows="2" placeholder="Something that went well this week, big or small."></textarea>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="wins">Wins or celebrations</label>
-                <textarea id="wins" rows="2"></textarea>
+            <div class="form-submit-area">
+                <button type="submit" class="btn btn-primary">Submit Reflection</button>
+                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
             </div>
-
-            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Submit Reflection</button>
         </form>
     </main>
 </div>
@@ -270,7 +502,10 @@
 <div class="page" id="page-progress">
     <main class="container">
         <h1>Vocal Progress</h1>
-        <p class="text-muted">Acoustic assessments from your beginning, middle, and end-of-semester sessions.</p>
+        <p class="dash-progress-intro">
+            Acoustic assessments from your beginning, middle, and end-of-semester sessions.
+            These measurements give us an objective picture of how your voice is developing over time.
+        </p>
         <div id="progress-content">
             <p class="text-muted">Loading...</p>
         </div>

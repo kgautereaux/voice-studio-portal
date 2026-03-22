@@ -6,7 +6,7 @@
     <title>Voice Studio — Kayla Gautereaux</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="landing-page">
 
 <!-- ============================================================
      PUBLIC LANDING PAGE
@@ -16,121 +16,176 @@
     <div class="container">
         <a href="index.html" class="nav-brand">Voice Studio</a>
         <ul class="nav-links">
-            <li><a href="#why-singing">Why Singing</a></li>
-            <li><a href="#the-studio">The Studio</a></li>
-            <li><a href="#support">Support</a></li>
-            <li><a href="#achievements">Achievements</a></li>
-            <li><a href="login.html">Student Login</a></li>
+            <li><a href="index.html">Studio</a></li>
+            <li><a href="login.html" class="landing-login-link">Student Login</a></li>
         </ul>
     </div>
 </nav>
 
-<main class="container">
-
-    <!-- HERO -->
-    <div class="hero">
-        <h1>Kayla Gautereaux</h1>
-        <p class="subtitle">Voice Studio</p>
+<!-- HERO -->
+<header class="hero landing-hero">
+    <div class="container">
+        <p class="landing-hero-kicker">The Voice Studio of</p>
+        <h1 class="landing-hero-name">Kayla Gautereaux</h1>
+        <div class="landing-hero-rule"></div>
+        <p class="landing-hero-tagline">Science-informed voice teaching across classical, musical theater, and contemporary styles</p>
+        <div class="landing-hero-actions">
+            <a href="#the-studio" class="landing-btn-primary">Explore the Studio</a>
+            <a href="login.html" class="landing-btn-secondary">Student Login</a>
+        </div>
     </div>
+</header>
+
+<main>
 
     <!-- WHY SINGING MATTERS -->
-    <section class="studio-section" id="why-singing">
-        <h2>Why Singing Matters</h2>
-        <p>Singing is inherent to human communication. When language isn't enough, we sing. We live in a time that needs more connection, and singing is the best way I know to create it.</p>
-        <p>Singing has real cognitive and physical health benefits across the lifespan. It builds community, cultivates resilience, and connects us to something larger than ourselves. The voice is both the most personal instrument and the most universal one.</p>
+    <section class="studio-section landing-section-why" id="why-singing">
+        <div class="container">
+            <div class="landing-pullquote">
+                <blockquote>
+                    Singing is inherent to human communication.<br>
+                    When language isn't enough, we sing.
+                </blockquote>
+            </div>
+            <div class="landing-why-body">
+                <p>We live in a time that needs more connection, and singing is the best way I know to create it.</p>
+                <p>Singing has real cognitive and physical health benefits across the lifespan. It builds community, cultivates resilience, and connects us to something larger than ourselves. The voice is both the most personal instrument and the most universal one.</p>
+            </div>
+        </div>
     </section>
 
-    <!-- WHO KAYLA IS -->
-    <section class="studio-section" id="the-studio">
-        <h2>The Studio</h2>
-        <p>I am a voice teacher informed by science, grounded in the history of singing pedagogy, and driven by the belief that singing is essential to human flourishing. I teach vocal pedagogy at the graduate level, supervise original research, and teach voice privately across classical, musical theater, and contemporary styles.</p>
-        <p>I am on faculty at the Acoustic Vocal Pedagogy Workshop. I teach courses in the structure and function of the singing mechanism, the history of vocal pedagogy, and thesis research methodology. This means the principles I bring to the studio are tested, refined, and connected to the broader world of voice science and pedagogy.</p>
+    <!-- THE STUDIO -->
+    <section class="studio-section landing-section-studio" id="the-studio">
+        <div class="container">
+            <h2 class="landing-section-heading">The Studio</h2>
+            <div class="landing-section-rule"></div>
 
-        <h3>The Co-Investigation Model</h3>
-        <p>You and I observe together. I observe your sound, your movement, your expressive connection. You observe what you feel, what you hear from the inside, what shifts. Neither perspective is complete alone. We are co-investigators, not master and apprentice.</p>
-        <p>You take responsibility for your own goals. You are a craftsman. I bring tools, a trained ear, and a framework. You bring curiosity, honesty about what you notice, and a willingness to explore.</p>
+            <div class="landing-studio-intro">
+                <p>I am a voice teacher informed by science, grounded in the history of singing pedagogy, and driven by the belief that singing is essential to human flourishing. I teach vocal pedagogy at the graduate level, supervise original research, and teach voice privately across classical, musical theater, and contemporary styles.</p>
+                <p>I am on faculty at the Acoustic Vocal Pedagogy Workshop. I teach courses in the structure and function of the singing mechanism, the history of vocal pedagogy, and thesis research methodology. This means the principles I bring to the studio are tested, refined, and connected to the broader world of voice science and pedagogy.</p>
+            </div>
 
-        <h3>Studio Culture</h3>
-        <div class="values-grid">
-            <div class="value-card">
-                <h3>Warm, High Expectations</h3>
-                <p>The studio is a place where you are supported and challenged. We celebrate wins, laugh when things crack, and always keep moving toward the target.</p>
+            <!-- Co-Investigation Model -->
+            <div class="landing-coinvestigation">
+                <h3 class="landing-subsection-heading">The Co-Investigation Model</h3>
+                <div class="landing-coinvestigation-body">
+                    <p>You and I observe together. I observe your sound, your movement, your expressive connection. You observe what you feel, what you hear from the inside, what shifts. Neither perspective is complete alone. We are co-investigators, not master and apprentice.</p>
+                    <p>You take responsibility for your own goals. You are a craftsman. I bring tools, a trained ear, and a framework. You bring curiosity, honesty about what you notice, and a willingness to explore.</p>
+                </div>
             </div>
-            <div class="value-card">
-                <h3>No Wrong Sounds</h3>
-                <p>There are no vocal faults. There are aesthetic targets, functional targets, and shots on goal. Every sound teaches us something about your voice.</p>
-            </div>
-            <div class="value-card">
-                <h3>Ease First</h3>
-                <p>Easy, not squeezy. We build from what's free and flexible, then add complexity. Warmth and brightness are our primary dimensions.</p>
-            </div>
-            <div class="value-card">
-                <h3>Head, Heart, Hand</h3>
-                <p>Every lesson attends to intention (head), expression (heart), and function (hand). Singing well requires all three.</p>
+
+            <!-- Studio Culture -->
+            <h3 class="landing-subsection-heading">Studio Culture</h3>
+            <div class="values-grid landing-values-grid">
+                <div class="value-card landing-value-card">
+                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
+                    <h3>Warm, High Expectations</h3>
+                    <p>The studio is a place where you are supported and challenged. We celebrate wins, laugh when things crack, and always keep moving toward the target.</p>
+                </div>
+                <div class="value-card landing-value-card">
+                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
+                    <h3>No Wrong Sounds</h3>
+                    <p>There are no vocal faults. There are aesthetic targets, functional targets, and shots on goal. Every sound teaches us something about your voice.</p>
+                </div>
+                <div class="value-card landing-value-card">
+                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
+                    <h3>Easy, Not Squeezy</h3>
+                    <p>We build from what's free and flexible, then add complexity. Warmth and brightness are our primary dimensions.</p>
+                </div>
+                <div class="value-card landing-value-card">
+                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
+                    <h3>Head, Heart, Hand</h3>
+                    <p>Every lesson attends to intention (head), expression (heart), and function (hand). Singing well requires all three.</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- BETWEEN-LESSON SUPPORT -->
-    <section class="studio-section" id="support">
-        <h2>Between-Lesson Support</h2>
-        <p>The lesson is just the beginning. In this studio, you get a support system designed to keep you growing between sessions.</p>
-        <div class="values-grid">
-            <div class="value-card">
-                <h3>Lesson Debriefs</h3>
-                <p>After every lesson, you receive a written summary of what we covered: what we worked on, what shifted, what to carry forward. We are not relying on memory alone. You have a record of your progress that builds over time.</p>
-            </div>
-            <div class="value-card">
-                <h3>Practice Plans</h3>
-                <p>Alongside each debrief, a practice plan with every exercise, its functional purpose, how it connects to your repertoire, and what to listen for while practicing. You always know <em>why</em> you are doing what you are doing.</p>
-            </div>
-            <div class="value-card">
-                <h3>Whole-Singer Reflection</h3>
-                <p>A simple check-in before each lesson: what you noticed in practice, your vocal load for the week, how your voice feels, questions for the next lesson. Your input directly shapes what we work on.</p>
-            </div>
-            <div class="value-card">
-                <h3>Progress Visibility</h3>
-                <p>Three acoustic assessment sessions per semester track your vocal development over time. You see your growth in plain language: range expansion, dynamic flexibility, voice quality trends.</p>
-            </div>
-            <div class="value-card">
-                <h3>Repertoire Tracking</h3>
-                <p>Every piece moves through a learning scaffold from translation and characterization through performance-ready. You always know where you are and what comes next.</p>
+    <section class="studio-section landing-section-support" id="support">
+        <div class="container">
+            <h2 class="landing-section-heading">Between-Lesson Support</h2>
+            <div class="landing-section-rule"></div>
+            <p class="landing-section-intro">The lesson is just the beginning. In this studio, you get a support system designed to keep you growing between sessions.</p>
+
+            <div class="values-grid landing-support-grid">
+                <div class="value-card landing-support-card">
+                    <div class="landing-support-number" aria-hidden="true">1</div>
+                    <h3>Lesson Debriefs</h3>
+                    <p>After every lesson, you receive a written summary of what we covered: what we worked on, what shifted, what to carry forward. We are not relying on memory alone. You have a record of your progress that builds over time.</p>
+                </div>
+                <div class="value-card landing-support-card">
+                    <div class="landing-support-number" aria-hidden="true">2</div>
+                    <h3>Practice Plans</h3>
+                    <p>Alongside each debrief, a practice plan with every exercise, its functional purpose, how it connects to your repertoire, and what to listen for while practicing. You always know <em>why</em> you are doing what you are doing.</p>
+                </div>
+                <div class="value-card landing-support-card">
+                    <div class="landing-support-number" aria-hidden="true">3</div>
+                    <h3>Whole-Singer Reflection</h3>
+                    <p>A simple check-in before each lesson: what you noticed in practice, your vocal load for the week, how your voice feels, questions for the next lesson. Your input directly shapes what we work on.</p>
+                </div>
+                <div class="value-card landing-support-card">
+                    <div class="landing-support-number" aria-hidden="true">4</div>
+                    <h3>Progress Visibility</h3>
+                    <p>Three acoustic assessment sessions per semester track your vocal development over time. You see your growth in plain language: range expansion, dynamic flexibility, voice quality trends.</p>
+                </div>
+                <div class="value-card landing-support-card">
+                    <div class="landing-support-number" aria-hidden="true">5</div>
+                    <h3>Repertoire Tracking</h3>
+                    <p>Every piece moves through a learning scaffold from translation and characterization through performance-ready. You always know where you are and what comes next.</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- WHO THIS IS FOR -->
-    <section class="studio-section">
-        <h2>Who This Studio Is For</h2>
-        <p>This studio is for people who want to get better at their craft and are willing to take responsibility for their own goals. People who are dissatisfied with their current operation and know there is more to be had. People who want more facility, more singing, easier singing.</p>
-        <p>This is not the right fit for someone looking for a guru to establish their goals for them. You are the expert on your experience. I am the expert on the instrument. Together, we figure it out.</p>
-    </section>
-
-    <!-- ACHIEVEMENTS -->
-    <section class="studio-section" id="achievements">
-        <h2>Student Achievements</h2>
-        <div id="achievements-list">
-            <ul class="achievement-list">
-                <li>
-                    <strong>Karima Haddouch</strong> — NATS NE Regional First Prize, Advanced Musical Theater
-                    <div class="achievement-date">2026</div>
-                </li>
-            </ul>
+    <section class="studio-section landing-section-who" id="who">
+        <div class="container">
+            <div class="landing-who-content">
+                <h2 class="landing-section-heading">Who This Studio Is For</h2>
+                <div class="landing-section-rule"></div>
+                <p>This studio is for people who want to get better at their craft and are willing to take responsibility for their own goals. People who are dissatisfied with their current operation and know there is more to be had. People who want more facility, more singing, easier singing.</p>
+                <p>This is not the right fit for someone looking for a guru to establish their goals for them. You are the expert on your experience. I am the expert on the instrument. Together, we figure it out.</p>
+            </div>
         </div>
     </section>
 
-    <!-- TOOLS -->
-    <section class="studio-section">
-        <h2>Studio Tools</h2>
-        <p>The studio is equipped with tools that support the co-investigation: RespTrack respiratory analysis, Voce Vista real-time acoustic display, Praat acoustic analysis, and a calibrated recording setup. These tools serve the teaching, not the other way around. They make the invisible visible so we can observe together.</p>
+    <!-- ACHIEVEMENTS -->
+    <section class="studio-section landing-section-achievements" id="achievements">
+        <div class="container">
+            <h2 class="landing-section-heading">Student Achievements</h2>
+            <div class="landing-section-rule"></div>
+            <div id="achievements-list">
+                <ul class="achievement-list landing-achievement-list">
+                    <li class="landing-achievement-item">
+                        <div class="landing-achievement-year">2026</div>
+                        <div class="landing-achievement-detail">
+                            <strong>Karima Haddouch</strong>
+                            <span class="landing-achievement-description">NATS NE Regional First Prize, Advanced Musical Theater</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- STUDIO TOOLS -->
+    <section class="studio-section landing-section-tools" id="tools">
+        <div class="container">
+            <h2 class="landing-section-heading">Studio Tools</h2>
+            <div class="landing-section-rule"></div>
+            <p>The studio is equipped with tools that support the co-investigation: RespTrack respiratory analysis, Voce Vista real-time acoustic display, Praat acoustic analysis, and a calibrated recording setup. These tools serve the teaching, not the other way around. They make the invisible visible so we can observe together.</p>
+        </div>
     </section>
 
 </main>
 
-<footer>
+<footer class="landing-footer">
     <div class="container">
-        <p>Kayla Gautereaux — Voice Studio</p>
-        <p><a href="https://kaylagautereaux.com">kaylagautereaux.com</a></p>
+        <div class="landing-footer-content">
+            <p class="landing-footer-name">Kayla Gautereaux</p>
+            <p class="landing-footer-link"><a href="https://kaylagautereaux.com">kaylagautereaux.com</a></p>
+        </div>
     </div>
 </footer>
 

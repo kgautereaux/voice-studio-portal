@@ -5,6 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Terms and Consent — Voice Studio</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .dash-consent-page {
+            max-width: 660px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+        }
+        .dash-consent-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .dash-consent-header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 0.3rem;
+        }
+        .dash-consent-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 0;
+        }
+        .dash-consent-section {
+            margin-bottom: 2rem;
+        }
+        .dash-consent-section h3 {
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.03em;
+            color: var(--primary-color);
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .dash-consent-section p {
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--text-color);
+            margin-bottom: 0.6rem;
+        }
+        .dash-consent-section ul {
+            padding-left: 1.25rem;
+            margin: 0.4rem 0 0.75rem;
+        }
+        .dash-consent-section li {
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 0.3rem;
+        }
+        .dash-consent-section strong {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        .dash-consent-highlight {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .dash-consent-accept {
+            margin-top: 2.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--success-color);
+            border-radius: 2px;
+            background: var(--bg-light);
+        }
+        .dash-consent-accept label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            cursor: pointer;
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+        .dash-consent-accept input[type="checkbox"] {
+            width: auto;
+            margin-top: 0.25rem;
+            flex-shrink: 0;
+        }
+        .dash-consent-btn {
+            margin-top: 1.25rem;
+        }
+        .dash-consent-btn .btn {
+            padding: 0.75rem 1.5rem;
+        }
+        .dash-consent-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+    </style>
 </head>
 <body>
 
@@ -14,67 +113,80 @@
     </div>
 </nav>
 
-<main class="container" style="max-width: 700px; margin-top: 2rem;">
+<main class="dash-consent-page">
 
-    <h1>Voice Studio Portal</h1>
-    <h2 style="border: none; margin-top: 0.5rem;">Terms of Use and Data Consent</h2>
+    <div class="dash-consent-header">
+        <h1>Welcome to the Voice Studio Portal</h1>
+        <p>Before you get started, here is how the portal works and how your information is handled.</p>
+    </div>
 
-    <p>Welcome to Prof. Gautereaux's Voice Studio portal. Before you begin, please review how the portal works and how your data is handled.</p>
+    <div class="dash-consent-section">
+        <h3>What the Portal Does</h3>
+        <p>The portal supports your learning between lessons. Through it you will:</p>
+        <ul>
+            <li>Receive written practice plans after each lesson</li>
+            <li>Submit reflections on your practice and vocal load</li>
+            <li>View your active repertoire and learning phase</li>
+            <li>Track your acoustic vocal development over time</li>
+            <li>Receive studio class feedback summaries</li>
+        </ul>
+    </div>
 
-    <h3>What the Portal Does</h3>
-    <p>The Voice Studio portal supports your learning between lessons. Through the portal you will:</p>
-    <ul style="padding-left: 1.25rem; margin: 0.5rem 0 1rem;">
-        <li>Receive written practice plans after each lesson</li>
-        <li>Submit reflections on your practice and vocal load</li>
-        <li>View your active repertoire and learning phase</li>
-        <li>Track your acoustic vocal development over time</li>
-        <li>Receive studio class feedback summaries</li>
-    </ul>
+    <div class="dash-consent-section">
+        <h3>How Your Data Is Handled</h3>
 
-    <h3>How Your Data Is Handled</h3>
+        <p><strong>Lesson recordings</strong> are stored on password-protected cloud storage (Google Drive) and downloaded to Prof. Gautereaux's computer for processing. Audio files are never sent to third-party transcription services; transcription happens locally.</p>
 
-    <p><strong>Lesson recordings</strong> are stored on password-protected cloud storage (Google Drive) and downloaded to Prof. Gautereaux's computer for processing. Audio files are never sent to third-party transcription services; transcription happens locally on Prof. Gautereaux's machine.</p>
+        <p><strong>Lesson transcripts</strong> are sent to Anthropic's Claude AI for analysis and practice plan generation. When transcripts are sent, your name is replaced with a student identifier. Anthropic does not use API inputs for model training.</p>
 
-    <p><strong>Lesson transcripts</strong> are sent to Anthropic's Claude AI for analysis and practice plan generation. When transcripts are sent, your name is replaced with a student identifier. Anthropic does not use API inputs for model training.</p>
+        <p><strong>Structured data</strong> you enter through the portal (reflections, repertoire progress, self-assessments) and data Prof. Gautereaux enters about your lessons (lesson logs, observations, acoustic measurements) are stored in a secure cloud database (Supabase). This data is used to generate your practice plans, pre-lesson briefs, and progress tracking.</p>
 
-    <p><strong>Structured data</strong> you enter through the portal (reflections, repertoire progress, self-assessments) and data Prof. Gautereaux enters about your lessons (lesson logs, observations, acoustic measurements) are stored in a secure cloud database (Supabase). This data is used to generate your practice plans, pre-lesson briefs, and progress tracking.</p>
+        <div class="dash-consent-highlight">
+            You see only your own data. Other students cannot see your lesson logs, reflections, practice plans, or acoustic measurements.
+        </div>
 
-    <p><strong>You see only your own data.</strong> Other students cannot see your lesson logs, reflections, practice plans, or acoustic measurements.</p>
+        <p><strong>Acoustic recordings</strong> from assessment sessions are used for educational progress tracking within the studio. They are not used for research purposes. If Prof. Gautereaux wishes to use any studio data for research, separate IRB-approved consent will be obtained.</p>
+    </div>
 
-    <p><strong>Acoustic recordings</strong> from assessment sessions are used for educational progress tracking within the studio. They are not used for research purposes. If Prof. Gautereaux wishes to use any studio data for research, separate IRB-approved consent will be obtained.</p>
+    <div class="dash-consent-section">
+        <h3>A Few Ground Rules</h3>
 
-    <h3>Terms of Use</h3>
+        <p><strong>Your account is personal.</strong> Do not share your login credentials with anyone.</p>
 
-    <p><strong>Your account is personal.</strong> Do not share your login credentials with anyone.</p>
+        <p><strong>Practice plans and lesson summaries are for your personal use.</strong> They are generated specifically for you based on your lessons and should not be shared or distributed.</p>
 
-    <p><strong>Practice plans and lesson summaries are for your personal use.</strong> They are generated specifically for you based on your lessons and should not be shared or distributed.</p>
+        <p><strong>Your reflections are honest input, not graded writing.</strong> The whole-singer reflection replaces the Voice Journal from the syllabus. Submitting reflections counts for participation. There are no wrong answers; the goal is self-awareness, not performance.</p>
 
-    <p><strong>Your reflections are honest input, not graded writing.</strong> The whole-singer reflection replaces the Voice Journal from the syllabus. Submitting reflections counts for participation. There are no wrong answers; the goal is self-awareness, not performance.</p>
+        <p><strong>AI-generated content is reviewed by Prof. Gautereaux.</strong> Practice plans and feedback are generated with AI assistance and reviewed before delivery. If anything seems off, flag it and it will be addressed.</p>
+    </div>
 
-    <p><strong>AI-generated content is reviewed by Prof. Gautereaux.</strong> Practice plans and feedback are generated with AI assistance and reviewed before delivery. If anything seems off, flag it and it will be addressed.</p>
+    <div class="dash-consent-section">
+        <h3>Your Rights</h3>
 
-    <h3>Your Rights</h3>
+        <p><strong>Participation is voluntary.</strong> Using the portal does not affect your standing in the studio. If you prefer not to use it, talk to Prof. Gautereaux about alternative arrangements.</p>
 
-    <p><strong>Participation is voluntary.</strong> Using the portal does not affect your standing in the studio. If you prefer not to use the portal, talk to Prof. Gautereaux about alternative arrangements.</p>
+        <p><strong>You can request data deletion.</strong> At any time, you can ask Prof. Gautereaux to delete your portal data. Lesson recordings on Prof. Gautereaux's local machine are managed separately.</p>
 
-    <p><strong>You can request data deletion.</strong> At any time, you can ask Prof. Gautereaux to delete your portal data. Lesson recordings on Prof. Gautereaux's local machine are managed separately.</p>
+        <p><strong>You can withdraw consent.</strong> If you change your mind, let Prof. Gautereaux know. Your account will be deactivated and your data can be deleted on request.</p>
+    </div>
 
-    <p><strong>You can withdraw consent.</strong> If you change your mind about portal participation, let Prof. Gautereaux know. Your account will be deactivated and your data can be deleted on request.</p>
-
-    <div style="margin: 2rem 0; padding: 1.25rem; border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color);">
-        <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; text-transform: none; letter-spacing: 0;">
-            <input type="checkbox" id="consent-checkbox" style="width: auto; margin-top: 0.25rem;">
-            <span style="font-weight: 400; font-size: 14px; line-height: 1.6;">
-                I have read and understand the terms of use and data handling practices described above. I consent to participating in the Voice Studio portal.
+    <div class="dash-consent-accept">
+        <label>
+            <input type="checkbox" id="consent-checkbox">
+            <span>
+                I have read and understand the terms of use and data handling practices described above.
+                I consent to participating in the Voice Studio portal.
             </span>
         </label>
     </div>
 
-    <button id="consent-accept" class="btn btn-primary" disabled style="width: 100%;">
-        Accept and Continue
-    </button>
+    <div class="dash-consent-btn">
+        <button id="consent-accept" class="btn btn-primary" disabled style="width: 100%;">
+            Accept and Continue
+        </button>
+    </div>
 
-    <p class="text-muted" style="text-align: center; margin-top: 1rem;">
+    <p class="dash-consent-footer">
         Questions? Contact Prof. Gautereaux directly.
     </p>
 

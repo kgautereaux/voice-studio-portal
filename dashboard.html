@@ -57,8 +57,23 @@
         <h1>Welcome, <span id="welcome-name"></span></h1>
 
         <!-- PRACTICE PLAN -->
+        <!-- CURRENT PRACTICE PLAN -->
         <h2>Current Practice Plan</h2>
         <div id="practice-plan-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+
+        <!-- REFLECTION PROMPT -->
+        <div id="reflection-prompt" class="reflection-prompt" style="display: none;">
+            <h3>Before Your Next Lesson</h3>
+            <p>Take a few minutes to reflect on your practice this week. Your reflection goes directly into your next pre-lesson brief, so Prof. G arrives prepared to pick up where you are, not where she left off.</p>
+            <p>This replaces the Voice Journal. Submitting counts for participation.</p>
+            <a href="#" data-nav="reflect" class="btn btn-primary">Submit Reflection</a>
+        </div>
+
+        <!-- PAST PRACTICE PLANS -->
+        <h2>Past Practice Plans</h2>
+        <div id="past-plans-content">
             <p class="text-muted">Loading...</p>
         </div>
 
@@ -75,14 +90,13 @@
         </div>
 
         <!-- RECENT REFLECTIONS -->
-        <h2>Recent Reflections</h2>
+        <h2>Your Recent Reflections</h2>
         <div id="reflections-content">
             <p class="text-muted">Loading...</p>
         </div>
 
         <div style="margin-top: 2rem;">
-            <a href="#" data-nav="reflect" class="btn btn-primary">Submit Reflection</a>
-            <a href="#" data-nav="progress" class="btn btn-secondary" style="margin-left: 0.5rem;">View Progress</a>
+            <a href="#" data-nav="progress" class="btn btn-secondary">View Vocal Progress</a>
         </div>
     </main>
 </div>

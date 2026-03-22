@@ -318,6 +318,12 @@ function renderDashboard() {
     // Current practice plan
     renderPracticePlan();
 
+    // Reflection prompt (show if there's a practice plan but no reflection since)
+    renderReflectionPrompt();
+
+    // Past practice plans
+    renderPastPlans();
+
     // Repertoire status
     renderRepertoire();
 
@@ -424,6 +430,85 @@ function renderPracticePlan() {
             <p class="plan-signoff">Prof. G</p>
         </div>
     `;
+}
+
+function renderReflectionPrompt() {
+    const prompt = document.getElementById('reflection-prompt');
+    if (!prompt) return;
+
+    const plans = studentData.practicePlans;
+    const reflections = studentData.reflections;
+
+    // Show prompt if there's a practice plan
+    if (!plans || plans.length === 0) {
+        prompt.style.display = 'none';
+        return;
+    }
+
+    const latestPlanDate = new Date(plans[0].date_generated);
+
+    // Check if there's a reflection submitted after the latest plan
+    const hasRecentReflection = reflections && reflections.some(r => {
+        return new Date(r.date_submitted) > latestPlanDate;
+    });
+
+    if (hasRecentReflection) {
+        prompt.style.display = 'none';
+    } else {
+        prompt.style.display = 'block';
+    }
+}
+
+function renderPastPlans() {
+    const container = document.getElementById('past-plans-content');
+    if (!container) return;
+
+    const plans = studentData.practicePlans;
+    if (!plans || plans.length <= 1) {
+        container.innerHTML = '<p class="text-muted">Past practice plans will appear here as your lessons accumulate.</p>';
+        return;
+    }
+
+    // Skip the first (current) plan
+    const pastPlans = plans.slice(1);
+    let html = '';
+
+    pastPlans.forEach((plan, index) => {
+        const dateStr = new Date(plan.date_generated).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // Extract a preview from the content (first meaningful paragraph)
+        const lines = (plan.content || '').split('\n').filter(l => l.trim() && !l.startsWith('#'));
+        const preview = lines.length > 0
+            ? lines[0].replace(/\*\*/g, '').replace(/\*/g, '').substring(0, 120) + '...'
+            : 'Practice plan';
+
+        const planId = 'past-plan-' + index;
+
+        html += `
+            <div class="past-plan-summary" onclick="togglePastPlan('${planId}')">
+                <div class="plan-summary-date">${dateStr}</div>
+                <div class="plan-summary-preview">${escapeHtml(preview)}</div>
+            </div>
+            <div class="past-plan-expanded" id="${planId}">
+                <div class="practice-plan-letter">
+                    <p class="plan-date">${dateStr}</p>
+                    ${markdownToHtml(plan.content || '')}
+                    <p class="plan-signoff">Prof. G</p>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function togglePastPlan(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.toggle('open');
+    }
 }
 
 function renderRepertoire() {

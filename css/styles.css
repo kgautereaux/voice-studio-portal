@@ -526,6 +526,77 @@ td {
     padding-top: 1rem;
 }
 
+/* ============================================================
+   REFLECTION PROMPT
+   ============================================================ */
+
+.reflection-prompt {
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--success-color);
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    background: var(--bg-white);
+}
+
+.reflection-prompt h3 {
+    margin-top: 0;
+    color: var(--success-color);
+}
+
+.reflection-prompt p {
+    font-size: 14px;
+    margin-bottom: 0.5rem;
+}
+
+.reflection-prompt .btn {
+    margin-top: 0.5rem;
+}
+
+/* ============================================================
+   PAST PLANS ARCHIVE
+   ============================================================ */
+
+.past-plan-summary {
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.past-plan-summary:hover {
+    background: var(--bg-light);
+}
+
+.past-plan-summary .plan-summary-date {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--primary-color);
+}
+
+.past-plan-summary .plan-summary-preview {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.past-plan-expanded {
+    display: none;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.past-plan-expanded.open {
+    display: block;
+}
+
+.past-plan-expanded .practice-plan-letter {
+    margin: 0;
+    border: none;
+}
+
 @media (max-width: 768px) {
     .practice-plan-letter {
         padding: 1.25rem 1.5rem;

@@ -481,7 +481,7 @@ function renderDashCards() {
         document.getElementById('dash-rep-summary').textContent = 'No repertoire tracked yet';
     }
 
-    // VOCAL PROGRESS
+    // VOICE ANALYTICS
     const acoustics = studentData.acoustics || [];
     if (acoustics.length > 0) {
         const sv = acoustics.filter(a => a.task_type === 'sv');
@@ -492,8 +492,8 @@ function renderDashCards() {
             document.getElementById('dash-progress-summary').textContent =
                 sv.length + ' assessment' + (sv.length > 1 ? 's' : '');
         } else {
-            document.getElementById('dash-progress-value').textContent = '--';
-            document.getElementById('dash-progress-summary').textContent = 'No assessments yet';
+            document.getElementById('dash-progress-value').textContent = 'Coming Soon';
+            document.getElementById('dash-progress-summary').textContent = 'Data collection pending';
         }
     } else {
         document.getElementById('dash-progress-value').textContent = 'Coming Soon';

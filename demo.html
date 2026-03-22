@@ -538,6 +538,62 @@
     });
 </script>
 
-<script src="js/feedback-widget.js"></script>
+<script>
+// Demo version of the feedback widget (no Supabase submission)
+(function() {
+    const widgetHTML = `
+        <button class="feedback-fab" id="feedback-fab" title="Report an issue" aria-label="Report an issue">&#9873;</button>
+        <div class="feedback-panel" id="feedback-panel">
+            <h3>Something seem off?</h3>
+            <p>If anything in your portal looks wrong, doesn't match what happened in your lesson, or feels confusing, let Prof. G know here.</p>
+            <textarea id="feedback-message" placeholder="What seems off?"></textarea>
+            <button class="btn btn-primary btn-small" id="feedback-submit">Send Feedback</button>
+        </div>
+    `;
+    const container = document.createElement('div');
+    container.innerHTML = widgetHTML;
+    document.body.appendChild(container);
+
+    const fab = document.getElementById('feedback-fab');
+    const panel = document.getElementById('feedback-panel');
+    let isOpen = false;
+
+    fab.addEventListener('click', () => {
+        isOpen = !isOpen;
+        fab.classList.toggle('open', isOpen);
+        panel.classList.toggle('visible', isOpen);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen) {
+            isOpen = false;
+            fab.classList.remove('open');
+            panel.classList.remove('visible');
+        }
+    });
+
+    document.getElementById('feedback-submit').addEventListener('click', () => {
+        const msg = document.getElementById('feedback-message').value.trim();
+        if (!msg) return;
+        panel.innerHTML = `
+            <div class="feedback-success">
+                Sent. Prof. G will see this.<br>
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: 400;">This is a demo. In the real portal, your feedback would be saved.</span>
+            </div>
+        `;
+        setTimeout(() => {
+            isOpen = false;
+            fab.classList.remove('open');
+            panel.classList.remove('visible');
+            panel.innerHTML = `
+                <h3>Something seem off?</h3>
+                <p>If anything in your portal looks wrong, doesn't match what happened in your lesson, or feels confusing, let Prof. G know here.</p>
+                <textarea id="feedback-message" placeholder="What seems off?"></textarea>
+                <button class="btn btn-primary btn-small" id="feedback-submit" onclick="document.getElementById('feedback-submit').click()">Send Feedback</button>
+            `;
+        }, 2500);
+    });
+})();
+</script>
 </body>
 </html>

@@ -385,33 +385,30 @@ function renderUpcomingEvents() {
 }
 
 function renderDashCards() {
-    // NEXT LESSON (from events) + LATEST LESSON (from logs)
     const events = studentData.events || [];
     const todayStr = new Date().toISOString().split('T')[0];
     const nextLesson = events.find(e =>
         e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
     );
-    if (nextLesson) {
-        const d = new Date(nextLesson.date + 'T12:00:00');
+
+    // LATEST LESSON (from logs, always show last lesson)
+    const lessons = studentData.lessonLogs || [];
+    if (lessons.length > 0) {
+        const l = lessons[0];
+        const d = new Date(l.date + 'T12:00:00');
         document.getElementById('dash-lesson-date').textContent =
-            d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        document.getElementById('dash-lesson-summary').textContent =
-            nextLesson.notes || 'Scheduled';
-    } else {
-        // Fall back to most recent lesson log
-        const lessons = studentData.lessonLogs || [];
-        if (lessons.length > 0) {
-            const l = lessons[0];
-            const d = new Date(l.date + 'T12:00:00');
-            document.getElementById('dash-lesson-date').textContent =
-                'Last: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
-            document.getElementById('dash-lesson-summary').textContent =
-                rep.length > 0 ? rep.map(r => r.split('—')[0].split('(')[0].trim()).join(', ') : 'Lesson recorded';
-        } else {
-            document.getElementById('dash-lesson-date').textContent = '--';
-            document.getElementById('dash-lesson-summary').textContent = 'No lessons scheduled';
+            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+        let summary = rep.length > 0 ? rep.map(r => r.split('—')[0].split('(')[0].trim()).join(', ') : 'Lesson recorded';
+        if (nextLesson) {
+            const nd = new Date(nextLesson.date + 'T12:00:00');
+            summary += ' · Next: ' + nd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
+        document.getElementById('dash-lesson-summary').textContent = summary;
+    } else {
+        document.getElementById('dash-lesson-date').textContent = '--';
+        document.getElementById('dash-lesson-summary').textContent =
+            nextLesson ? 'Next: ' + new Date(nextLesson.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'No lessons yet';
     }
 
     // PRACTICE PLAN
@@ -442,17 +439,15 @@ function renderDashCards() {
     const latestPlanDate = plans.length > 0 ? new Date(plans[0].date_generated) : null;
     const hasRecentReflection = latestPlanDate && reflections.some(r => new Date(r.date_submitted) > latestPlanDate);
 
-    // Find next lesson date to calculate reflection due date (day before)
-    const nextLessonEvent = events.find(e =>
-        e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
-    );
-
+    // Reflection due date and next lesson naming
     let reflectionDueStr = '';
-    if (nextLessonEvent) {
-        const lessonDate = new Date(nextLessonEvent.date + 'T12:00:00');
+    let nextLessonLabel = 'your next lesson';
+    if (nextLesson) {
+        const lessonDate = new Date(nextLesson.date + 'T12:00:00');
         const dueDate = new Date(lessonDate);
         dueDate.setDate(dueDate.getDate() - 1);
         reflectionDueStr = dueDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        nextLessonLabel = lessonDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' lesson';
     }
 
     if (hasRecentReflection) {
@@ -464,7 +459,7 @@ function renderDashCards() {
         document.getElementById('dash-reflection-status').textContent =
             reflectionDueStr ? 'Due ' + reflectionDueStr : 'Due';
         document.getElementById('dash-reflection-summary').textContent =
-            'Submit before your next lesson';
+            'Submit before ' + nextLessonLabel;
     }
 
     // REPERTOIRE

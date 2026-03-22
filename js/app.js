@@ -291,6 +291,11 @@ function setupNavigation() {
         logoutBtn.addEventListener('click', handleLogout);
     }
 
+    const settingsBtn = document.getElementById('btn-settings');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', showSettings);
+    }
+
     // Nav links
     document.querySelectorAll('[data-nav]').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -1324,6 +1329,85 @@ function addVocalLoadEntry() {
         </div>
     `;
     container.appendChild(entry);
+}
+
+// ============================================================
+// SETTINGS / PASSWORD CHANGE
+// ============================================================
+
+function showSettings() {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-settings').classList.add('active');
+    setupPasswordForm();
+}
+
+function setupPasswordForm() {
+    const form = document.getElementById('change-password-form');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPw = document.getElementById('current-password').value;
+        const newPw = document.getElementById('new-password').value;
+        const confirmPw = document.getElementById('confirm-password').value;
+        const msgEl = document.getElementById('password-message');
+        const btn = form.querySelector('button[type="submit"]');
+
+        msgEl.style.display = 'none';
+
+        if (newPw !== confirmPw) {
+            msgEl.textContent = 'New passwords do not match.';
+            msgEl.style.color = 'var(--error-color)';
+            msgEl.style.display = 'block';
+            return;
+        }
+
+        if (newPw.length < 8) {
+            msgEl.textContent = 'Password must be at least 8 characters.';
+            msgEl.style.color = 'var(--error-color)';
+            msgEl.style.display = 'block';
+            return;
+        }
+
+        btn.textContent = 'Updating...';
+        btn.disabled = true;
+
+        // Verify current password by re-authenticating
+        const email = currentUser.email;
+        const { error: authError } = await sb.auth.signInWithPassword({
+            email: email,
+            password: currentPw,
+        });
+
+        if (authError) {
+            msgEl.textContent = 'Current password is incorrect.';
+            msgEl.style.color = 'var(--error-color)';
+            msgEl.style.display = 'block';
+            btn.textContent = 'Update Password';
+            btn.disabled = false;
+            return;
+        }
+
+        // Update password
+        const { error: updateError } = await sb.auth.updateUser({
+            password: newPw,
+        });
+
+        if (updateError) {
+            msgEl.textContent = 'Error updating password: ' + updateError.message;
+            msgEl.style.color = 'var(--error-color)';
+            msgEl.style.display = 'block';
+        } else {
+            msgEl.textContent = 'Password updated successfully.';
+            msgEl.style.color = 'var(--success-color)';
+            msgEl.style.display = 'block';
+            form.reset();
+        }
+
+        btn.textContent = 'Update Password';
+        btn.disabled = false;
+    });
 }
 
 // ============================================================

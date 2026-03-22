@@ -217,6 +217,7 @@
             <li><a href="#" data-nav="progress">Analytics</a></li>
         </ul>
         <div class="nav-user" id="nav-authenticated">
+            <button id="btn-settings" style="margin-right: 0.75rem;">Settings</button>
             <button id="btn-logout">Sign Out</button>
         </div>
     </div>
@@ -522,6 +523,38 @@
         </p>
         <div id="progress-content">
             <p class="text-muted">Loading...</p>
+        </div>
+    </main>
+</div>
+
+<!-- ============================================================
+     SETTINGS PAGE
+     ============================================================ -->
+<div class="page" id="page-settings">
+    <main class="container" style="max-width: 500px;">
+        <h1>Settings</h1>
+
+        <h2 style="margin-top: 1.5rem;">Change Password</h2>
+        <form id="change-password-form">
+            <div class="form-group">
+                <label for="current-password">Current Password</label>
+                <input type="password" id="current-password" required>
+            </div>
+            <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password" required minlength="8">
+                <span class="hint">At least 8 characters.</span>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm New Password</label>
+                <input type="password" id="confirm-password" required>
+            </div>
+            <div id="password-message" style="display: none; font-size: 13px; margin-bottom: 1rem;"></div>
+            <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+
+        <div style="margin-top: 2rem;">
+            <a href="#" data-nav="dashboard" class="btn btn-secondary btn-small">Back to Dashboard</a>
         </div>
     </main>
 </div>

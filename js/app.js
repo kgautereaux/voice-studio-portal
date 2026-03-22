@@ -947,7 +947,7 @@ function renderRepertoire() {
 
     // Active repertoire
     if (rep.length > 0) {
-        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Due</th></tr></thead><tbody>';
+        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Sheet Music</th><th>Due</th></tr></thead><tbody>';
         for (const r of rep) {
             const timeline = r.timeline
                 ? new Date(r.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -967,10 +967,19 @@ function renderRepertoire() {
             }
             statusSelect += '</select>';
 
+            // Sheet music link
+            let sheetMusic = '';
+            if (r.sheet_music_url) {
+                sheetMusic = `<a href="${escapeHtml(r.sheet_music_url)}" target="_blank" class="btn btn-secondary btn-small" style="font-size: 11px;">View PDF</a>`;
+            } else {
+                sheetMusic = `<button class="btn btn-secondary btn-small rep-add-link" data-rep-id="${r.id}" style="font-size: 11px;">+ Add Link</button>`;
+            }
+
             html += `<tr>
                 <td><strong>${escapeHtml(r.title)}</strong>${r.composer ? '<br><span class="text-muted text-small">' + escapeHtml(r.composer) + '</span>' : ''}</td>
                 <td>${phaseSelect}</td>
                 <td>${statusSelect}</td>
+                <td>${sheetMusic}</td>
                 <td>${timeline}</td>
             </tr>`;
         }
@@ -1012,6 +1021,19 @@ function renderRepertoire() {
             await updateRepertoireField(repId, 'status', newStatus);
             // If shelved, reload to shift it to previous section
             if (newStatus === 'shelved') {
+                await loadStudentData();
+                renderRepertoire();
+            }
+        });
+    });
+
+    // Sheet music link buttons
+    container.querySelectorAll('.rep-add-link').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const repId = btn.dataset.repId;
+            const url = prompt('Paste a link to the sheet music (Google Drive, Dropbox, etc.):');
+            if (url && url.trim()) {
+                await updateRepertoireField(repId, 'sheet_music_url', url.trim());
                 await loadStudentData();
                 renderRepertoire();
             }
@@ -1426,19 +1448,23 @@ function setupRepForm() {
         const title = document.getElementById('rep-title').value.trim();
         const composer = document.getElementById('rep-composer').value.trim();
         const style = document.getElementById('rep-style').value;
+        const sheetMusic = document.getElementById('rep-sheet-music')?.value.trim();
 
         if (!title) return;
 
+        const record = {
+            student_id: currentUser.id,
+            title: title,
+            composer: composer || null,
+            style: style || null,
+            status: 'in_progress',
+            assignment_type: 'short_term',
+        };
+        if (sheetMusic) record.sheet_music_url = sheetMusic;
+
         const { data, error } = await sb
             .from('repertoire')
-            .insert({
-                student_id: currentUser.id,
-                title: title,
-                composer: composer || null,
-                style: style || null,
-                status: 'in_progress',
-                assignment_type: 'short_term',
-            });
+            .insert(record);
 
         if (error) {
             alert('Error adding piece: ' + error.message);

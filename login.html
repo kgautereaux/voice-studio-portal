@@ -89,33 +89,51 @@
 </div>
 
 <script>
-    // Login page redirects to dashboard which handles auth
-    document.addEventListener('DOMContentLoaded', function() {
-        const { createClient } = window.supabase;
-        const sb = createClient(
-            'https://ukvkljztinkzmkbtsfuo.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k'
-        );
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const { createClient } = window.supabase;
+            const sb = createClient(
+                'https://ukvkljztinkzmkbtsfuo.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k'
+            );
 
-        const form = document.getElementById('login-form');
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('login-username').value.trim().toLowerCase();
-            const password = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-            errorEl.style.display = 'none';
-
-            const email = username.includes('@') ? username : username + '@studio.kaylagautereaux.com';
-
-            const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                errorEl.textContent = 'Invalid username or password.';
-                errorEl.style.display = 'block';
-            } else {
+            // If already logged in, go straight to dashboard
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
                 window.location.href = 'dashboard.html';
+                return;
             }
-        });
+
+            const form = document.getElementById('login-form');
+            const btn = form.querySelector('button[type="submit"]');
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('login-username').value.trim().toLowerCase();
+                const password = document.getElementById('login-password').value;
+                const errorEl = document.getElementById('login-error');
+                errorEl.style.display = 'none';
+                btn.textContent = 'Signing in...';
+                btn.disabled = true;
+
+                const email = username.includes('@') ? username : username + '@studio.kaylagautereaux.com';
+
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    errorEl.textContent = 'Invalid username or password.';
+                    errorEl.style.display = 'block';
+                    btn.textContent = 'Sign In';
+                    btn.disabled = false;
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            });
+        } catch (err) {
+            console.error('Login init error:', err);
+            document.getElementById('login-error').textContent = 'Portal loading error. Please refresh.';
+            document.getElementById('login-error').style.display = 'block';
+        }
     });
 </script>
 

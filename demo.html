@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo Dashboard — Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        .demo-banner {
+            background: var(--bg-warm);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.6rem 0;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+        .demo-banner strong { color: var(--accent-color); }
+        .demo-banner a { color: var(--accent-color); margin-left: 0.5rem; }
+
+        /* Reuse dashboard styles */
+        .dash-welcome { padding: 1.5rem 0 0.5rem; }
+        .dash-welcome h1 { font-size: 1.8rem; font-weight: 300; margin-bottom: 0.25rem; }
+        .dash-welcome-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 0; }
+        .dash-detail-wrap {
+            background: var(--bg-light); border: 1px solid var(--border-color);
+            border-radius: 2px; padding: 2rem 2.5rem; margin-top: 0.5rem;
+        }
+        @media (max-width: 768px) { .dash-detail-wrap { padding: 1.5rem; } }
+    </style>
+</head>
+<body>
+
+<!-- DEMO BANNER -->
+<div class="demo-banner">
+    <strong>Demo Dashboard</strong> — This is a sample view of the student experience. Data shown is illustrative.
+    <a href="index.html">Back to Studio</a>
+</div>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand">Voice Studio</a>
+        <ul class="nav-links">
+            <li><a href="#" id="nav-dashboard" class="active">Dashboard</a></li>
+            <li><a href="#" id="nav-plan">Practice Plan</a></li>
+            <li><a href="#" id="nav-debrief">Lesson Debrief</a></li>
+            <li><a href="#" id="nav-reflection">Reflection</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container">
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard">
+        <div class="dash-welcome">
+            <h1>Welcome, Alex</h1>
+            <p class="dash-welcome-sub">Here is what is happening in your studio this week.</p>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="upcoming-events">
+            <strong>Monday Apr 7</strong>: Voice Lesson (10:00 AM, 60 min) &nbsp;&middot;&nbsp;
+            <strong>Friday Apr 11</strong>: Studio Class (10:00 AM, Houston Hall)
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard-grid">
+            <div class="dash-card" onclick="showView('debrief')">
+                <div class="dash-card-label">Latest Lesson</div>
+                <div class="dash-card-value">Apr 1</div>
+                <div class="dash-card-summary">Breath management, "Somewhere Over the Rainbow," registration work &middot; Next: Mon Apr 7</div>
+            </div>
+            <div class="dash-card" onclick="showView('plan')">
+                <div class="dash-card-label">Practice Plan</div>
+                <div class="dash-card-value">Apr 1</div>
+                <div class="dash-card-summary">3 exercises &middot; Somewhere Over the Rainbow, Come to My Garden</div>
+            </div>
+            <div class="dash-card dash-card-action" onclick="showView('reflection')">
+                <div class="dash-card-label">Reflection</div>
+                <div class="dash-card-value">Due Sun Apr 6</div>
+                <div class="dash-card-summary">Submit before Monday Apr 7 lesson</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Repertoire</div>
+                <div class="dash-card-value">6 pieces</div>
+                <div class="dash-card-summary">Next: Apr 25 (jury)</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Voice Analytics</div>
+                <div class="dash-card-value">Coming Soon</div>
+                <div class="dash-card-summary">Data collection pending</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Vocal Progress</div>
+                <div class="dash-card-value">3 highlights</div>
+                <div class="dash-card-summary">Registration shift on "Garden" landed cleanly for the first time...</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Studio Class</div>
+                <div class="dash-card-value">Apr 11</div>
+                <div class="dash-card-summary">10:00 AM &middot; Houston Hall</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRACTICE PLAN VIEW -->
+    <div id="view-plan" style="display: none;">
+        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
+        <h2>Practice Plan</h2>
+        <div class="dash-detail-wrap">
+            <div class="practice-plan-letter">
+                <p class="plan-date">Tuesday, April 1, 2026</p>
+
+                <h2>What We Worked On and Why</h2>
+                <p>Today we focused on breath management and how it connects to your registration work in "Somewhere Over the Rainbow." The core discovery: when you maintain rib expansion through the ascending phrase, the registration shift takes care of itself. Your body already knows the coordination. We just needed to give it enough air to work with.</p>
+
+                <h2>Exercises for This Week</h2>
+
+                <h3>1. Lip trill with rib expansion (warm-up)</h3>
+                <p><strong>What it sounds like:</strong> Lip trill on a 5-note descending scale, starting in your comfortable range and moving up by half steps.</p>
+                <p><strong>What it's for:</strong> Connects breath flow to phonation without any registration pressure. The trill regulates airflow for you.</p>
+                <p><strong>What to listen for:</strong> Evenness. If the trill sputters, you are pushing too much air. If it stops, not enough. Find the sweet spot where it hums along easily.</p>
+
+                <h3>2. Sustained [u] with rib monitoring</h3>
+                <p><strong>What it sounds like:</strong> Sustained "oo" on a comfortable pitch, hands on your ribs.</p>
+                <p><strong>What it's for:</strong> Builds awareness of rib expansion during phonation. Your pattern has been to collapse the ribs early. This teaches you to keep the tank full longer.</p>
+                <p><strong>What to listen for:</strong> Warmth. The [u] should feel round and easy. If it thins out, the ribs have probably dropped. Check with your hands.</p>
+
+                <h3>3. Octave slide on [i] to [a]</h3>
+                <p><strong>What it sounds like:</strong> Start on a comfortable pitch on "ee," slide up an octave while opening to "ah."</p>
+                <p><strong>What it's for:</strong> Practices the registration shift with a vowel change that supports it. The [i] keeps things narrow at the bottom, the [a] opens up space at the top.</p>
+                <p><strong>What to listen for:</strong> No grab at the top. If you feel a squeeze, you are closing down instead of opening up. Think of the "ah" as arriving at a wide, warm place.</p>
+
+                <h2>Repertoire Work</h2>
+
+                <h3>Somewhere Over the Rainbow</h3>
+                <p><strong>Your target sound:</strong> Warm and open on the octave leap. The brightness comes from the vowel, not from pressing.</p>
+                <ul>
+                    <li>Practice the octave leap ("Some-where") with the rib expansion from exercise 2. Keep the tank full through the leap.</li>
+                    <li>Speak the text of the bridge in rhythm before singing it. Notice where the character's energy peaks. It is not the highest note.</li>
+                    <li>Run the full song once per practice session for continuity. Trust what is working.</li>
+                </ul>
+
+                <h3>Come to My Garden</h3>
+                <p><strong>Current phase:</strong> Melody + Text + Rhythm</p>
+                <ul>
+                    <li>Focus on measures 16-24 this week. The registration shift at "and I will show you" is the same coordination as the Rainbow leap.</li>
+                    <li>Speak the text with character intention first. Who is Lily speaking to? What does she want?</li>
+                </ul>
+
+                <h2>Areas for Growth</h2>
+                <p>These are the functional edges we are actively building. They are not problems. They are the next level.</p>
+                <ul>
+                    <li><strong>Rib expansion through phrases:</strong> Your breath management is improving. The next step is maintaining expansion through longer phrases without thinking about it. The exercises above build this.</li>
+                    <li><strong>Registration shifts without grabbing:</strong> You can do this when you are thinking about it. The goal is for it to become automatic, especially under performance conditions.</li>
+                    <li><strong>Character intention on first attempts:</strong> You tend to sing the notes first and add character second. We are working on bringing the character from the very first note.</li>
+                </ul>
+
+                <h2>Practice Structure</h2>
+                <p>You have a jury in three weeks. Practice smart, not long.</p>
+                <ul>
+                    <li><strong>Warm up:</strong> 10 minutes. Lip trills, then sustained [u] with rib check.</li>
+                    <li><strong>Exercises:</strong> Octave slides, 5 minutes. Focus on ease, not volume.</li>
+                    <li><strong>Rep work:</strong> 20-30 minutes. Alternate between Rainbow and Garden. Do not run each piece more than twice in a row. Mix it up.</li>
+                    <li><strong>Cool down:</strong> Lip trills descending, gentle humming.</li>
+                    <li><strong>Stop when fatigue shows up.</strong> If the sound starts thinning or you feel tension creeping in, that is your signal.</li>
+                </ul>
+
+                <p class="plan-signoff">Prof. G</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LESSON DEBRIEF VIEW -->
+    <div id="view-debrief" style="display: none;">
+        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
+        <h2>Lesson Debrief</h2>
+        <div class="dash-detail-wrap">
+            <div class="practice-plan-letter">
+                <p class="plan-date">Tuesday, April 1, 2026 &middot; 60 min</p>
+
+                <h3>What We Worked On</h3>
+                <ul>
+                    <li>Somewhere Over the Rainbow — octave leap and bridge section</li>
+                    <li>Come to My Garden — measures 16-24, registration shift at "and I will show you"</li>
+                    <li>Breath management: rib expansion exercises, sustained vowel work</li>
+                </ul>
+
+                <h3>Observations</h3>
+                <p><strong>Intention + Learning:</strong> Alex came in with a clear goal: the octave leap in Rainbow has been inconsistent in practice. Strong self-awareness about what is and is not working. Asked good questions about why the leap feels different on tired days versus fresh days.</p>
+                <p><strong>Expression:</strong> Character work in Garden is emerging. The text-first approach is connecting. Alex had a moment of genuine discovery when speaking Lily's text and realizing the emotional arc peaks before the melodic peak.</p>
+                <p><strong>Function:</strong> Rib expansion was collapsing mid-phrase, which was starving the registration shift of air support. Once we addressed the breath management, the leap in Rainbow cleaned up significantly. The same coordination transferred to Garden without additional instruction.</p>
+
+                <h3>Warmth + Brightness</h3>
+                <p>Warmth is strong and consistent in the lower range. Brightness on ascending phrases was coming from pressing rather than from vowel shaping. The [i] to [a] slide exercise helped Alex hear the difference between pressed brightness and resonant brightness.</p>
+
+                <h3>Breakthroughs</h3>
+                <p>The octave leap in Rainbow landed three times in a row with full rib expansion. Alex's reaction: "Oh, it is just... there." That is the feeling we are after. The registration shift in Garden at "and I will show you" also landed cleanly for the first time when approached with the same breath strategy.</p>
+
+                <h3>Areas for Growth</h3>
+                <p>Rib expansion is still in the associative phase: Alex can do it when thinking about it but it is not yet automatic. The grab at the top of ascending phrases is a habit that is loosening but not gone. Character intention tends to arrive after the first few notes rather than from the start.</p>
+                <p>Motor learning phase for breath management: late associative, approaching autonomous for comfortable range. Still cognitive for passages above the passaggio.</p>
+
+                <h3>What We Are Working Toward</h3>
+                <p>Automatic rib expansion through phrases. Registration shifts that feel like nothing happened. Character intention from the first note. These are the edges, and we are close.</p>
+
+                <p class="plan-signoff">Prof. G</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- REFLECTION VIEW -->
+    <div id="view-reflection" style="display: none;">
+        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
+        <h1>Whole-Singer Reflection</h1>
+        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.75rem;">
+            This is your space to check in before your next lesson.
+            There are no wrong answers. Your responses help shape your practice plans
+            and give Prof. G a window into how things are going between lessons.
+        </p>
+
+        <form onsubmit="event.preventDefault(); demoSubmit();">
+            <h2 style="font-weight: 400; font-size: 1.2rem; margin-top: 0; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Practice Reflection</h2>
+
+            <div class="form-group">
+                <label>What did you focus on in practice?
+                    <span class="hint">What exercises, repertoire sections, or skills did you work on?</span>
+                </label>
+                <textarea rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>What did you notice?
+                    <span class="hint">Self-listening observations: warmth, brightness, ease, effort, anything that shifted.</span>
+                </label>
+                <textarea rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Fatigue notes
+                    <span class="hint">When or if fatigue set in during practice, how it felt.</span>
+                </label>
+                <textarea rows="2"></textarea>
+            </div>
+
+            <h2 style="font-weight: 400; font-size: 1.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Vocal Load This Week</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Log each vocal activity from your week.</p>
+
+            <div class="vocal-load-entry">
+                <div class="form-group">
+                    <label>Activity</label>
+                    <input type="text" placeholder="Choir rehearsal, show, practice...">
+                </div>
+                <div class="form-group">
+                    <label>Duration (min)</label>
+                    <input type="number" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Intensity</label>
+                    <select>
+                        <option value="low">Low</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="high">High</option>
+                        <option value="very_demanding">Very demanding</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fatigue?</label>
+                    <select>
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 style="font-weight: 400; font-size: 1.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Self-Perception</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Quick check-in. Move each slider to where it feels right.</p>
+
+            <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
+                <label>How does your voice feel right now?</label>
+                <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
+                <input type="range" min="1" max="10" value="7">
+                <div class="range-value">7</div>
+            </div>
+
+            <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
+                <label>Artistic confidence</label>
+                <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
+                <input type="range" min="1" max="10" value="6">
+                <div class="range-value">6</div>
+            </div>
+
+            <div style="padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); border-radius: 2px; margin-bottom: 1rem; background: var(--bg-light);">
+                <label>Connection to the art form</label>
+                <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
+                <input type="range" min="1" max="10" value="8">
+                <div class="range-value">8</div>
+            </div>
+
+            <h2 style="font-weight: 400; font-size: 1.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border-color);">Open</h2>
+
+            <div class="form-group">
+                <label>Questions or concerns for your next lesson</label>
+                <textarea rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Wins or celebrations</label>
+                <textarea rows="2" placeholder="Something that went well this week, big or small."></textarea>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <button type="submit" class="btn btn-primary">Submit Reflection</button>
+                <span style="font-size: 12px; color: var(--text-muted); margin-left: 1rem;">Submitted reflections appear in your dashboard.</span>
+            </div>
+        </form>
+    </div>
+
+</main>
+
+<footer>
+    <div class="container">
+        <p>Kayla Gautereaux — Voice Studio</p>
+    </div>
+</footer>
+
+<script>
+    function showView(view) {
+        document.querySelectorAll('[id^="view-"]').forEach(el => el.style.display = 'none');
+        document.getElementById('view-' + view).style.display = 'block';
+
+        document.querySelectorAll('nav .nav-links a').forEach(a => a.classList.remove('active'));
+        const btn = document.getElementById('nav-' + view);
+        if (btn) btn.classList.add('active');
+
+        window.scrollTo(0, 0);
+    }
+
+    function demoSubmit() {
+        alert('This is a demo. In the real portal, your reflection would be saved and appear in your dashboard.');
+    }
+
+    // Nav clicks
+    document.getElementById('nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); showView('dashboard'); });
+    document.getElementById('nav-plan').addEventListener('click', (e) => { e.preventDefault(); showView('plan'); });
+    document.getElementById('nav-debrief').addEventListener('click', (e) => { e.preventDefault(); showView('debrief'); });
+    document.getElementById('nav-reflection').addEventListener('click', (e) => { e.preventDefault(); showView('reflection'); });
+
+    // Card clicks on dashboard
+    document.querySelectorAll('.dash-card').forEach(card => {
+        card.style.cursor = 'pointer';
+    });
+
+    // Range sliders
+    document.querySelectorAll('input[type="range"]').forEach(input => {
+        const display = input.nextElementSibling;
+        if (display && display.classList.contains('range-value')) {
+            input.addEventListener('input', () => { display.textContent = input.value; });
+        }
+    });
+</script>
+
+</body>
+</html>

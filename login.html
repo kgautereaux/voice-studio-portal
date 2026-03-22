@@ -88,7 +88,36 @@
     </div>
 </div>
 
-<script src="js/app.js"></script>
+<script>
+    // Login page redirects to dashboard which handles auth
+    document.addEventListener('DOMContentLoaded', function() {
+        const { createClient } = window.supabase;
+        const sb = createClient(
+            'https://ukvkljztinkzmkbtsfuo.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k'
+        );
+
+        const form = document.getElementById('login-form');
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            errorEl.style.display = 'none';
+
+            const email = username.includes('@') ? username : username + '@studio.kaylagautereaux.com';
+
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                errorEl.textContent = 'Invalid username or password.';
+                errorEl.style.display = 'block';
+            } else {
+                window.location.href = 'dashboard.html';
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

@@ -1,0 +1,27 @@
+/* ============================================================
+   Studio Portal Bridge
+   ============================================================
+   Maps shared design tokens to the studio portal's existing
+   variable names. Import this AFTER variables.css in the portal.
+
+   When the portal variables change, update them HERE
+   (not in the portal's styles.css).
+   ============================================================ */
+
+:root {
+    /* Map shared palette to portal semantic names */
+    --primary-color: var(--color-night);
+    --text-color: var(--color-espresso);
+    --text-muted: var(--color-warm-gray);
+    --accent-color: var(--color-bronze);
+    --accent-light: var(--color-bronze-light);
+    --border-color: var(--color-taupe);
+    --bg-light: var(--color-linen);
+    --bg-warm: var(--color-linen);
+    --bg-white: var(--color-warm-white);
+    --bg-cream: var(--color-cream);
+    --success-color: var(--color-success);
+    --success-light: var(--color-success-light);
+    --warning-color: var(--color-warning);
+    --error-color: var(--color-error);
+}

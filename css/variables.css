@@ -1,0 +1,104 @@
+/* ============================================================
+   Kayla Gautereaux — Shared Design Variables
+   ============================================================
+   Import this file into all three sites:
+   - kaylagautereaux.com (main site)
+   - studio.kaylagautereaux.com (voice studio portal)
+   - research.kaylagautereaux.com (MFA research archive)
+
+   This is the single source of truth for palette, typography,
+   spacing, shadows, and transitions.
+   ============================================================ */
+
+:root {
+    /* --------------------------------------------------------
+       PALETTE
+       Primary: deep plum from brand identity
+       Secondary: muted sage from brand identity
+       Warm neutrals bridge all three sites
+       -------------------------------------------------------- */
+    --color-plum: #6B3A65;
+    --color-plum-light: #8B5A85;
+    --color-plum-dark: #4E2649;
+    --color-sage: #7A8B72;
+    --color-sage-light: #9AAE92;
+    --color-sage-dark: #5E6E57;
+
+    /* Warm neutrals (shared across all sites) */
+    --color-cream: #FAF7F3;
+    --color-linen: #F5F0EA;
+    --color-warm-white: #FDFCFA;
+    --color-taupe: #E4DBD2;
+    --color-taupe-light: rgba(228, 219, 210, 0.6);
+    --color-warm-gray: #8A7E76;
+    --color-espresso: #3D3530;
+    --color-night: #2C2420;
+
+    /* Accent (warm bronze, used for interactive elements) */
+    --color-bronze: #9C7C5C;
+    --color-bronze-light: #C4A882;
+
+    /* Semantic colors */
+    --color-success: #5A7D5E;
+    --color-success-light: #EEF3EE;
+    --color-warning: #B08D3E;
+    --color-error: #B5453A;
+
+    /* --------------------------------------------------------
+       TYPOGRAPHY
+       -------------------------------------------------------- */
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* When the main site moves to its brand fonts: */
+    /* --font-body: 'Libre Baskerville', Georgia, serif; */
+    /* --font-display: 'DM Sans', 'Inter', sans-serif; */
+
+    --font-size-base: 15px;
+    --font-size-small: 13px;
+    --font-size-xs: 11px;
+    --line-height-base: 1.7;
+    --letter-spacing-base: 0.01em;
+    --letter-spacing-caps: 0.05em;
+    --letter-spacing-wide: 0.1em;
+
+    /* --------------------------------------------------------
+       SPACING
+       -------------------------------------------------------- */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    --max-width: 900px;
+    --max-width-narrow: 700px;
+    --max-width-wide: 1100px;
+
+    /* --------------------------------------------------------
+       SHADOWS
+       -------------------------------------------------------- */
+    --shadow-card: 0 1px 2px rgba(44, 36, 32, 0.04);
+    --shadow-soft: 0 1px 3px rgba(44, 36, 32, 0.04), 0 4px 12px rgba(44, 36, 32, 0.03);
+    --shadow-hover: 0 2px 8px rgba(44, 36, 32, 0.07), 0 8px 24px rgba(44, 36, 32, 0.05);
+
+    /* --------------------------------------------------------
+       BORDERS & RADIUS
+       -------------------------------------------------------- */
+    --radius: 6px;
+    --radius-lg: 10px;
+    --border-width: 1px;
+
+    /* --------------------------------------------------------
+       TRANSITIONS
+       -------------------------------------------------------- */
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Selection color */
+::selection {
+    background: rgba(107, 58, 101, 0.15);
+    color: var(--color-night);
+}

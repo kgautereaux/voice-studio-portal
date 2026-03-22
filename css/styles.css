@@ -2,33 +2,14 @@
    Voice Studio Portal — Styles
    Warm, artistic, professional. A music studio, not a dashboard.
    Inter font, warm neutral palette, elegant light-weight typography.
+
+   Design tokens imported from shared-design/variables.css
+   Semantic mapping via shared-design/studio-bridge.css
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
-:root {
-    --primary-color: #2c2420;
-    --text-color: #3d3530;
-    --text-muted: #8a7e76;
-    --accent-color: #9c7c5c;
-    --accent-light: #c4a882;
-    --border-color: #e4dbd2;
-    --bg-light: #f9f6f2;
-    --bg-warm: #f5f0ea;
-    --bg-white: #fdfcfa;
-    --bg-cream: #faf7f3;
-    --success-color: #5a7d5e;
-    --success-light: #eef3ee;
-    --warning-color: #b08d3e;
-    --error-color: #b5453a;
-    --max-width: 900px;
-    --shadow-soft: 0 1px 3px rgba(44, 36, 32, 0.04), 0 4px 12px rgba(44, 36, 32, 0.03);
-    --shadow-hover: 0 2px 8px rgba(44, 36, 32, 0.07), 0 8px 24px rgba(44, 36, 32, 0.05);
-    --shadow-card: 0 1px 2px rgba(44, 36, 32, 0.04);
-    --radius: 6px;
-    --radius-lg: 10px;
-    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
+@import url('variables.css');
+@import url('studio-bridge.css');
 
 /* ============================================================
    BASE

@@ -330,6 +330,76 @@ function renderDashboard() {
     updateNavActive('dashboard');
 }
 
+function markdownToHtml(md) {
+    // Process line by line for block elements
+    const lines = md.split('\n');
+    let html = '';
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // Headings
+        if (line.match(/^### (.+)$/)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h3>' + line.replace(/^### /, '') + '</h3>';
+            continue;
+        }
+        if (line.match(/^## (.+)$/)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h2>' + line.replace(/^## /, '') + '</h2>';
+            continue;
+        }
+        if (line.match(/^# (.+)$/)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            // Skip the title heading (it's redundant with the page header)
+            continue;
+        }
+
+        // List items
+        if (line.match(/^- (.+)$/)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            let item = line.replace(/^- /, '');
+            item = inlineFormat(item);
+            html += '<li>' + item + '</li>';
+            continue;
+        }
+
+        // Close list if we're no longer in one
+        if (inList && !line.match(/^- /)) {
+            html += '</ul>';
+            inList = false;
+        }
+
+        // Empty line = paragraph break
+        if (line.trim() === '') {
+            continue;
+        }
+
+        // Italic line (whole line wrapped in *)
+        if (line.match(/^\*([^*]+)\*$/)) {
+            html += '<p class="plan-note">' + line.replace(/^\*/, '').replace(/\*$/, '') + '</p>';
+            continue;
+        }
+
+        // Regular paragraph
+        html += '<p>' + inlineFormat(line) + '</p>';
+    }
+
+    if (inList) html += '</ul>';
+    return html;
+}
+
+function inlineFormat(text) {
+    // Bold
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    // Inline code (for vowel notation etc.)
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return text;
+}
+
 function renderPracticePlan() {
     const container = document.getElementById('practice-plan-content');
     if (!container) return;
@@ -345,19 +415,14 @@ function renderPracticePlan() {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    // Render markdown-like content as HTML
-    const content = plan.content
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^\*\*(.+?)\*\*/gm, '<strong>$1</strong>')
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>');
+    const content = markdownToHtml(plan.content);
 
     container.innerHTML = `
-        <p class="card-date">Generated ${dateStr}</p>
-        <div class="practice-plan">${content}</div>
+        <div class="practice-plan-letter">
+            <p class="plan-date">${dateStr}</p>
+            ${content}
+            <p class="plan-signoff">Prof. G</p>
+        </div>
     `;
 }
 

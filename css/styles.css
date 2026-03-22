@@ -457,38 +457,79 @@ td {
    PRACTICE PLAN DISPLAY
    ============================================================ */
 
-.practice-plan {
-    line-height: 1.8;
-}
-
-.practice-plan h3 {
-    margin-top: 1.5rem;
-}
-
-.practice-plan ul {
-    padding-left: 1.25rem;
-    margin: 0.5rem 0;
-}
-
-.practice-plan li {
-    margin-bottom: 0.25rem;
-}
-
-.exercise-card {
+.practice-plan-letter {
+    background: var(--bg-light);
     border: 1px solid var(--border-color);
-    padding: 1rem;
-    margin: 0.75rem 0;
+    padding: 2rem 2.5rem;
+    margin: 1rem 0;
+    line-height: 1.8;
+    font-size: 14.5px;
 }
 
-.exercise-name {
+.practice-plan-letter .plan-date {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.practice-plan-letter .plan-note {
+    font-style: italic;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.practice-plan-letter h2 {
     font-weight: 500;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    color: var(--primary-color);
+    margin: 2rem 0 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.practice-plan-letter h2:first-of-type {
+    margin-top: 0.5rem;
+}
+
+.practice-plan-letter h3 {
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--primary-color);
+    margin: 1.25rem 0 0.4rem;
+}
+
+.practice-plan-letter p {
+    margin-bottom: 0.6rem;
+}
+
+.practice-plan-letter ul {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.practice-plan-letter li {
+    margin-bottom: 0.3rem;
+}
+
+.practice-plan-letter strong {
     color: var(--primary-color);
 }
 
-.exercise-purpose {
-    font-size: 13px;
+.practice-plan-letter .plan-signoff {
+    margin-top: 2rem;
+    font-style: italic;
     color: var(--text-muted);
-    margin-top: 0.25rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .practice-plan-letter {
+        padding: 1.25rem 1.5rem;
+    }
 }
 
 /* ============================================================

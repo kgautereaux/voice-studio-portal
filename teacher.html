@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Teacher View — Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Teacher-specific styles */
+        .teacher-header {
+            padding: 1.5rem 0 1rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .teacher-header h1 {
+            font-size: 1.6rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+        .teacher-date {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .student-brief {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.5rem;
+            background: #fff;
+            overflow: hidden;
+        }
+        .student-brief-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .student-brief-header:hover {
+            background: var(--bg-warm);
+        }
+        .student-brief-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        .student-brief-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .student-brief-flags {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+        .flag-tag {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            background: rgba(156, 92, 92, 0.1);
+            color: #8b4040;
+        }
+        .student-brief-body {
+            display: none;
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .student-brief.expanded .student-brief-body {
+            display: block;
+        }
+        .student-brief-chevron {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+        }
+        .student-brief.expanded .student-brief-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Brief content styling */
+        .brief-content h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--primary-color);
+        }
+        .brief-content h3 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 1rem 0 0.35rem;
+            color: var(--text-color);
+        }
+        .brief-content p,
+        .brief-content li {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-color);
+        }
+        .brief-content ul, .brief-content ol {
+            padding-left: 1.25rem;
+            margin: 0.5rem 0;
+        }
+        .brief-content li {
+            margin-bottom: 0.35rem;
+        }
+        .brief-content strong {
+            color: var(--primary-color);
+        }
+        .brief-content hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
+        .brief-content code {
+            background: var(--bg-warm);
+            padding: 0.1rem 0.35rem;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        /* Category coverage */
+        .category-check {
+            display: inline-block;
+            font-size: 13px;
+            margin-right: 0.75rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-muted);
+        }
+        .category-check.covered {
+            color: var(--text-color);
+        }
+        .category-check.covered::before {
+            content: "✓ ";
+            color: #5a8a5a;
+            font-weight: 600;
+        }
+        .category-check.uncovered::before {
+            content: "○ ";
+            color: #c4b8ae;
+        }
+
+        /* No lessons state */
+        .no-lessons {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        .no-lessons h2 {
+            font-weight: 300;
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Login */
+        .teacher-login-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 2rem 1.5rem;
+        }
+        .teacher-login-inner {
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+        }
+        .teacher-login-inner h2 {
+            font-weight: 300;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .teacher-login-inner p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 2rem;
+        }
+        .teacher-login-inner .form-group {
+            text-align: left;
+            margin-bottom: 1.25rem;
+        }
+        .teacher-login-inner input {
+            width: 100%;
+            padding: 0.75rem 0.85rem;
+            font-size: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-family: inherit;
+            transition: border-color var(--transition);
+        }
+        .teacher-login-inner input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .teacher-login-inner label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+        .login-error {
+            color: #8b4040;
+            font-size: 13px;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Quick actions */
+        .quick-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .quick-action-btn {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .quick-action-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        .quick-action-btn.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        @media (max-width: 600px) {
+            .student-brief-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            .student-brief-flags {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0;">
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <span style="font-size: 15px; font-weight: 500; color: var(--primary-color); letter-spacing: 0.02em;">Voice Studio</span>
+            <span data-nav="today" class="nav-link" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 2px;">Today</span>
+            <span data-nav="roster" class="nav-link" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; color: var(--text-muted);">All Students</span>
+        </div>
+        <button onclick="signOut()" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; color: var(--text-muted); cursor: pointer; font-family: inherit;">Sign Out</button>
+    </div>
+</nav>
+
+<main class="container">
+
+<!-- LOGIN -->
+<div id="page-login" style="display: none;">
+    <div class="teacher-login-wrap">
+        <div class="teacher-login-inner">
+            <h2>Teacher View</h2>
+            <p>Voice Studio lesson planning and student overview.</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" id="login-email" placeholder="kayla@studio.kaylagautereaux.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+                <div class="login-error" id="login-error"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- TODAY VIEW -->
+<div id="page-today" style="display: none;">
+    <div class="teacher-header">
+        <h1 id="greeting">Good morning</h1>
+        <div class="teacher-date" id="today-date"></div>
+    </div>
+    <div id="today-briefs"></div>
+</div>
+
+<!-- ALL STUDENTS VIEW -->
+<div id="page-roster" style="display: none;">
+    <div class="teacher-header">
+        <h1>All Students</h1>
+        <div class="teacher-date">Full studio roster with recent lesson history</div>
+    </div>
+    <div id="roster-content"></div>
+</div>
+
+</main>
+
+<script>
+const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+
+let sb = null;
+let currentUser = null;
+
+// ============================================================
+// INIT
+// ============================================================
+
+async function initApp() {
+    const { createClient } = window.supabase;
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (session) {
+        currentUser = session.user;
+        const role = currentUser.user_metadata?.role;
+        if (role !== 'teacher') {
+            alert('This page is for teachers only.');
+            await sb.auth.signOut();
+            showLogin();
+            return;
+        }
+        showToday();
+    } else {
+        showLogin();
+    }
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            currentUser = session.user;
+            showToday();
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            showLogin();
+        }
+    });
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+
+    let loginEmail = email;
+    if (!email.includes('@')) {
+        loginEmail = email + '@studio.kaylagautereaux.com';
+    }
+
+    const { error } = await sb.auth.signInWithPassword({ email: loginEmail, password });
+    if (error) {
+        errorEl.textContent = 'Invalid credentials.';
+        errorEl.style.display = 'block';
+    }
+}
+
+async function signOut() {
+    await sb.auth.signOut();
+    showLogin();
+}
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+
+function showLogin() {
+    document.getElementById('page-login').style.display = 'block';
+    document.getElementById('page-today').style.display = 'none';
+    document.getElementById('page-roster').style.display = 'none';
+    document.querySelector('nav').style.display = 'none';
+}
+
+function showToday() {
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('page-today').style.display = 'block';
+    document.getElementById('page-roster').style.display = 'none';
+    document.querySelector('nav').style.display = 'block';
+    setActiveNav('today');
+    renderToday();
+}
+
+function showRoster() {
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('page-today').style.display = 'none';
+    document.getElementById('page-roster').style.display = 'block';
+    document.querySelector('nav').style.display = 'block';
+    setActiveNav('roster');
+    renderRoster();
+}
+
+function setActiveNav(page) {
+    document.querySelectorAll('.nav-link').forEach(el => {
+        if (el.dataset.nav === page) {
+            el.style.color = 'var(--accent-color)';
+            el.style.borderBottom = '2px solid var(--accent-color)';
+        } else {
+            el.style.color = 'var(--text-muted)';
+            el.style.borderBottom = 'none';
+        }
+    });
+}
+
+// Nav click handlers
+document.querySelectorAll('.nav-link').forEach(el => {
+    el.addEventListener('click', () => {
+        if (el.dataset.nav === 'today') showToday();
+        if (el.dataset.nav === 'roster') showRoster();
+    });
+});
+
+// ============================================================
+// GREETING
+// ============================================================
+
+function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
+function formatDate(d) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+}
+
+// ============================================================
+// TODAY VIEW
+// ============================================================
+
+async function renderToday() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('greeting').textContent = getGreeting();
+    document.getElementById('today-date').textContent = formatDate(today);
+
+    const container = document.getElementById('today-briefs');
+    container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">Loading briefs...</p>';
+
+    // Load all students
+    const { data: students } = await sb.from('students')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+
+    // Load today's briefs
+    const { data: briefs } = await sb.from('pre_lesson_briefs')
+        .select('*')
+        .eq('date', today);
+
+    // Load latest reflections for all students
+    const { data: reflections } = await sb.from('reflections')
+        .select('*')
+        .order('date_submitted', { ascending: false });
+
+    // Load latest lesson for each student
+    const { data: recentLessons } = await sb.from('lesson_logs')
+        .select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps')
+        .order('date', { ascending: false });
+
+    // Build a map of briefs by student_id
+    const briefMap = {};
+    (briefs || []).forEach(b => { briefMap[b.student_id] = b; });
+
+    // Build a map of latest reflection by student_id
+    const reflectionMap = {};
+    (reflections || []).forEach(r => {
+        if (!reflectionMap[r.student_id]) reflectionMap[r.student_id] = r;
+    });
+
+    // Build a map of recent lessons by student_id
+    const lessonMap = {};
+    (recentLessons || []).forEach(l => {
+        if (!lessonMap[l.student_id]) lessonMap[l.student_id] = [];
+        lessonMap[l.student_id].push(l);
+    });
+
+    // Students with briefs today come first
+    const withBrief = students.filter(s => briefMap[s.id]);
+    const withoutBrief = students.filter(s => !briefMap[s.id]);
+
+    let html = '';
+
+    if (withBrief.length > 0) {
+        html += '<div style="margin-bottom: 0.75rem; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Today\'s Lessons</div>';
+        withBrief.forEach(s => {
+            html += renderStudentBrief(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
+        });
+    }
+
+    if (withoutBrief.length > 0) {
+        html += '<div style="margin: 1.5rem 0 0.75rem; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Other Students</div>';
+        withoutBrief.forEach(s => {
+            html += renderStudentBrief(s, null, reflectionMap[s.id], lessonMap[s.id] || [], false);
+        });
+    }
+
+    if (!students || students.length === 0) {
+        html = '<div class="no-lessons"><h2>No students found</h2><p>Add students to get started.</p></div>';
+    }
+
+    container.innerHTML = html;
+
+    // Expand handlers
+    container.querySelectorAll('.student-brief-header').forEach(el => {
+        el.addEventListener('click', () => {
+            el.closest('.student-brief').classList.toggle('expanded');
+        });
+    });
+
+    // Auto-expand today's students
+    container.querySelectorAll('.student-brief.has-brief').forEach(el => {
+        el.classList.add('expanded');
+    });
+}
+
+function renderStudentBrief(student, brief, reflection, lessons, hasBrief) {
+    const flags = brief ? JSON.parse(brief.flags || '[]') : [];
+    const lastLesson = lessons.length > 0 ? lessons[0] : null;
+
+    let flagsHtml = '';
+    if (flags.length > 0) {
+        flagsHtml = '<div class="student-brief-flags">' +
+            flags.map(f => `<span class="flag-tag">${escapeHtml(f.replace(/^Fatigue notes: /, 'Fatigue: ').substring(0, 50))}</span>`).join('') +
+            '</div>';
+    }
+
+    let metaText = '';
+    if (lastLesson) {
+        metaText = 'Last lesson: ' + formatDate(lastLesson.date);
+    } else {
+        metaText = 'No lessons recorded';
+    }
+
+    let bodyHtml = '';
+    if (brief && brief.full_brief) {
+        bodyHtml = '<div class="brief-content">' + markdownToHtml(brief.full_brief) + '</div>';
+    } else if (brief && brief.lesson_plan) {
+        bodyHtml = '<div class="brief-content">' + markdownToHtml(brief.lesson_plan) + '</div>';
+    } else {
+        // Show quick summary from last lesson
+        let summaryParts = [];
+        if (lastLesson && lastLesson.next_steps) {
+            summaryParts.push('<h3>Carry-Forward</h3><div style="font-size: 14px;">' + markdownToHtml(lastLesson.next_steps) + '</div>');
+        }
+        if (reflection) {
+            summaryParts.push('<h3>Latest Reflection</h3>');
+            if (reflection.practice_summary) summaryParts.push('<p style="font-size: 14px;">' + escapeHtml(reflection.practice_summary) + '</p>');
+            if (reflection.self_observations) summaryParts.push('<p style="font-size: 14px; color: var(--text-muted);">' + escapeHtml(reflection.self_observations) + '</p>');
+        }
+        if (lastLesson && lastLesson.exercise_categories_addressed) {
+            const cats = lastLesson.exercise_categories_addressed;
+            const allCats = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
+            summaryParts.push('<h3>Last Lesson Categories</h3><div>' +
+                allCats.map(c => {
+                    const covered = cats.includes(c);
+                    const label = c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    return `<span class="category-check ${covered ? 'covered' : 'uncovered'}">${label}</span>`;
+                }).join('') + '</div>');
+        }
+        bodyHtml = summaryParts.length > 0
+            ? '<div class="brief-content">' + summaryParts.join('') + '</div>'
+            : '<p style="font-size: 14px; color: var(--text-muted);">No brief generated for today. Generate one to see the lesson plan.</p>';
+    }
+
+    return `
+        <div class="student-brief ${hasBrief ? 'has-brief' : ''}">
+            <div class="student-brief-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="student-brief-name">${escapeHtml(student.name)}</span>
+                    <span class="student-brief-meta">${escapeHtml(student.voice_type || '')}, ${escapeHtml(student.degree_program || '')}</span>
+                    ${flagsHtml}
+                </div>
+                <span class="student-brief-chevron">▼</span>
+            </div>
+            <div class="student-brief-body">
+                ${bodyHtml}
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================
+// ROSTER VIEW
+// ============================================================
+
+async function renderRoster() {
+    const container = document.getElementById('roster-content');
+    container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">Loading...</p>';
+
+    const { data: students } = await sb.from('students')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+
+    const { data: recentLessons } = await sb.from('lesson_logs')
+        .select('student_id, date, repertoire_worked, exercise_categories_addressed')
+        .order('date', { ascending: false });
+
+    const lessonMap = {};
+    (recentLessons || []).forEach(l => {
+        if (!lessonMap[l.student_id]) lessonMap[l.student_id] = [];
+        lessonMap[l.student_id].push(l);
+    });
+
+    let html = '';
+    students.forEach(s => {
+        const lessons = lessonMap[s.id] || [];
+        const lessonCount = lessons.length;
+        const lastDate = lessons.length > 0 ? formatDate(lessons[0].date) : 'None';
+
+        // Category coverage across last 3 lessons
+        const allCats = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
+        const coveredCats = new Set();
+        lessons.slice(0, 3).forEach(l => {
+            (l.exercise_categories_addressed || []).forEach(c => coveredCats.add(c));
+        });
+
+        html += `
+            <div class="student-brief">
+                <div class="student-brief-header">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span class="student-brief-name">${escapeHtml(s.name)}</span>
+                        <span class="student-brief-meta">${escapeHtml(s.voice_type || '')}, ${escapeHtml(s.degree_program || '')}</span>
+                    </div>
+                    <span class="student-brief-chevron">▼</span>
+                </div>
+                <div class="student-brief-body">
+                    <div class="brief-content">
+                        <p><strong>Lessons recorded:</strong> ${lessonCount} | <strong>Last lesson:</strong> ${lastDate}</p>
+                        <h3>Category Coverage (last 3 lessons)</h3>
+                        <div>
+                            ${allCats.map(c => {
+                                const covered = coveredCats.has(c);
+                                const label = c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                return `<span class="category-check ${covered ? 'covered' : 'uncovered'}">${label}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.student-brief-header').forEach(el => {
+        el.addEventListener('click', () => {
+            el.closest('.student-brief').classList.toggle('expanded');
+        });
+    });
+}
+
+// ============================================================
+// MARKDOWN RENDERING
+// ============================================================
+
+function markdownToHtml(md) {
+    if (!md) return '';
+    // Remove frontmatter
+    md = md.replace(/^---[\s\S]*?---\s*\n/, '');
+    // Remove H1 (title)
+    md = md.replace(/^# .+\n/m, '');
+
+    let lines = md.split('\n');
+    let html = '';
+    let inList = false;
+    let inTable = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // Headers
+        if (line.match(/^## /)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            if (inTable) { html += '</table>'; inTable = false; }
+            html += '<h2>' + inlineFormat(line.replace(/^## /, '')) + '</h2>';
+            continue;
+        }
+        if (line.match(/^### /)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h3>' + inlineFormat(line.replace(/^### /, '')) + '</h3>';
+            continue;
+        }
+
+        // HR
+        if (line.match(/^---+$/)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<hr>';
+            continue;
+        }
+
+        // Table rows
+        if (line.match(/^\|/)) {
+            if (line.match(/^\|[\s-|]+$/)) continue; // separator row
+            const cells = line.split('|').filter(c => c.trim()).map(c => c.trim());
+            if (!inTable) {
+                html += '<table style="width:100%;font-size:13px;border-collapse:collapse;margin:0.5rem 0">';
+                html += '<tr>' + cells.map(c => '<th style="text-align:left;padding:0.35rem 0.5rem;border-bottom:1px solid var(--border-color)">' + inlineFormat(c) + '</th>').join('') + '</tr>';
+                inTable = true;
+            } else {
+                html += '<tr>' + cells.map(c => '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--border-color)">' + inlineFormat(c) + '</td>').join('') + '</tr>';
+            }
+            continue;
+        }
+        if (inTable && !line.match(/^\|/)) {
+            html += '</table>';
+            inTable = false;
+        }
+
+        // List items
+        if (line.match(/^[-*] /)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + inlineFormat(line.replace(/^[-*] /, '')) + '</li>';
+            continue;
+        }
+        if (line.match(/^\d+\. /)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + inlineFormat(line.replace(/^\d+\. /, '')) + '</li>';
+            continue;
+        }
+
+        // Checkbox
+        if (line.match(/^- \[[ x]\]/i)) {
+            const checked = line.match(/\[x\]/i);
+            const text = line.replace(/^- \[[ x]\]\s*/i, '');
+            if (!inList) { html += '<ul style="list-style:none;padding-left:0.5rem">'; inList = true; }
+            html += '<li>' + (checked ? '✓ ' : '○ ') + inlineFormat(text) + '</li>';
+            continue;
+        }
+
+        // End list if not a list item
+        if (inList && line.trim() === '') {
+            html += '</ul>';
+            inList = false;
+            continue;
+        }
+
+        // Paragraph
+        if (line.trim()) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<p>' + inlineFormat(line) + '</p>';
+        }
+    }
+
+    if (inList) html += '</ul>';
+    if (inTable) html += '</table>';
+
+    return html;
+}
+
+function inlineFormat(text) {
+    text = escapeHtml(text);
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    text = text.replace(/`(.+?)`/g, '<code>$1</code>');
+    return text;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+</body>
+</html>

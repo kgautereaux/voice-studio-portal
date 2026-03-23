@@ -3,11 +3,73 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Teacher View — Voice Studio</title>
+    <title>Teacher Portal : Voice Studio</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Teacher-specific styles */
+        /* ============================================================
+           Teacher Portal Styles
+           ============================================================ */
+
+        /* Nav overrides for teacher portal */
+        .teacher-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .teacher-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .nav-item {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0.4rem 0.75rem;
+            border-radius: var(--radius);
+            transition: all var(--transition);
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+        .nav-item:hover {
+            color: var(--text-color);
+            background: var(--bg-warm);
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+            background: rgba(108, 73, 91, 0.08);
+            font-weight: 500;
+        }
+        .nav-brand {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--primary-color);
+            letter-spacing: 0.02em;
+            margin-right: 0.5rem;
+        }
+        .nav-signout {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.35rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+        }
+        .nav-signout:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Header block */
         .teacher-header {
             padding: 1.5rem 0 1rem;
             border-bottom: 1px solid var(--border-color);
@@ -25,15 +87,33 @@
             letter-spacing: 0.05em;
         }
 
-        .student-brief {
+        /* Section labels */
+        .section-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .section-label:first-child {
+            margin-top: 0;
+        }
+
+        /* Card system */
+        .card {
             border: 1px solid var(--border-color);
             border-left: 3px solid var(--accent-color);
             border-radius: var(--radius-lg);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             background: #fff;
             overflow: hidden;
+            transition: box-shadow var(--transition);
         }
-        .student-brief-header {
+        .card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -41,22 +121,42 @@
             cursor: pointer;
             transition: background var(--transition);
         }
-        .student-brief-header:hover {
+        .card-header:hover {
             background: var(--bg-warm);
         }
-        .student-brief-name {
+        .card-name {
             font-size: 1.1rem;
             font-weight: 500;
             color: var(--primary-color);
         }
-        .student-brief-meta {
+        .card-meta {
             font-size: 13px;
             color: var(--text-muted);
         }
-        .student-brief-flags {
+        .card-body {
+            display: none;
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .card.expanded .card-body {
+            display: block;
+        }
+        .card-chevron {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+        .card.expanded .card-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Flag tags */
+        .flag-tags {
             display: flex;
             gap: 0.5rem;
             margin-left: 1rem;
+            flex-wrap: wrap;
         }
         .flag-tag {
             font-size: 11px;
@@ -66,22 +166,6 @@
             border-radius: 3px;
             background: rgba(156, 92, 92, 0.1);
             color: #8b4040;
-        }
-        .student-brief-body {
-            display: none;
-            padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .student-brief.expanded .student-brief-body {
-            display: block;
-        }
-        .student-brief-chevron {
-            font-size: 12px;
-            color: var(--text-muted);
-            transition: transform var(--transition);
-        }
-        .student-brief.expanded .student-brief-chevron {
-            transform: rotate(180deg);
         }
 
         /* Brief content styling */
@@ -127,7 +211,7 @@
             font-size: 13px;
         }
 
-        /* Category coverage */
+        /* Category checks */
         .category-check {
             display: inline-block;
             font-size: 13px;
@@ -139,26 +223,13 @@
             color: var(--text-color);
         }
         .category-check.covered::before {
-            content: "✓ ";
+            content: "\2713 ";
             color: #5a8a5a;
             font-weight: 600;
         }
         .category-check.uncovered::before {
-            content: "○ ";
+            content: "\25CB ";
             color: #c4b8ae;
-        }
-
-        /* No lessons state */
-        .no-lessons {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-muted);
-        }
-        .no-lessons h2 {
-            font-weight: 300;
-            font-size: 1.4rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
         }
 
         /* Login */
@@ -189,7 +260,8 @@
             text-align: left;
             margin-bottom: 1.25rem;
         }
-        .teacher-login-inner input {
+        .teacher-login-inner input[type="text"],
+        .teacher-login-inner input[type="password"] {
             width: 100%;
             padding: 0.75rem 0.85rem;
             font-size: 15px;
@@ -217,18 +289,85 @@
             display: none;
         }
 
-        /* Quick actions */
-        .quick-actions {
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin: 0.5rem 0;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .data-table th:hover {
+            color: var(--primary-color);
+        }
+        .data-table th.sorted-asc::after {
+            content: " \25B2";
+            font-size: 10px;
+        }
+        .data-table th.sorted-desc::after {
+            content: " \25BC";
+            font-size: 10px;
+        }
+        .data-table td {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        .data-table tbody tr:hover {
+            background: var(--bg-warm);
+        }
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Status dots */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.4rem;
+        }
+        .status-dot.green { background: #5a8a5a; }
+        .status-dot.amber { background: #c49a3c; }
+        .status-dot.red { background: #9c5c5c; }
+
+        /* Heatmap cells */
+        .heat-cell {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            min-width: 32px;
+        }
+        .heat-cell.heat-0 { color: #9c5c5c; background: rgba(156, 92, 92, 0.08); }
+        .heat-cell.heat-1 { color: #c49a3c; background: rgba(196, 154, 60, 0.08); }
+        .heat-cell.heat-2, .heat-cell.heat-3 { color: #5a8a5a; background: rgba(90, 138, 90, 0.08); }
+
+        /* Filter buttons */
+        .filter-bar {
             display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
             flex-wrap: wrap;
         }
-        .quick-action-btn {
+        .filter-btn {
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 0.5rem 1rem;
+            padding: 0.45rem 0.85rem;
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
             background: #fff;
@@ -237,24 +376,316 @@
             transition: all var(--transition);
             font-family: inherit;
         }
-        .quick-action-btn:hover {
+        .filter-btn:hover {
             border-color: var(--accent-color);
             color: var(--accent-color);
         }
-        .quick-action-btn.active {
+        .filter-btn.active {
             background: var(--primary-color);
             color: #fff;
             border-color: var(--primary-color);
         }
 
-        @media (max-width: 600px) {
-            .student-brief-header {
+        /* Forms */
+        .form-card {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--primary-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            background: #fff;
+            margin-bottom: 1.5rem;
+        }
+        .form-card h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .form-row {
+            margin-bottom: 1rem;
+        }
+        .form-row label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+        .form-row input[type="text"],
+        .form-row input[type="date"],
+        .form-row textarea,
+        .form-row select {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-family: inherit;
+            transition: border-color var(--transition);
+            background: #fff;
+        }
+        .form-row input:focus,
+        .form-row textarea:focus,
+        .form-row select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .form-row textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-row-inline {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .form-row-inline .form-row {
+            flex: 1;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            margin-top: 0.25rem;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 13px;
+            text-transform: none;
+            letter-spacing: normal;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            accent-color: var(--primary-color);
+        }
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .form-check label {
+            display: inline;
+            font-size: 13px;
+            text-transform: none;
+            letter-spacing: normal;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        /* Announcement cards */
+        .announcement-card {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.5rem;
+            background: #fff;
+            margin-bottom: 0.75rem;
+            transition: box-shadow var(--transition);
+        }
+        .announcement-card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .announcement-card.pinned {
+            border-left-color: var(--primary-color);
+        }
+        .announcement-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        .announcement-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .announcement-body {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .announcement-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .announcement-actions button {
+            font-size: 12px;
+            padding: 0.3rem 0.65rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+        }
+        .announcement-actions button:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        .announcement-actions button.delete-btn:hover {
+            border-color: #9c5c5c;
+            color: #9c5c5c;
+        }
+
+        /* Event cards */
+        .event-week-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .event-card {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 14px;
+        }
+        .event-date-col {
+            width: 90px;
+            flex-shrink: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .event-type-badge {
+            display: inline-block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+            background: rgba(108, 73, 91, 0.08);
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        /* No data state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+        }
+        .empty-state h2 {
+            font-weight: 300;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Loading */
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: 1rem 0;
+        }
+
+        /* Student detail sub-sections */
+        .detail-section {
+            margin-top: 1.25rem;
+        }
+        .detail-section h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .detail-section p, .detail-section li {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .detail-section ul {
+            padding-left: 1.25rem;
+            margin: 0.25rem 0;
+        }
+        .detail-section li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Feedback card for juries */
+        .feedback-block {
+            border-left: 2px solid var(--accent-color);
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 14px;
+        }
+        .feedback-block .fb-panelist {
+            font-weight: 500;
+            color: var(--primary-color);
+            font-size: 13px;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.success {
+            background: #5a8a5a;
+            color: #fff;
+        }
+        .toast.error {
+            background: #9c5c5c;
+            color: #fff;
+        }
+
+        /* Draft badge */
+        .draft-badge {
+            display: inline-block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+            background: rgba(196, 154, 60, 0.15);
+            color: #9a7a2a;
+        }
+
+        /* Days-since warning */
+        .days-warning { color: #9c5c5c; font-weight: 500; }
+
+        @media (max-width: 768px) {
+            .teacher-nav-links {
+                gap: 0;
+            }
+            .nav-item {
+                padding: 0.35rem 0.5rem;
+                font-size: 11px;
+            }
+            .card-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 0.5rem;
             }
-            .student-brief-flags {
+            .flag-tags {
                 margin-left: 0;
+            }
+            .form-row-inline {
+                flex-direction: column;
+                gap: 0;
             }
         }
     </style>
@@ -262,14 +693,20 @@
 <body>
 
 <!-- NAV -->
-<nav>
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0;">
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <span style="font-size: 15px; font-weight: 500; color: var(--primary-color); letter-spacing: 0.02em;">Voice Studio</span>
-            <span data-nav="today" class="nav-link" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 2px;">Today</span>
-            <span data-nav="roster" class="nav-link" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; color: var(--text-muted);">All Students</span>
+<nav id="main-nav" style="display: none;">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="teacher-nav">
+            <span class="nav-brand">Voice Studio</span>
+            <div class="teacher-nav-links">
+                <button class="nav-item active" data-nav="today">Today</button>
+                <button class="nav-item" data-nav="pulse">Pulse</button>
+                <button class="nav-item" data-nav="students">Students</button>
+                <button class="nav-item" data-nav="repertoire">Repertoire</button>
+                <button class="nav-item" data-nav="announcements">Announcements</button>
+                <button class="nav-item" data-nav="events">Events</button>
+            </div>
         </div>
-        <button onclick="signOut()" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; color: var(--text-muted); cursor: pointer; font-family: inherit;">Sign Out</button>
+        <button class="nav-signout" onclick="signOut()">Sign Out</button>
     </div>
 </nav>
 
@@ -279,8 +716,8 @@
 <div id="page-login" style="display: none;">
     <div class="teacher-login-wrap">
         <div class="teacher-login-inner">
-            <h2>Teacher View</h2>
-            <p>Voice Studio lesson planning and student overview.</p>
+            <h2>Teacher Portal</h2>
+            <p>Voice Studio lesson planning, student tracking, and studio management.</p>
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label>Email</label>
@@ -297,32 +734,87 @@
     </div>
 </div>
 
-<!-- TODAY VIEW -->
+<!-- TODAY -->
 <div id="page-today" style="display: none;">
     <div class="teacher-header">
         <h1 id="greeting">Good morning</h1>
         <div class="teacher-date" id="today-date"></div>
     </div>
-    <div id="today-briefs"></div>
+    <div id="today-content"></div>
 </div>
 
-<!-- ALL STUDENTS VIEW -->
-<div id="page-roster" style="display: none;">
+<!-- PULSE -->
+<div id="page-pulse" style="display: none;">
     <div class="teacher-header">
-        <h1>All Students</h1>
-        <div class="teacher-date">Full studio roster with recent lesson history</div>
+        <h1>Studio Pulse</h1>
+        <div class="teacher-date">Health dashboard for the full studio</div>
     </div>
-    <div id="roster-content"></div>
+    <div id="pulse-content"></div>
+</div>
+
+<!-- STUDENTS -->
+<div id="page-students" style="display: none;">
+    <div class="teacher-header">
+        <h1>Students</h1>
+        <div class="teacher-date">Full studio roster</div>
+    </div>
+    <div id="students-content"></div>
+</div>
+
+<!-- REPERTOIRE -->
+<div id="page-repertoire" style="display: none;">
+    <div class="teacher-header">
+        <h1>Repertoire</h1>
+        <div class="teacher-date">All active repertoire across the studio</div>
+    </div>
+    <div id="repertoire-content"></div>
+</div>
+
+<!-- ANNOUNCEMENTS -->
+<div id="page-announcements" style="display: none;">
+    <div class="teacher-header">
+        <h1>Announcements</h1>
+        <div class="teacher-date">Create and manage studio announcements</div>
+    </div>
+    <div id="announcements-content"></div>
+</div>
+
+<!-- EVENTS -->
+<div id="page-events" style="display: none;">
+    <div class="teacher-header">
+        <h1>Events</h1>
+        <div class="teacher-date">Upcoming performances, juries, and recent feedback</div>
+    </div>
+    <div id="events-content"></div>
 </div>
 
 </main>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
+// ============================================================
+// CONFIG
+// ============================================================
+
 const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+const TEACHER_AUTH_ID = 'af095774-b74a-4f74-8507-95cdf2aaec77';
+const ALL_CATEGORIES = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
+const CATEGORY_LABELS = {
+    body: 'Body', breath: 'Breath', speech_access: 'Speech Access',
+    chest_voice: 'Chest Voice', sustain: 'Sustain', head_voice: 'Head Voice',
+    range_extension: 'Range Extension', middle_range: 'Middle Range',
+    mix_registration: 'Mix/Registration', dynamics: 'Dynamics', agility: 'Agility'
+};
 
 let sb = null;
 let currentUser = null;
+let currentPage = 'today';
+
+// Cache to avoid redundant fetches within a session
+let studentsCache = null;
 
 // ============================================================
 // INIT
@@ -343,7 +835,7 @@ async function initApp() {
             showLogin();
             return;
         }
-        showToday();
+        navigateTo('today');
     } else {
         showLogin();
     }
@@ -351,9 +843,10 @@ async function initApp() {
     sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
             currentUser = session.user;
-            showToday();
+            navigateTo('today');
         } else if (event === 'SIGNED_OUT') {
             currentUser = null;
+            studentsCache = null;
             showLogin();
         }
     });
@@ -391,53 +884,49 @@ async function signOut() {
 // PAGE SWITCHING
 // ============================================================
 
+const PAGE_IDS = ['today', 'pulse', 'students', 'repertoire', 'announcements', 'events'];
+
 function showLogin() {
+    document.getElementById('main-nav').style.display = 'none';
+    PAGE_IDS.forEach(p => { document.getElementById('page-' + p).style.display = 'none'; });
     document.getElementById('page-login').style.display = 'block';
-    document.getElementById('page-today').style.display = 'none';
-    document.getElementById('page-roster').style.display = 'none';
-    document.querySelector('nav').style.display = 'none';
 }
 
-function showToday() {
+function navigateTo(page) {
+    currentPage = page;
+    document.getElementById('main-nav').style.display = 'block';
     document.getElementById('page-login').style.display = 'none';
-    document.getElementById('page-today').style.display = 'block';
-    document.getElementById('page-roster').style.display = 'none';
-    document.querySelector('nav').style.display = 'block';
-    setActiveNav('today');
-    renderToday();
-}
 
-function showRoster() {
-    document.getElementById('page-login').style.display = 'none';
-    document.getElementById('page-today').style.display = 'none';
-    document.getElementById('page-roster').style.display = 'block';
-    document.querySelector('nav').style.display = 'block';
-    setActiveNav('roster');
-    renderRoster();
-}
-
-function setActiveNav(page) {
-    document.querySelectorAll('.nav-link').forEach(el => {
-        if (el.dataset.nav === page) {
-            el.style.color = 'var(--accent-color)';
-            el.style.borderBottom = '2px solid var(--accent-color)';
-        } else {
-            el.style.color = 'var(--text-muted)';
-            el.style.borderBottom = 'none';
-        }
+    PAGE_IDS.forEach(p => {
+        document.getElementById('page-' + p).style.display = (p === page) ? 'block' : 'none';
     });
+
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.nav === page);
+    });
+
+    // Load data for the page
+    const loaders = {
+        today: renderToday,
+        pulse: renderPulse,
+        students: renderStudents,
+        repertoire: renderRepertoire,
+        announcements: renderAnnouncements,
+        events: renderEvents
+    };
+    if (loaders[page]) loaders[page]();
 }
 
 // Nav click handlers
-document.querySelectorAll('.nav-link').forEach(el => {
+document.querySelectorAll('.nav-item').forEach(el => {
     el.addEventListener('click', () => {
-        if (el.dataset.nav === 'today') showToday();
-        if (el.dataset.nav === 'roster') showRoster();
+        navigateTo(el.dataset.nav);
     });
 });
 
 // ============================================================
-// GREETING
+// UTILITIES
 // ============================================================
 
 function getGreeting() {
@@ -447,236 +936,73 @@ function getGreeting() {
     return 'Good evening';
 }
 
+function todayStr() {
+    return new Date().toISOString().split('T')[0];
+}
+
 function formatDate(d) {
+    if (!d) return '';
     return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
 }
 
-// ============================================================
-// TODAY VIEW
-// ============================================================
-
-async function renderToday() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('greeting').textContent = getGreeting();
-    document.getElementById('today-date').textContent = formatDate(today);
-
-    const container = document.getElementById('today-briefs');
-    container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">Loading briefs...</p>';
-
-    // Load all students
-    const { data: students } = await sb.from('students')
-        .select('*')
-        .eq('status', 'active')
-        .order('name');
-
-    // Load today's briefs
-    const { data: briefs } = await sb.from('pre_lesson_briefs')
-        .select('*')
-        .eq('date', today);
-
-    // Load latest reflections for all students
-    const { data: reflections } = await sb.from('reflections')
-        .select('*')
-        .order('date_submitted', { ascending: false });
-
-    // Load latest lesson for each student
-    const { data: recentLessons } = await sb.from('lesson_logs')
-        .select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps')
-        .order('date', { ascending: false });
-
-    // Build a map of briefs by student_id
-    const briefMap = {};
-    (briefs || []).forEach(b => { briefMap[b.student_id] = b; });
-
-    // Build a map of latest reflection by student_id
-    const reflectionMap = {};
-    (reflections || []).forEach(r => {
-        if (!reflectionMap[r.student_id]) reflectionMap[r.student_id] = r;
-    });
-
-    // Build a map of recent lessons by student_id
-    const lessonMap = {};
-    (recentLessons || []).forEach(l => {
-        if (!lessonMap[l.student_id]) lessonMap[l.student_id] = [];
-        lessonMap[l.student_id].push(l);
-    });
-
-    // Students with briefs today come first
-    const withBrief = students.filter(s => briefMap[s.id]);
-    const withoutBrief = students.filter(s => !briefMap[s.id]);
-
-    let html = '';
-
-    if (withBrief.length > 0) {
-        html += '<div style="margin-bottom: 0.75rem; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Today\'s Lessons</div>';
-        withBrief.forEach(s => {
-            html += renderStudentBrief(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
-        });
-    }
-
-    if (withoutBrief.length > 0) {
-        html += '<div style="margin: 1.5rem 0 0.75rem; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Other Students</div>';
-        withoutBrief.forEach(s => {
-            html += renderStudentBrief(s, null, reflectionMap[s.id], lessonMap[s.id] || [], false);
-        });
-    }
-
-    if (!students || students.length === 0) {
-        html = '<div class="no-lessons"><h2>No students found</h2><p>Add students to get started.</p></div>';
-    }
-
-    container.innerHTML = html;
-
-    // Expand handlers
-    container.querySelectorAll('.student-brief-header').forEach(el => {
-        el.addEventListener('click', () => {
-            el.closest('.student-brief').classList.toggle('expanded');
-        });
-    });
-
-    // Auto-expand today's students
-    container.querySelectorAll('.student-brief.has-brief').forEach(el => {
-        el.classList.add('expanded');
+function formatShortDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric'
     });
 }
 
-function renderStudentBrief(student, brief, reflection, lessons, hasBrief) {
-    const flags = brief ? JSON.parse(brief.flags || '[]') : [];
-    const lastLesson = lessons.length > 0 ? lessons[0] : null;
-
-    let flagsHtml = '';
-    if (flags.length > 0) {
-        flagsHtml = '<div class="student-brief-flags">' +
-            flags.map(f => `<span class="flag-tag">${escapeHtml(f.replace(/^Fatigue notes: /, 'Fatigue: ').substring(0, 50))}</span>`).join('') +
-            '</div>';
-    }
-
-    let metaText = '';
-    if (lastLesson) {
-        metaText = 'Last lesson: ' + formatDate(lastLesson.date);
-    } else {
-        metaText = 'No lessons recorded';
-    }
-
-    let bodyHtml = '';
-    if (brief && brief.full_brief) {
-        bodyHtml = '<div class="brief-content">' + markdownToHtml(brief.full_brief) + '</div>';
-    } else if (brief && brief.lesson_plan) {
-        bodyHtml = '<div class="brief-content">' + markdownToHtml(brief.lesson_plan) + '</div>';
-    } else {
-        // Show quick summary from last lesson
-        let summaryParts = [];
-        if (lastLesson && lastLesson.next_steps) {
-            summaryParts.push('<h3>Carry-Forward</h3><div style="font-size: 14px;">' + markdownToHtml(lastLesson.next_steps) + '</div>');
-        }
-        if (reflection) {
-            summaryParts.push('<h3>Latest Reflection</h3>');
-            if (reflection.practice_summary) summaryParts.push('<p style="font-size: 14px;">' + escapeHtml(reflection.practice_summary) + '</p>');
-            if (reflection.self_observations) summaryParts.push('<p style="font-size: 14px; color: var(--text-muted);">' + escapeHtml(reflection.self_observations) + '</p>');
-        }
-        if (lastLesson && lastLesson.exercise_categories_addressed) {
-            const cats = lastLesson.exercise_categories_addressed;
-            const allCats = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
-            summaryParts.push('<h3>Last Lesson Categories</h3><div>' +
-                allCats.map(c => {
-                    const covered = cats.includes(c);
-                    const label = c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    return `<span class="category-check ${covered ? 'covered' : 'uncovered'}">${label}</span>`;
-                }).join('') + '</div>');
-        }
-        bodyHtml = summaryParts.length > 0
-            ? '<div class="brief-content">' + summaryParts.join('') + '</div>'
-            : '<p style="font-size: 14px; color: var(--text-muted);">No brief generated for today. Generate one to see the lesson plan.</p>';
-    }
-
-    return `
-        <div class="student-brief ${hasBrief ? 'has-brief' : ''}">
-            <div class="student-brief-header">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span class="student-brief-name">${escapeHtml(student.name)}</span>
-                    <span class="student-brief-meta">${escapeHtml(student.voice_type || '')}, ${escapeHtml(student.degree_program || '')}</span>
-                    ${flagsHtml}
-                </div>
-                <span class="student-brief-chevron">▼</span>
-            </div>
-            <div class="student-brief-body">
-                ${bodyHtml}
-            </div>
-        </div>
-    `;
+function formatWeekLabel(d) {
+    const date = new Date(d + 'T12:00:00');
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay());
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return 'Week of ' + fmt(start) + ' to ' + fmt(end);
 }
 
-// ============================================================
-// ROSTER VIEW
-// ============================================================
+function daysBetween(dateStr1, dateStr2) {
+    const d1 = new Date(dateStr1 + 'T12:00:00');
+    const d2 = new Date(dateStr2 + 'T12:00:00');
+    return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+}
 
-async function renderRoster() {
-    const container = document.getElementById('roster-content');
-    container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">Loading...</p>';
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-    const { data: students } = await sb.from('students')
-        .select('*')
-        .eq('status', 'active')
-        .order('name');
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type || 'success');
+    setTimeout(() => { t.className = 'toast'; }, 3000);
+}
 
-    const { data: recentLessons } = await sb.from('lesson_logs')
-        .select('student_id, date, repertoire_worked, exercise_categories_addressed')
-        .order('date', { ascending: false });
-
-    const lessonMap = {};
-    (recentLessons || []).forEach(l => {
-        if (!lessonMap[l.student_id]) lessonMap[l.student_id] = [];
-        lessonMap[l.student_id].push(l);
-    });
-
-    let html = '';
-    students.forEach(s => {
-        const lessons = lessonMap[s.id] || [];
-        const lessonCount = lessons.length;
-        const lastDate = lessons.length > 0 ? formatDate(lessons[0].date) : 'None';
-
-        // Category coverage across last 3 lessons
-        const allCats = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
-        const coveredCats = new Set();
-        lessons.slice(0, 3).forEach(l => {
-            (l.exercise_categories_addressed || []).forEach(c => coveredCats.add(c));
-        });
-
-        html += `
-            <div class="student-brief">
-                <div class="student-brief-header">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <span class="student-brief-name">${escapeHtml(s.name)}</span>
-                        <span class="student-brief-meta">${escapeHtml(s.voice_type || '')}, ${escapeHtml(s.degree_program || '')}</span>
-                    </div>
-                    <span class="student-brief-chevron">▼</span>
-                </div>
-                <div class="student-brief-body">
-                    <div class="brief-content">
-                        <p><strong>Lessons recorded:</strong> ${lessonCount} | <strong>Last lesson:</strong> ${lastDate}</p>
-                        <h3>Category Coverage (last 3 lessons)</h3>
-                        <div>
-                            ${allCats.map(c => {
-                                const covered = coveredCats.has(c);
-                                const label = c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                                return `<span class="category-check ${covered ? 'covered' : 'uncovered'}">${label}</span>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
-
-    container.querySelectorAll('.student-brief-header').forEach(el => {
+function addExpandHandlers(container) {
+    container.querySelectorAll('.card-header').forEach(el => {
         el.addEventListener('click', () => {
-            el.closest('.student-brief').classList.toggle('expanded');
+            el.closest('.card').classList.toggle('expanded');
         });
     });
+}
+
+async function getStudents() {
+    if (studentsCache) return studentsCache;
+    const { data } = await sb.from('students').select('*').eq('status', 'active').order('name');
+    studentsCache = data || [];
+    return studentsCache;
+}
+
+function studentNameMap(students) {
+    const m = {};
+    (students || []).forEach(s => { m[s.id] = s; });
+    return m;
 }
 
 // ============================================================
@@ -685,9 +1011,7 @@ async function renderRoster() {
 
 function markdownToHtml(md) {
     if (!md) return '';
-    // Remove frontmatter
     md = md.replace(/^---[\s\S]*?---\s*\n/, '');
-    // Remove H1 (title)
     md = md.replace(/^# .+\n/m, '');
 
     let lines = md.split('\n');
@@ -698,7 +1022,6 @@ function markdownToHtml(md) {
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
 
-        // Headers
         if (line.match(/^## /)) {
             if (inList) { html += '</ul>'; inList = false; }
             if (inTable) { html += '</table>'; inTable = false; }
@@ -711,16 +1034,14 @@ function markdownToHtml(md) {
             continue;
         }
 
-        // HR
         if (line.match(/^---+$/)) {
             if (inList) { html += '</ul>'; inList = false; }
             html += '<hr>';
             continue;
         }
 
-        // Table rows
         if (line.match(/^\|/)) {
-            if (line.match(/^\|[\s-|]+$/)) continue; // separator row
+            if (line.match(/^\|[\s-|]+$/)) continue;
             const cells = line.split('|').filter(c => c.trim()).map(c => c.trim());
             if (!inTable) {
                 html += '<table style="width:100%;font-size:13px;border-collapse:collapse;margin:0.5rem 0">';
@@ -736,7 +1057,14 @@ function markdownToHtml(md) {
             inTable = false;
         }
 
-        // List items
+        if (line.match(/^- \[[ x]\]/i)) {
+            const checked = line.match(/\[x\]/i);
+            const text = line.replace(/^- \[[ x]\]\s*/i, '');
+            if (!inList) { html += '<ul style="list-style:none;padding-left:0.5rem">'; inList = true; }
+            html += '<li>' + (checked ? '\u2713 ' : '\u25CB ') + inlineFormat(text) + '</li>';
+            continue;
+        }
+
         if (line.match(/^[-*] /)) {
             if (!inList) { html += '<ul>'; inList = true; }
             html += '<li>' + inlineFormat(line.replace(/^[-*] /, '')) + '</li>';
@@ -748,23 +1076,12 @@ function markdownToHtml(md) {
             continue;
         }
 
-        // Checkbox
-        if (line.match(/^- \[[ x]\]/i)) {
-            const checked = line.match(/\[x\]/i);
-            const text = line.replace(/^- \[[ x]\]\s*/i, '');
-            if (!inList) { html += '<ul style="list-style:none;padding-left:0.5rem">'; inList = true; }
-            html += '<li>' + (checked ? '✓ ' : '○ ') + inlineFormat(text) + '</li>';
-            continue;
-        }
-
-        // End list if not a list item
         if (inList && line.trim() === '') {
             html += '</ul>';
             inList = false;
             continue;
         }
 
-        // Paragraph
         if (line.trim()) {
             if (inList) { html += '</ul>'; inList = false; }
             html += '<p>' + inlineFormat(line) + '</p>';
@@ -773,7 +1090,6 @@ function markdownToHtml(md) {
 
     if (inList) html += '</ul>';
     if (inTable) html += '</table>';
-
     return html;
 }
 
@@ -785,11 +1101,891 @@ function inlineFormat(text) {
     return text;
 }
 
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+// ============================================================
+// TODAY VIEW
+// ============================================================
+
+async function renderToday() {
+    const today = todayStr();
+    document.getElementById('greeting').textContent = getGreeting();
+    document.getElementById('today-date').textContent = formatDate(today);
+
+    const container = document.getElementById('today-content');
+    container.innerHTML = '<p class="loading-text">Loading briefs...</p>';
+
+    const students = await getStudents();
+
+    // Parallel fetches
+    const [briefsRes, reflectionsRes, lessonsRes] = await Promise.all([
+        sb.from('pre_lesson_briefs').select('*').eq('date', today),
+        sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
+        sb.from('lesson_logs').select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps, breakthroughs').order('date', { ascending: false })
+    ]);
+
+    const briefs = briefsRes.data || [];
+    const reflections = reflectionsRes.data || [];
+    const lessons = lessonsRes.data || [];
+
+    const briefMap = {};
+    briefs.forEach(b => { briefMap[b.student_id] = b; });
+
+    const reflectionMap = {};
+    reflections.forEach(r => { if (!reflectionMap[r.student_id]) reflectionMap[r.student_id] = r; });
+
+    const lessonMap = {};
+    lessons.forEach(l => {
+        if (!lessonMap[l.student_id]) lessonMap[l.student_id] = [];
+        lessonMap[l.student_id].push(l);
+    });
+
+    const withBrief = students.filter(s => briefMap[s.id]);
+    const withoutBrief = students.filter(s => !briefMap[s.id]);
+
+    let html = '';
+
+    if (withBrief.length > 0) {
+        html += '<div class="section-label">Today\'s Lessons</div>';
+        withBrief.forEach(s => {
+            html += renderTodayCard(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
+        });
+    }
+
+    if (withoutBrief.length > 0) {
+        html += '<div class="section-label">Other Students</div>';
+        withoutBrief.forEach(s => {
+            html += renderTodayCard(s, null, reflectionMap[s.id], lessonMap[s.id] || [], false);
+        });
+    }
+
+    if (!students || students.length === 0) {
+        html = '<div class="empty-state"><h2>No students found</h2><p>Add students to get started.</p></div>';
+    }
+
+    container.innerHTML = html;
+    addExpandHandlers(container);
+
+    // Auto-expand today's students
+    container.querySelectorAll('.card.has-brief').forEach(el => {
+        el.classList.add('expanded');
+    });
+}
+
+function renderTodayCard(student, brief, reflection, lessons, hasBrief) {
+    const flags = brief ? (typeof brief.flags === 'string' ? JSON.parse(brief.flags || '[]') : (brief.flags || [])) : [];
+    const lastLesson = lessons.length > 0 ? lessons[0] : null;
+
+    let flagsHtml = '';
+    if (flags.length > 0) {
+        flagsHtml = '<div class="flag-tags">' +
+            flags.map(f => '<span class="flag-tag">' + escapeHtml(String(f).replace(/^Fatigue notes: /, 'Fatigue: ').substring(0, 50)) + '</span>').join('') +
+            '</div>';
+    }
+
+    let metaText = escapeHtml((student.voice_type || '') + (student.degree_program ? ', ' + student.degree_program : ''));
+
+    let bodyHtml = '';
+    if (brief && brief.full_brief) {
+        bodyHtml = '<div class="brief-content">' + markdownToHtml(brief.full_brief) + '</div>';
+    } else if (brief && brief.lesson_plan) {
+        let parts = '<div class="brief-content">';
+        parts += '<h3>Lesson Plan</h3>' + markdownToHtml(brief.lesson_plan);
+        if (brief.carry_forward) {
+            parts += '<h3>Carry Forward</h3>' + markdownToHtml(brief.carry_forward);
+        }
+        if (brief.category_priorities) {
+            const cp = typeof brief.category_priorities === 'string' ? JSON.parse(brief.category_priorities) : brief.category_priorities;
+            if (Array.isArray(cp) && cp.length > 0) {
+                parts += '<h3>Category Priorities</h3><div>';
+                cp.forEach(c => {
+                    const label = CATEGORY_LABELS[c] || c.replace(/_/g, ' ');
+                    parts += '<span class="category-check covered">' + escapeHtml(label) + '</span>';
+                });
+                parts += '</div>';
+            }
+        }
+        parts += '</div>';
+        bodyHtml = parts;
+    } else {
+        let summaryParts = [];
+        if (lastLesson && lastLesson.next_steps) {
+            summaryParts.push('<h3>Carry Forward (from last lesson)</h3><div>' + markdownToHtml(lastLesson.next_steps) + '</div>');
+        }
+        if (reflection) {
+            summaryParts.push('<h3>Latest Reflection (' + escapeHtml(formatShortDate(reflection.date_submitted)) + ')</h3>');
+            if (reflection.practice_summary) summaryParts.push('<p>' + escapeHtml(reflection.practice_summary) + '</p>');
+            if (reflection.self_observations) summaryParts.push('<p style="color: var(--text-muted);">' + escapeHtml(reflection.self_observations) + '</p>');
+            const scores = [];
+            if (reflection.voice_feeling) scores.push('Voice feeling: ' + reflection.voice_feeling + '/10');
+            if (reflection.engagement) scores.push('Engagement: ' + reflection.engagement + '/10');
+            if (scores.length) summaryParts.push('<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(scores.join(' | ')) + '</p>');
+        }
+        if (lastLesson && lastLesson.exercise_categories_addressed) {
+            const cats = lastLesson.exercise_categories_addressed;
+            summaryParts.push('<h3>Last Lesson Categories</h3><div>' +
+                ALL_CATEGORIES.map(c => {
+                    const covered = cats.includes(c);
+                    return '<span class="category-check ' + (covered ? 'covered' : 'uncovered') + '">' + (CATEGORY_LABELS[c] || c) + '</span>';
+                }).join('') + '</div>');
+        }
+        bodyHtml = summaryParts.length > 0
+            ? '<div class="brief-content">' + summaryParts.join('') + '</div>'
+            : '<p class="loading-text">No brief for today. Last lesson: ' + (lastLesson ? escapeHtml(formatShortDate(lastLesson.date)) : 'none recorded') + '</p>';
+    }
+
+    return '<div class="card ' + (hasBrief ? 'has-brief' : '') + '">' +
+        '<div class="card-header">' +
+            '<div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">' +
+                '<span class="card-name">' + escapeHtml(student.name) + '</span>' +
+                '<span class="card-meta">' + metaText + '</span>' +
+                flagsHtml +
+            '</div>' +
+            '<span class="card-chevron">\u25BC</span>' +
+        '</div>' +
+        '<div class="card-body">' + bodyHtml + '</div>' +
+    '</div>';
+}
+
+// ============================================================
+// PULSE VIEW
+// ============================================================
+
+async function renderPulse() {
+    const container = document.getElementById('pulse-content');
+    container.innerHTML = '<p class="loading-text">Loading studio pulse...</p>';
+
+    const students = await getStudents();
+    const today = todayStr();
+
+    // Calculate the start of the current week (Monday)
+    const now = new Date(today + 'T12:00:00');
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() + mondayOffset);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+
+    const [reflectionsRes, logsRes, lessonsRes] = await Promise.all([
+        sb.from('reflections').select('student_id, date_submitted, voice_feeling, engagement').gte('date_submitted', weekStartStr),
+        sb.from('lesson_logs').select('id, student_id, date, approved, exercise_categories_addressed').order('date', { ascending: false }),
+        sb.from('lesson_logs').select('student_id, date').order('date', { ascending: false })
+    ]);
+
+    const reflections = reflectionsRes.data || [];
+    const allLogs = logsRes.data || [];
+    const allLessons = lessonsRes.data || [];
+
+    // Reflection map: student_id -> latest this week
+    const reflectionMap = {};
+    reflections.forEach(r => {
+        if (!reflectionMap[r.student_id]) reflectionMap[r.student_id] = r;
+    });
+
+    // Unapproved logs
+    const unapproved = allLogs.filter(l => l.approved === false);
+
+    // Last lesson per student
+    const lastLessonMap = {};
+    allLessons.forEach(l => {
+        if (!lastLessonMap[l.student_id]) lastLessonMap[l.student_id] = l.date;
+    });
+
+    // Category heatmap: last 3 lessons per student
+    const lessonsByStudent = {};
+    allLogs.forEach(l => {
+        if (!lessonsByStudent[l.student_id]) lessonsByStudent[l.student_id] = [];
+        lessonsByStudent[l.student_id].push(l);
+    });
+
+    let html = '';
+
+    // 1. REFLECTION STATUS
+    html += '<div class="section-label">Reflection Status (This Week)</div>';
+    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+    html += '<th>Student</th><th>Submitted</th><th>Voice Feeling</th><th>Engagement</th>';
+    html += '</tr></thead><tbody>';
+    students.forEach(s => {
+        const r = reflectionMap[s.id];
+        let statusDot, statusText;
+        if (r) {
+            statusDot = 'green';
+            statusText = formatShortDate(r.date_submitted);
+        } else {
+            // Check if today is past Wednesday (due day heuristic)
+            const dayNum = now.getDay();
+            statusDot = dayNum >= 4 ? 'red' : 'amber';
+            statusText = statusDot === 'red' ? 'Overdue' : 'Due';
+        }
+        html += '<tr>';
+        html += '<td><strong>' + escapeHtml(s.name) + '</strong></td>';
+        html += '<td><span class="status-dot ' + statusDot + '"></span>' + statusText + '</td>';
+        html += '<td>' + (r && r.voice_feeling ? r.voice_feeling + '/10' : '') + '</td>';
+        html += '<td>' + (r && r.engagement ? r.engagement + '/10' : '') + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    // 2. LESSON LOG QUEUE
+    html += '<div class="section-label">Lesson Log Queue (Drafts)</div>';
+    if (unapproved.length === 0) {
+        html += '<p class="loading-text">No draft lesson logs waiting for review.</p>';
+    } else {
+        const sMap = studentNameMap(students);
+        html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+        html += '<th>Student</th><th>Date</th><th>Status</th>';
+        html += '</tr></thead><tbody>';
+        unapproved.forEach(l => {
+            const st = sMap[l.student_id];
+            html += '<tr>';
+            html += '<td>' + (st ? escapeHtml(st.name) : 'Unknown') + '</td>';
+            html += '<td>' + escapeHtml(formatShortDate(l.date)) + '</td>';
+            html += '<td><span class="draft-badge">Draft</span></td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+    }
+
+    // 3. CATEGORY HEATMAP
+    html += '<div class="section-label">Category Heatmap (Last 3 Lessons)</div>';
+    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+    html += '<th>Student</th>';
+    ALL_CATEGORIES.forEach(c => {
+        const abbrev = CATEGORY_LABELS[c].length > 8 ? CATEGORY_LABELS[c].substring(0, 7) + '.' : CATEGORY_LABELS[c];
+        html += '<th style="text-align:center; font-size:11px; padding: 0.4rem 0.3rem;" title="' + escapeHtml(CATEGORY_LABELS[c]) + '">' + escapeHtml(abbrev) + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+    students.forEach(s => {
+        const sLessons = (lessonsByStudent[s.id] || []).slice(0, 3);
+        const catCounts = {};
+        ALL_CATEGORIES.forEach(c => { catCounts[c] = 0; });
+        sLessons.forEach(l => {
+            (l.exercise_categories_addressed || []).forEach(c => {
+                if (catCounts[c] !== undefined) catCounts[c]++;
+            });
+        });
+        html += '<tr>';
+        html += '<td style="white-space:nowrap;"><strong>' + escapeHtml(s.name) + '</strong></td>';
+        ALL_CATEGORIES.forEach(c => {
+            const count = catCounts[c];
+            html += '<td class="heat-cell heat-' + count + '">' + count + '</td>';
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    // 4. DAYS SINCE LAST LESSON
+    html += '<div class="section-label">Days Since Last Lesson</div>';
+    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+    html += '<th>Student</th><th>Last Lesson</th><th>Days</th>';
+    html += '</tr></thead><tbody>';
+    students.forEach(s => {
+        const lastDate = lastLessonMap[s.id];
+        let days = lastDate ? daysBetween(lastDate, today) : null;
+        let daysText = days !== null ? String(days) : 'No lessons';
+        let cls = (days !== null && days > 14) ? ' class="days-warning"' : '';
+        html += '<tr>';
+        html += '<td><strong>' + escapeHtml(s.name) + '</strong></td>';
+        html += '<td>' + (lastDate ? escapeHtml(formatShortDate(lastDate)) : '') + '</td>';
+        html += '<td' + cls + '>' + daysText + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    container.innerHTML = html;
+}
+
+// ============================================================
+// STUDENTS VIEW
+// ============================================================
+
+async function renderStudents() {
+    const container = document.getElementById('students-content');
+    container.innerHTML = '<p class="loading-text">Loading roster...</p>';
+
+    const students = await getStudents();
+
+    // Get lesson counts and last dates
+    const { data: lessonsData } = await sb.from('lesson_logs')
+        .select('student_id, date')
+        .order('date', { ascending: false });
+
+    const lessonCountMap = {};
+    const lastLessonMap = {};
+    (lessonsData || []).forEach(l => {
+        if (!lessonCountMap[l.student_id]) lessonCountMap[l.student_id] = 0;
+        lessonCountMap[l.student_id]++;
+        if (!lastLessonMap[l.student_id]) lastLessonMap[l.student_id] = l.date;
+    });
+
+    let html = '';
+    students.forEach(s => {
+        const count = lessonCountMap[s.id] || 0;
+        const lastDate = lastLessonMap[s.id];
+        html += '<div class="card" data-student-id="' + s.id + '">';
+        html += '<div class="card-header">';
+        html += '<div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">';
+        html += '<span class="card-name">' + escapeHtml(s.name) + '</span>';
+        html += '<span class="card-meta">' + escapeHtml((s.voice_type || '') + (s.degree_program ? ', ' + s.degree_program : '')) + '</span>';
+        html += '<span class="card-meta">' + count + ' lessons' + (lastDate ? ' | Last: ' + formatShortDate(lastDate) : '') + '</span>';
+        html += '</div>';
+        html += '<span class="card-chevron">\u25BC</span>';
+        html += '</div>';
+        html += '<div class="card-body"><p class="loading-text">Click to load details...</p></div>';
+        html += '</div>';
+    });
+
+    if (students.length === 0) {
+        html = '<div class="empty-state"><h2>No active students</h2></div>';
+    }
+
+    container.innerHTML = html;
+
+    // Lazy-load student details on expand
+    container.querySelectorAll('.card-header').forEach(el => {
+        el.addEventListener('click', async () => {
+            const card = el.closest('.card');
+            const wasExpanded = card.classList.contains('expanded');
+            card.classList.toggle('expanded');
+
+            if (!wasExpanded && card.dataset.loaded !== 'true') {
+                card.dataset.loaded = 'true';
+                const sid = card.dataset.studentId;
+                await loadStudentDetail(card.querySelector('.card-body'), sid);
+            }
+        });
+    });
+}
+
+async function loadStudentDetail(bodyEl, studentId) {
+    bodyEl.innerHTML = '<p class="loading-text">Loading...</p>';
+
+    const [repRes, lessonsRes, reflRes, juryRes] = await Promise.all([
+        sb.from('repertoire').select('*').eq('student_id', studentId).order('title'),
+        sb.from('lesson_logs').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(3),
+        sb.from('reflections').select('*').eq('student_id', studentId).order('date_submitted', { ascending: false }).limit(1),
+        sb.from('jury_feedback').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(5)
+    ]);
+
+    const rep = repRes.data || [];
+    const lessons = lessonsRes.data || [];
+    const reflection = (reflRes.data || [])[0];
+    const juries = juryRes.data || [];
+
+    let html = '<div class="brief-content">';
+
+    // Repertoire
+    html += '<div class="detail-section"><h4>Current Repertoire</h4>';
+    if (rep.length === 0) {
+        html += '<p style="color: var(--text-muted);">No repertoire entries.</p>';
+    } else {
+        html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+        html += '<th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th><th>Status</th><th>Timeline</th>';
+        html += '</tr></thead><tbody>';
+        rep.forEach(r => {
+            html += '<tr>';
+            html += '<td>' + escapeHtml(r.title) + '</td>';
+            html += '<td>' + escapeHtml(r.composer || '') + '</td>';
+            html += '<td>' + escapeHtml(r.style || '') + '</td>';
+            html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
+            html += '<td>' + escapeHtml(r.status || '') + '</td>';
+            html += '<td>' + escapeHtml(r.timeline ? formatShortDate(r.timeline) : '') + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+    }
+    html += '</div>';
+
+    // Last 3 lessons
+    html += '<div class="detail-section"><h4>Recent Lessons</h4>';
+    if (lessons.length === 0) {
+        html += '<p style="color: var(--text-muted);">No lessons recorded.</p>';
+    } else {
+        lessons.forEach(l => {
+            html += '<div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">';
+            html += '<p><strong>' + escapeHtml(formatShortDate(l.date)) + '</strong></p>';
+            if (l.repertoire_worked) {
+                const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : l.repertoire_worked;
+                if (Array.isArray(rw) && rw.length > 0) {
+                    html += '<p style="font-size: 13px; color: var(--text-muted);">Repertoire: ' + rw.map(r => escapeHtml(typeof r === 'string' ? r : r.title || JSON.stringify(r))).join(', ') + '</p>';
+                }
+            }
+            if (l.breakthroughs) {
+                html += '<p><strong>Breakthroughs:</strong> ' + escapeHtml(l.breakthroughs) + '</p>';
+            }
+            if (l.next_steps) {
+                html += '<p><strong>Next steps:</strong> ' + escapeHtml(l.next_steps) + '</p>';
+            }
+            html += '</div>';
+        });
+    }
+    html += '</div>';
+
+    // Motor learning phase from most recent lesson
+    if (lessons.length > 0 && lessons[0].motor_learning_phase) {
+        html += '<div class="detail-section"><h4>Motor Learning Phase</h4>';
+        html += '<p>' + escapeHtml(lessons[0].motor_learning_phase) + '</p>';
+        html += '</div>';
+    }
+
+    // Latest reflection
+    html += '<div class="detail-section"><h4>Latest Reflection</h4>';
+    if (!reflection) {
+        html += '<p style="color: var(--text-muted);">No reflections submitted.</p>';
+    } else {
+        html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(formatShortDate(reflection.date_submitted)) + '</p>';
+        if (reflection.practice_summary) html += '<p>' + escapeHtml(reflection.practice_summary) + '</p>';
+        if (reflection.self_observations) html += '<p>' + escapeHtml(reflection.self_observations) + '</p>';
+        const scores = [];
+        if (reflection.voice_feeling) scores.push('Voice feeling: ' + reflection.voice_feeling + '/10');
+        if (reflection.artistic_confidence) scores.push('Artistic confidence: ' + reflection.artistic_confidence + '/10');
+        if (reflection.engagement) scores.push('Engagement: ' + reflection.engagement + '/10');
+        if (scores.length) html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(scores.join(' | ')) + '</p>';
+        if (reflection.questions) html += '<p><strong>Questions:</strong> ' + escapeHtml(reflection.questions) + '</p>';
+        if (reflection.wins) html += '<p><strong>Wins:</strong> ' + escapeHtml(reflection.wins) + '</p>';
+    }
+    html += '</div>';
+
+    // Jury / hearing feedback
+    if (juries.length > 0) {
+        html += '<div class="detail-section"><h4>Jury / Hearing Feedback</h4>';
+        juries.forEach(j => {
+            html += '<div class="feedback-block">';
+            html += '<p class="fb-panelist">' + escapeHtml(j.panelist_name || 'Unknown Panelist') + (j.panelist_role ? ' (' + escapeHtml(j.panelist_role) + ')' : '') + '</p>';
+            html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(j.event_type || '') + ' on ' + escapeHtml(formatShortDate(j.date)) + (j.outcome ? ' : ' + escapeHtml(j.outcome) : '') + '</p>';
+            if (j.comments) html += '<p>' + escapeHtml(j.comments) + '</p>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    // Category coverage (last 3 lessons)
+    if (lessons.length > 0) {
+        const catCounts = {};
+        ALL_CATEGORIES.forEach(c => { catCounts[c] = 0; });
+        lessons.forEach(l => {
+            (l.exercise_categories_addressed || []).forEach(c => {
+                if (catCounts[c] !== undefined) catCounts[c]++;
+            });
+        });
+        html += '<div class="detail-section"><h4>Category Coverage (Last ' + lessons.length + ' Lessons)</h4><div>';
+        ALL_CATEGORIES.forEach(c => {
+            const count = catCounts[c];
+            html += '<span class="category-check ' + (count > 0 ? 'covered' : 'uncovered') + '">' + CATEGORY_LABELS[c] + ' (' + count + ')</span>';
+        });
+        html += '</div></div>';
+    }
+
+    html += '</div>';
+    bodyEl.innerHTML = html;
+}
+
+// ============================================================
+// REPERTOIRE VIEW
+// ============================================================
+
+let repertoireData = [];
+let repertoireFilter = 'all';
+let repertoireSortCol = 0;
+let repertoireSortAsc = true;
+
+async function renderRepertoire() {
+    const container = document.getElementById('repertoire-content');
+    container.innerHTML = '<p class="loading-text">Loading repertoire...</p>';
+
+    const students = await getStudents();
+    const sMap = studentNameMap(students);
+
+    const { data } = await sb.from('repertoire').select('*').order('title');
+    repertoireData = (data || []).map(r => ({
+        ...r,
+        studentName: sMap[r.student_id] ? sMap[r.student_id].name : 'Unknown'
+    }));
+
+    repertoireFilter = 'all';
+    repertoireSortCol = 0;
+    repertoireSortAsc = true;
+    renderRepertoireTable(container);
+}
+
+function renderRepertoireTable(container) {
+    let filtered = repertoireData;
+    if (repertoireFilter === 'performance_ready') {
+        filtered = filtered.filter(r => r.status && r.status.toLowerCase().includes('performance') || r.status && r.status.toLowerCase().includes('ready'));
+    } else if (repertoireFilter === 'in_progress') {
+        filtered = filtered.filter(r => r.status && r.status.toLowerCase().includes('progress'));
+    } else if (repertoireFilter === 'assigned') {
+        filtered = filtered.filter(r => r.status && r.status.toLowerCase().includes('assigned'));
+    }
+
+    const cols = ['studentName', 'title', 'composer', 'style', 'learning_phase', 'status', 'timeline'];
+    filtered.sort((a, b) => {
+        let va = (a[cols[repertoireSortCol]] || '').toString().toLowerCase();
+        let vb = (b[cols[repertoireSortCol]] || '').toString().toLowerCase();
+        if (va < vb) return repertoireSortAsc ? -1 : 1;
+        if (va > vb) return repertoireSortAsc ? 1 : -1;
+        return 0;
+    });
+
+    const colLabels = ['Student', 'Piece', 'Composer', 'Style', 'Phase', 'Status', 'Timeline'];
+
+    let html = '<div class="filter-bar">';
+    ['all', 'performance_ready', 'in_progress', 'assigned'].forEach(f => {
+        const label = { all: 'All', performance_ready: 'Performance Ready', in_progress: 'In Progress', assigned: 'Assigned' }[f];
+        html += '<button class="filter-btn ' + (repertoireFilter === f ? 'active' : '') + '" data-filter="' + f + '">' + label + '</button>';
+    });
+    html += '</div>';
+
+    html += '<div class="table-scroll"><table class="data-table" id="rep-table"><thead><tr>';
+    colLabels.forEach((label, i) => {
+        let cls = '';
+        if (i === repertoireSortCol) cls = repertoireSortAsc ? 'sorted-asc' : 'sorted-desc';
+        html += '<th class="' + cls + '" data-col="' + i + '">' + label + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    if (filtered.length === 0) {
+        html += '<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 2rem;">No repertoire found.</td></tr>';
+    }
+
+    filtered.forEach(r => {
+        html += '<tr>';
+        html += '<td><strong>' + escapeHtml(r.studentName) + '</strong></td>';
+        html += '<td>' + escapeHtml(r.title || '') + '</td>';
+        html += '<td>' + escapeHtml(r.composer || '') + '</td>';
+        html += '<td>' + escapeHtml(r.style || '') + '</td>';
+        html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
+        html += '<td>' + escapeHtml(r.status || '') + '</td>';
+        html += '<td>' + escapeHtml(r.timeline ? formatShortDate(r.timeline) : '') + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    container.innerHTML = html;
+
+    // Filter handlers
+    container.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            repertoireFilter = btn.dataset.filter;
+            renderRepertoireTable(container);
+        });
+    });
+
+    // Sort handlers
+    container.querySelectorAll('#rep-table th').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = parseInt(th.dataset.col);
+            if (col === repertoireSortCol) {
+                repertoireSortAsc = !repertoireSortAsc;
+            } else {
+                repertoireSortCol = col;
+                repertoireSortAsc = true;
+            }
+            renderRepertoireTable(container);
+        });
+    });
+}
+
+// ============================================================
+// ANNOUNCEMENTS VIEW
+// ============================================================
+
+let announcementStudents = [];
+
+async function renderAnnouncements() {
+    const container = document.getElementById('announcements-content');
+    container.innerHTML = '<p class="loading-text">Loading announcements...</p>';
+
+    const students = await getStudents();
+    announcementStudents = students;
+
+    const { data } = await sb.from('studio_announcements').select('*').order('created_at', { ascending: false });
+    const announcements = data || [];
+    const today = todayStr();
+
+    const active = announcements.filter(a => !a.expires_at || a.expires_at >= today);
+    const expired = announcements.filter(a => a.expires_at && a.expires_at < today);
+
+    let html = '';
+
+    // Post new announcement form
+    html += '<div class="form-card"><h3>Post New Announcement</h3>';
+    html += '<form id="announcement-form">';
+    html += '<div class="form-row"><label>Title</label><input type="text" id="ann-title" required></div>';
+    html += '<div class="form-row"><label>Body</label><textarea id="ann-body" required></textarea></div>';
+    html += '<div class="form-row-inline">';
+    html += '<div class="form-row"><label>Type</label><select id="ann-type">';
+    html += '<option value="general">General</option><option value="competition">Competition</option><option value="deadline">Deadline</option><option value="event">Event</option><option value="policy">Policy</option>';
+    html += '</select></div>';
+    html += '<div class="form-row"><label>Expires</label><input type="date" id="ann-expires"></div>';
+    html += '</div>';
+    html += '<div class="form-row"><div class="form-check"><input type="checkbox" id="ann-pinned"><label for="ann-pinned">Pin this announcement</label></div></div>';
+    html += '<div class="form-row"><label>Recommended Students (optional)</label>';
+    html += '<div class="checkbox-group" id="ann-students">';
+    students.forEach(s => {
+        html += '<label><input type="checkbox" value="' + s.id + '">' + escapeHtml(s.name) + '</label>';
+    });
+    html += '</div></div>';
+    html += '<button type="submit" class="btn btn-primary">Post Announcement</button>';
+    html += '</form></div>';
+
+    // Active announcements
+    html += '<div class="section-label">Active Announcements (' + active.length + ')</div>';
+    if (active.length === 0) {
+        html += '<p class="loading-text">No active announcements.</p>';
+    }
+    active.forEach(a => {
+        html += renderAnnouncementCard(a, students, false);
+    });
+
+    // Expired
+    if (expired.length > 0) {
+        html += '<div class="section-label" style="cursor: pointer;" id="expired-toggle">Expired / Past (' + expired.length + ') \u25BC</div>';
+        html += '<div id="expired-list" style="display: none;">';
+        expired.forEach(a => {
+            html += renderAnnouncementCard(a, students, true);
+        });
+        html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    // Form submit
+    document.getElementById('announcement-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await postAnnouncement();
+    });
+
+    // Edit/Delete handlers
+    container.querySelectorAll('.ann-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => editAnnouncement(btn.dataset.id));
+    });
+    container.querySelectorAll('.ann-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteAnnouncement(btn.dataset.id));
+    });
+
+    // Expired toggle
+    const expToggle = document.getElementById('expired-toggle');
+    if (expToggle) {
+        expToggle.addEventListener('click', () => {
+            const list = document.getElementById('expired-list');
+            list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+}
+
+function renderAnnouncementCard(a, students, isExpired) {
+    const sMap = studentNameMap(students);
+    let recNames = '';
+    if (a.recommended_students && a.recommended_students.length > 0) {
+        recNames = a.recommended_students.map(id => sMap[id] ? sMap[id].name : '').filter(Boolean).join(', ');
+    }
+
+    let meta = escapeHtml(a.announcement_type || 'general');
+    if (a.pinned) meta += ' | Pinned';
+    if (a.expires_at) meta += ' | Expires: ' + formatShortDate(a.expires_at);
+    if (a.created_at) meta += ' | Posted: ' + formatShortDate(a.created_at.split('T')[0]);
+
+    let html = '<div class="announcement-card ' + (a.pinned ? 'pinned' : '') + '">';
+    html += '<div class="announcement-title">' + escapeHtml(a.title) + '</div>';
+    html += '<div class="announcement-meta">' + meta + '</div>';
+    html += '<div class="announcement-body">' + escapeHtml(a.body) + '</div>';
+    if (recNames) {
+        html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;">Recommended for: ' + escapeHtml(recNames) + '</p>';
+    }
+    if (!isExpired) {
+        html += '<div class="announcement-actions">';
+        html += '<button class="ann-edit-btn" data-id="' + a.id + '">Edit</button>';
+        html += '<button class="ann-delete-btn delete-btn" data-id="' + a.id + '">Delete</button>';
+        html += '</div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+async function postAnnouncement() {
+    const title = document.getElementById('ann-title').value.trim();
+    const body = document.getElementById('ann-body').value.trim();
+    const type = document.getElementById('ann-type').value;
+    const pinned = document.getElementById('ann-pinned').checked;
+    const expires = document.getElementById('ann-expires').value || null;
+
+    const checked = document.querySelectorAll('#ann-students input:checked');
+    const recStudents = Array.from(checked).map(cb => cb.value);
+
+    if (!title || !body) {
+        showToast('Title and body are required.', 'error');
+        return;
+    }
+
+    const { error } = await sb.from('studio_announcements').insert({
+        title,
+        body,
+        announcement_type: type,
+        pinned,
+        expires_at: expires,
+        recommended_students: recStudents.length > 0 ? recStudents : null
+    });
+
+    if (error) {
+        showToast('Error posting announcement: ' + error.message, 'error');
+    } else {
+        showToast('Announcement posted.');
+        renderAnnouncements();
+    }
+}
+
+async function editAnnouncement(id) {
+    const { data } = await sb.from('studio_announcements').select('*').eq('id', id).single();
+    if (!data) return;
+
+    document.getElementById('ann-title').value = data.title || '';
+    document.getElementById('ann-body').value = data.body || '';
+    document.getElementById('ann-type').value = data.announcement_type || 'general';
+    document.getElementById('ann-pinned').checked = !!data.pinned;
+    document.getElementById('ann-expires').value = data.expires_at || '';
+
+    // Check recommended students
+    document.querySelectorAll('#ann-students input').forEach(cb => {
+        cb.checked = (data.recommended_students || []).includes(cb.value);
+    });
+
+    // Replace form submit with update
+    const form = document.getElementById('announcement-form');
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await updateAnnouncement(id);
+    });
+
+    // Scroll to form
+    newForm.scrollIntoView({ behavior: 'smooth' });
+
+    // Change button text
+    newForm.querySelector('button[type="submit"]').textContent = 'Update Announcement';
+}
+
+async function updateAnnouncement(id) {
+    const title = document.getElementById('ann-title').value.trim();
+    const body = document.getElementById('ann-body').value.trim();
+    const type = document.getElementById('ann-type').value;
+    const pinned = document.getElementById('ann-pinned').checked;
+    const expires = document.getElementById('ann-expires').value || null;
+
+    const checked = document.querySelectorAll('#ann-students input:checked');
+    const recStudents = Array.from(checked).map(cb => cb.value);
+
+    const { error } = await sb.from('studio_announcements').update({
+        title,
+        body,
+        announcement_type: type,
+        pinned,
+        expires_at: expires,
+        recommended_students: recStudents.length > 0 ? recStudents : null
+    }).eq('id', id);
+
+    if (error) {
+        showToast('Error updating: ' + error.message, 'error');
+    } else {
+        showToast('Announcement updated.');
+        renderAnnouncements();
+    }
+}
+
+async function deleteAnnouncement(id) {
+    if (!confirm('Delete this announcement?')) return;
+
+    const { error } = await sb.from('studio_announcements').delete().eq('id', id);
+    if (error) {
+        showToast('Error deleting: ' + error.message, 'error');
+    } else {
+        showToast('Announcement deleted.');
+        renderAnnouncements();
+    }
+}
+
+// ============================================================
+// EVENTS VIEW
+// ============================================================
+
+async function renderEvents() {
+    const container = document.getElementById('events-content');
+    container.innerHTML = '<p class="loading-text">Loading events...</p>';
+
+    const students = await getStudents();
+    const sMap = studentNameMap(students);
+    const today = todayStr();
+
+    // Next 60 days
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 60);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+
+    // Past 30 days
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 30);
+    const pastDateStr = pastDate.toISOString().split('T')[0];
+
+    const [eventsRes, feedbackRes] = await Promise.all([
+        sb.from('performance_events').select('*').gte('date', today).lte('date', futureDateStr).order('date'),
+        sb.from('jury_feedback').select('*').gte('date', pastDateStr).lte('date', today).order('date', { ascending: false })
+    ]);
+
+    const events = eventsRes.data || [];
+    const feedback = feedbackRes.data || [];
+
+    let html = '';
+
+    // Group events by week
+    if (events.length === 0) {
+        html += '<div class="empty-state"><h2>No upcoming events</h2><p>No performances or juries scheduled in the next 60 days.</p></div>';
+    } else {
+        const weeks = {};
+        events.forEach(ev => {
+            const d = new Date(ev.date + 'T12:00:00');
+            const dayOfWeek = d.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(d);
+            monday.setDate(d.getDate() + mondayOffset);
+            const weekKey = monday.toISOString().split('T')[0];
+            if (!weeks[weekKey]) weeks[weekKey] = [];
+            weeks[weekKey].push(ev);
+        });
+
+        Object.keys(weeks).sort().forEach(weekKey => {
+            html += '<div class="event-week-label">' + escapeHtml(formatWeekLabel(weekKey)) + '</div>';
+            weeks[weekKey].forEach(ev => {
+                const st = sMap[ev.student_id];
+                html += '<div class="event-card">';
+                html += '<div class="event-date-col">' + escapeHtml(formatShortDate(ev.date)) + '</div>';
+                html += '<div>';
+                html += '<span class="event-type-badge">' + escapeHtml(ev.event_type || 'Event') + '</span>';
+                html += '<strong>' + escapeHtml(st ? st.name : 'Unknown') + '</strong>';
+                if (ev.title) html += ' : ' + escapeHtml(ev.title);
+                if (ev.location) html += '<span style="color: var(--text-muted); font-size: 13px;"> at ' + escapeHtml(ev.location) + '</span>';
+                if (ev.notes) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.25rem;">' + escapeHtml(ev.notes) + '</p>';
+                html += '</div>';
+                html += '</div>';
+            });
+        });
+    }
+
+    // Recent feedback
+    if (feedback.length > 0) {
+        html += '<div class="section-label" style="margin-top: 2rem;">Recent Feedback (Last 30 Days)</div>';
+        feedback.forEach(f => {
+            const st = sMap[f.student_id];
+            html += '<div class="feedback-block">';
+            html += '<p><strong>' + escapeHtml(st ? st.name : 'Unknown') + '</strong>';
+            html += ' : ' + escapeHtml(f.event_type || '') + ' on ' + escapeHtml(formatShortDate(f.date));
+            if (f.outcome) html += ' : ' + escapeHtml(f.outcome);
+            html += '</p>';
+            if (f.panelist_name) html += '<p class="fb-panelist">' + escapeHtml(f.panelist_name) + (f.panelist_role ? ' (' + escapeHtml(f.panelist_role) + ')' : '') + '</p>';
+            if (f.comments) html += '<p>' + escapeHtml(f.comments) + '</p>';
+            html += '</div>';
+        });
+    }
+
+    container.innerHTML = html;
 }
 
 // ============================================================

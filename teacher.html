@@ -688,6 +688,206 @@
                 gap: 0;
             }
         }
+
+        /* ============================================================
+           Student View Overlay
+           ============================================================ */
+        #page-student-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1000;
+            background: var(--bg-cream, #faf8f5);
+            overflow-y: auto;
+            display: none;
+        }
+        .sv-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            background: var(--bg-cream, #faf8f5);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sv-topbar-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            letter-spacing: 0.02em;
+        }
+        .sv-topbar-badge {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: rgba(108, 73, 91, 0.1);
+            color: var(--primary-color);
+            margin-left: 0.75rem;
+        }
+        .sv-body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+        .sv-welcome h1 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+        .sv-welcome-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+        .sv-events-banner {
+            background: var(--bg-warm, #f5f0eb);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg, 4px);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            font-size: 14px;
+        }
+        .sv-events-banner h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .sv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0 2rem;
+        }
+        .sv-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg, 4px);
+            padding: 1.5rem;
+            background: #fff;
+            cursor: pointer;
+            position: relative;
+            transition: box-shadow var(--transition);
+        }
+        .sv-card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .sv-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0.75rem;
+            right: 0.75rem;
+            width: 16px;
+            height: 16px;
+            border-right: 1.5px solid var(--border-color);
+            border-bottom: 1.5px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        .sv-card:hover::after {
+            border-color: var(--accent-color);
+        }
+        .sv-card-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+        }
+        .sv-card-value {
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .sv-card-summary {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .sv-detail-wrap {
+            background: var(--bg-light, #fff);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg, 4px);
+            padding: 2rem 2.5rem;
+            margin-top: 0.5rem;
+        }
+        .sv-detail-wrap h2 {
+            margin-top: 0.5rem;
+        }
+        .sv-announcements {
+            margin-top: 2rem;
+        }
+        .sv-announcements h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+        .sv-ann-card {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: var(--radius-lg, 4px);
+            padding: 1rem 1.25rem;
+            background: #fff;
+            margin-bottom: 0.75rem;
+        }
+        .sv-ann-card.sv-ann-pinned {
+            border-left-color: var(--primary-color);
+        }
+        .sv-ann-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        .sv-ann-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .sv-ann-body {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .btn-view-student {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.4rem 0.85rem;
+            border: 1px solid var(--accent-color);
+            border-radius: var(--radius, 2px);
+            background: #fff;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+            margin-top: 1rem;
+        }
+        .btn-view-student:hover {
+            background: var(--accent-color);
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            .sv-topbar {
+                padding: 0.75rem 1rem;
+            }
+            .sv-body {
+                padding: 1rem 1rem 2rem;
+            }
+            .sv-detail-wrap {
+                padding: 1.5rem;
+            }
+            .sv-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -789,6 +989,18 @@
 </div>
 
 </main>
+
+<!-- Student View Overlay -->
+<div id="page-student-view">
+    <div class="sv-topbar">
+        <div>
+            <span class="sv-topbar-name" id="sv-student-name"></span>
+            <span class="sv-topbar-badge">Student View</span>
+        </div>
+        <button class="nav-signout" onclick="closeStudentView()">Back to Teacher View</button>
+    </div>
+    <div class="sv-body" id="sv-body"></div>
+</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -1574,6 +1786,11 @@ async function loadStudentDetail(bodyEl, studentId) {
         html += '</div></div>';
     }
 
+    // View as Student button
+    html += '<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">';
+    html += '<button class="btn-view-student" onclick="viewAsStudent(\'' + studentId + '\')">View Student Portal</button>';
+    html += '</div>';
+
     html += '</div>';
     bodyEl.innerHTML = html;
 }
@@ -1987,6 +2204,314 @@ async function renderEvents() {
 
     container.innerHTML = html;
 }
+
+// ============================================================
+// STUDENT VIEW (View as Student)
+// ============================================================
+
+let svCurrentDetail = null; // tracks which detail panel is open
+
+function closeStudentView() {
+    document.getElementById('page-student-view').style.display = 'none';
+    document.body.style.overflow = '';
+    svCurrentDetail = null;
+}
+
+async function viewAsStudent(studentId) {
+    const overlay = document.getElementById('page-student-view');
+    const body = document.getElementById('sv-body');
+    body.innerHTML = '<p class="loading-text">Loading student dashboard...</p>';
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Get student name
+    const students = await getStudents();
+    const student = students.find(s => s.id === studentId);
+    const studentName = student ? student.name.split(' ')[0] : 'Student';
+    document.getElementById('sv-student-name').textContent = student ? student.name : 'Student';
+
+    // Fetch all data in parallel
+    const today = todayStr();
+    const [lessonsRes, plansRes, reflectionsRes, repRes, eventsRes, studioRes, annRes] = await Promise.all([
+        sb.from('lesson_logs').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(10),
+        sb.from('practice_plans').select('*').eq('student_id', studentId).in('status', ['approved', 'delivered']).order('date_generated', { ascending: false }).limit(5),
+        sb.from('reflections').select('*').eq('student_id', studentId).order('date_submitted', { ascending: false }).limit(5),
+        sb.from('repertoire').select('*').eq('student_id', studentId).order('timeline'),
+        sb.from('performance_events').select('*').eq('student_id', studentId).order('date'),
+        sb.from('studio_class_feedback').select('*').eq('student_id', studentId).order('studio_class_date', { ascending: false }).limit(3),
+        sb.from('studio_announcements').select('*').or('expires_at.is.null,expires_at.gte.' + today)
+    ]);
+
+    const lessons = lessonsRes.data || [];
+    const plans = plansRes.data || [];
+    const reflections = reflectionsRes.data || [];
+    const repertoire = repRes.data || [];
+    const events = eventsRes.data || [];
+    const studioFeedback = studioRes.data || [];
+    const allAnnouncements = annRes.data || [];
+
+    // Filter announcements: show if recommended_students contains this student OR is empty/null
+    const announcements = allAnnouncements.filter(a => {
+        if (!a.recommended_students || a.recommended_students.length === 0) return true;
+        return a.recommended_students.includes(studentId);
+    });
+
+    // Latest items for cards
+    const latestLesson = lessons[0] || null;
+    const latestPlan = plans[0] || null;
+    const latestReflection = reflections[0] || null;
+    const latestStudio = studioFeedback[0] || null;
+
+    // Upcoming events
+    const upcomingEvents = events.filter(e => e.date >= today);
+
+    // Wins/breakthroughs from lessons
+    const wins = lessons.filter(l => l.breakthroughs).slice(0, 5);
+
+    // Build the dashboard
+    let html = '';
+
+    // Welcome
+    html += '<div class="sv-welcome">';
+    html += '<h1>Welcome, ' + escapeHtml(studentName) + '</h1>';
+    html += '<p class="sv-welcome-sub">Here is what is happening in your studio this week.</p>';
+    html += '</div>';
+
+    // Upcoming events banner
+    if (upcomingEvents.length > 0) {
+        html += '<div class="sv-events-banner"><h3>Upcoming</h3>';
+        upcomingEvents.slice(0, 3).forEach(ev => {
+            html += '<div style="margin-bottom: 0.35rem;">';
+            html += '<strong>' + escapeHtml(formatShortDate(ev.date)) + '</strong> ';
+            html += escapeHtml(ev.event_type || 'Event');
+            if (ev.title) html += ': ' + escapeHtml(ev.title);
+            if (ev.location) html += ' <span style="color: var(--text-muted);">at ' + escapeHtml(ev.location) + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    // Dashboard card grid
+    html += '<div class="sv-grid">';
+
+    // Latest Lesson card
+    html += '<div class="sv-card" onclick="svShowDetail(\'lesson\')">';
+    html += '<div class="sv-card-label">Latest Lesson</div>';
+    html += '<div class="sv-card-value">' + (latestLesson ? escapeHtml(formatShortDate(latestLesson.date)) : '--') + '</div>';
+    html += '<div class="sv-card-summary">' + (latestLesson && latestLesson.next_steps ? escapeHtml(latestLesson.next_steps.substring(0, 80)) + (latestLesson.next_steps.length > 80 ? '...' : '') : 'No lessons recorded') + '</div>';
+    html += '</div>';
+
+    // Practice Plan card
+    html += '<div class="sv-card" onclick="svShowDetail(\'plan\')">';
+    html += '<div class="sv-card-label">Practice Plan</div>';
+    html += '<div class="sv-card-value">' + (latestPlan ? escapeHtml(formatShortDate(latestPlan.date_generated)) : '--') + '</div>';
+    html += '<div class="sv-card-summary">' + (latestPlan ? 'Plan available' : 'No practice plans yet') + '</div>';
+    html += '</div>';
+
+    // Reflection card
+    html += '<div class="sv-card" onclick="svShowDetail(\'reflection\')">';
+    html += '<div class="sv-card-label">Reflection</div>';
+    html += '<div class="sv-card-value">' + (latestReflection ? escapeHtml(formatShortDate(latestReflection.date_submitted)) : '--') + '</div>';
+    html += '<div class="sv-card-summary">';
+    if (latestReflection) {
+        const scores = [];
+        if (latestReflection.voice_feeling) scores.push('Voice: ' + latestReflection.voice_feeling + '/10');
+        if (latestReflection.engagement) scores.push('Connection: ' + latestReflection.engagement + '/10');
+        html += scores.length > 0 ? escapeHtml(scores.join(' | ')) : 'Submitted';
+    } else {
+        html += 'No reflections submitted';
+    }
+    html += '</div></div>';
+
+    // Repertoire card
+    html += '<div class="sv-card" onclick="svShowDetail(\'repertoire\')">';
+    html += '<div class="sv-card-label">Repertoire</div>';
+    html += '<div class="sv-card-value">' + repertoire.length + ' piece' + (repertoire.length !== 1 ? 's' : '') + '</div>';
+    html += '<div class="sv-card-summary">' + (repertoire.length > 0 ? repertoire.slice(0, 2).map(r => escapeHtml(r.title)).join(', ') + (repertoire.length > 2 ? ', ...' : '') : 'No repertoire entries') + '</div>';
+    html += '</div>';
+
+    // Vocal Progress card
+    html += '<div class="sv-card" onclick="svShowDetail(\'wins\')">';
+    html += '<div class="sv-card-label">Vocal Progress</div>';
+    html += '<div class="sv-card-value">' + (wins.length > 0 ? wins.length + ' win' + (wins.length !== 1 ? 's' : '') : '--') + '</div>';
+    html += '<div class="sv-card-summary">' + (wins.length > 0 ? escapeHtml(wins[0].breakthroughs.substring(0, 80)) + (wins[0].breakthroughs.length > 80 ? '...' : '') : 'Breakthroughs will appear here') + '</div>';
+    html += '</div>';
+
+    // Studio Class card
+    html += '<div class="sv-card" onclick="svShowDetail(\'studio\')">';
+    html += '<div class="sv-card-label">Studio Class</div>';
+    html += '<div class="sv-card-value">' + (latestStudio ? escapeHtml(formatShortDate(latestStudio.studio_class_date)) : '--') + '</div>';
+    html += '<div class="sv-card-summary">' + (latestStudio ? 'Feedback available' : 'No studio class feedback yet') + '</div>';
+    html += '</div>';
+
+    html += '</div>'; // close sv-grid
+
+    // Detail panels (hidden by default)
+    html += '<div id="sv-detail-area"></div>';
+
+    // Announcements
+    if (announcements.length > 0) {
+        html += '<div class="sv-announcements"><h3>Announcements</h3>';
+        // Pinned first
+        const sorted = [...announcements].sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+        sorted.forEach(a => {
+            html += '<div class="sv-ann-card' + (a.pinned ? ' sv-ann-pinned' : '') + '">';
+            html += '<div class="sv-ann-title">' + escapeHtml(a.title) + '</div>';
+            let meta = escapeHtml(a.announcement_type || 'general');
+            if (a.pinned) meta += ' | Pinned';
+            if (a.created_at) meta += ' | ' + formatShortDate(a.created_at.split('T')[0]);
+            html += '<div class="sv-ann-meta">' + meta + '</div>';
+            html += '<div class="sv-ann-body">' + escapeHtml(a.body) + '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    body.innerHTML = html;
+
+    // Store data for detail panels
+    body._svData = {
+        lessons, plans, reflections, repertoire, studioFeedback, wins, studentName
+    };
+    svCurrentDetail = null;
+}
+
+function svShowDetail(type) {
+    const area = document.getElementById('sv-detail-area');
+    const body = document.getElementById('sv-body');
+    const data = body._svData;
+    if (!data) return;
+
+    // Toggle: if same detail is open, close it
+    if (svCurrentDetail === type) {
+        area.innerHTML = '';
+        svCurrentDetail = null;
+        return;
+    }
+    svCurrentDetail = type;
+
+    let html = '<div class="sv-detail-wrap">';
+    html += '<button class="btn btn-secondary btn-small" style="margin-bottom: 1rem; font-size: 12px; padding: 0.35rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius, 2px); background: #fff; cursor: pointer; font-family: inherit;" onclick="document.getElementById(\'sv-detail-area\').innerHTML=\'\'; svCurrentDetail=null;">Back to Dashboard</button>';
+
+    if (type === 'lesson') {
+        html += '<h2>Lesson Debrief</h2>';
+        if (data.lessons.length === 0) {
+            html += '<p style="color: var(--text-muted);">No lessons recorded yet.</p>';
+        } else {
+            data.lessons.forEach(l => {
+                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
+                html += '<p><strong>' + escapeHtml(formatDate(l.date)) + '</strong></p>';
+                if (l.repertoire_worked) {
+                    const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : l.repertoire_worked;
+                    if (Array.isArray(rw) && rw.length > 0) {
+                        html += '<p style="font-size: 13px; color: var(--text-muted);">Repertoire: ' + rw.map(r => escapeHtml(typeof r === 'string' ? r : r.title || '')).join(', ') + '</p>';
+                    }
+                }
+                if (l.exercise_categories_addressed && l.exercise_categories_addressed.length > 0) {
+                    html += '<p style="font-size: 13px; color: var(--text-muted);">Categories: ' + l.exercise_categories_addressed.map(c => escapeHtml(CATEGORY_LABELS[c] || c)).join(', ') + '</p>';
+                }
+                if (l.breakthroughs) html += '<p><strong>Breakthroughs:</strong> ' + escapeHtml(l.breakthroughs) + '</p>';
+                if (l.next_steps) html += '<div><strong>Next steps:</strong>' + markdownToHtml(l.next_steps) + '</div>';
+                if (l.student_facing_summary) html += '<div style="margin-top: 0.5rem;">' + markdownToHtml(l.student_facing_summary) + '</div>';
+                html += '</div>';
+            });
+        }
+    } else if (type === 'plan') {
+        html += '<h2>Practice Plan</h2>';
+        if (data.plans.length === 0) {
+            html += '<p style="color: var(--text-muted);">No practice plans available yet.</p>';
+        } else {
+            data.plans.forEach((p, i) => {
+                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem;' + (i < data.plans.length - 1 ? ' border-bottom: 1px solid var(--border-color);' : '') + '">';
+                html += '<p><strong>' + escapeHtml(formatDate(p.date_generated)) + '</strong></p>';
+                if (p.plan_content) {
+                    html += '<div class="brief-content">' + markdownToHtml(p.plan_content) + '</div>';
+                }
+                html += '</div>';
+            });
+        }
+    } else if (type === 'reflection') {
+        html += '<h2>Reflections</h2>';
+        if (data.reflections.length === 0) {
+            html += '<p style="color: var(--text-muted);">No reflections submitted yet.</p>';
+        } else {
+            data.reflections.forEach(r => {
+                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
+                html += '<p><strong>' + escapeHtml(formatDate(r.date_submitted)) + '</strong></p>';
+                if (r.practice_summary) html += '<p>' + escapeHtml(r.practice_summary) + '</p>';
+                if (r.self_observations) html += '<p style="color: var(--text-muted);">' + escapeHtml(r.self_observations) + '</p>';
+                const scores = [];
+                if (r.voice_feeling) scores.push('Voice feeling: ' + r.voice_feeling + '/10');
+                if (r.artistic_confidence) scores.push('Artistic confidence: ' + r.artistic_confidence + '/10');
+                if (r.engagement) scores.push('Connection: ' + r.engagement + '/10');
+                if (scores.length) html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(scores.join(' | ')) + '</p>';
+                if (r.questions) html += '<p><strong>Questions:</strong> ' + escapeHtml(r.questions) + '</p>';
+                if (r.wins) html += '<p><strong>Wins:</strong> ' + escapeHtml(r.wins) + '</p>';
+                html += '</div>';
+            });
+        }
+    } else if (type === 'repertoire') {
+        html += '<h2>Active Repertoire</h2>';
+        if (data.repertoire.length === 0) {
+            html += '<p style="color: var(--text-muted);">No repertoire entries yet.</p>';
+        } else {
+            html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+            html += '<th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th><th>Status</th>';
+            html += '</tr></thead><tbody>';
+            data.repertoire.forEach(r => {
+                html += '<tr>';
+                html += '<td><strong>' + escapeHtml(r.title || '') + '</strong></td>';
+                html += '<td>' + escapeHtml(r.composer || '') + '</td>';
+                html += '<td>' + escapeHtml(r.style || '') + '</td>';
+                html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
+                html += '<td>' + escapeHtml(r.status || '') + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+    } else if (type === 'wins') {
+        html += '<h2>Vocal Progress</h2>';
+        html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Breakthroughs, wins, and milestones from lessons and studio work.</p>';
+        if (data.wins.length === 0) {
+            html += '<p style="color: var(--text-muted);">No breakthroughs recorded yet. They will appear here as your work develops.</p>';
+        } else {
+            data.wins.forEach(l => {
+                html += '<div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">';
+                html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(formatShortDate(l.date)) + '</p>';
+                html += '<p>' + escapeHtml(l.breakthroughs) + '</p>';
+                html += '</div>';
+            });
+        }
+    } else if (type === 'studio') {
+        html += '<h2>Studio Class</h2>';
+        if (data.studioFeedback.length === 0) {
+            html += '<p style="color: var(--text-muted);">No studio class feedback yet.</p>';
+        } else {
+            data.studioFeedback.forEach(f => {
+                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
+                html += '<p><strong>' + escapeHtml(formatDate(f.studio_class_date)) + '</strong></p>';
+                if (f.feedback) html += '<div class="brief-content">' + markdownToHtml(f.feedback) + '</div>';
+                if (f.peer_observations) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Peer observations:</strong> ' + escapeHtml(f.peer_observations) + '</p>';
+                html += '</div>';
+            });
+        }
+    }
+
+    html += '</div>';
+    area.innerHTML = html;
+    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Close student view with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('page-student-view').style.display === 'block') {
+        closeStudentView();
+    }
+});
 
 // ============================================================
 // BOOT

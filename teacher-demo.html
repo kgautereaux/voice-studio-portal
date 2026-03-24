@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Teacher Portal Demo : Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* ============================================================
+           Teacher Portal Styles (mirrored from teacher.html)
+           ============================================================ */
+
+        /* Nav overrides for teacher portal */
+        .teacher-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .teacher-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .nav-item {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0.4rem 0.75rem;
+            border-radius: var(--radius);
+            transition: all var(--transition);
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+        .nav-item:hover {
+            color: var(--text-color);
+            background: var(--bg-warm);
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+            background: rgba(108, 73, 91, 0.08);
+            font-weight: 500;
+        }
+        .nav-brand {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--primary-color);
+            letter-spacing: 0.02em;
+            margin-right: 0.5rem;
+        }
+        .demo-badge {
+            display: inline-block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            background: rgba(108, 73, 91, 0.12);
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        /* Demo banner */
+        .demo-banner {
+            background: rgba(108, 73, 91, 0.06);
+            border-bottom: 1px solid rgba(108, 73, 91, 0.12);
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 0.01em;
+        }
+
+        /* Header block */
+        .teacher-header {
+            padding: 1.5rem 0 1rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .teacher-header h1 {
+            font-size: 1.6rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+        .teacher-date {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Section labels */
+        .section-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .section-label:first-child {
+            margin-top: 0;
+        }
+
+        /* Card system */
+        .card {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            background: #fff;
+            overflow: hidden;
+            transition: box-shadow var(--transition);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .card-header:hover {
+            background: var(--bg-warm);
+        }
+        .card-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        .card-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .card-body {
+            display: none;
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .card.expanded .card-body {
+            display: block;
+        }
+        .card-chevron {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+        .card.expanded .card-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Flag tags */
+        .flag-tags {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+            flex-wrap: wrap;
+        }
+        .flag-tag {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            background: rgba(156, 92, 92, 0.1);
+            color: #8b4040;
+        }
+
+        /* Brief content styling */
+        .brief-content h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--primary-color);
+        }
+        .brief-content h3 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 1rem 0 0.35rem;
+            color: var(--text-color);
+        }
+        .brief-content p,
+        .brief-content li {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-color);
+        }
+        .brief-content ul, .brief-content ol {
+            padding-left: 1.25rem;
+            margin: 0.5rem 0;
+        }
+        .brief-content li {
+            margin-bottom: 0.35rem;
+        }
+        .brief-content strong {
+            color: var(--primary-color);
+        }
+        .brief-content hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
+
+        /* Category checks */
+        .category-check {
+            display: inline-block;
+            font-size: 13px;
+            margin-right: 0.75rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-muted);
+        }
+        .category-check.covered {
+            color: var(--text-color);
+        }
+        .category-check.covered::before {
+            content: "\2713 ";
+            color: #5a8a5a;
+            font-weight: 600;
+        }
+        .category-check.uncovered::before {
+            content: "\25CB ";
+            color: #c4b8ae;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin: 0.5rem 0;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .data-table th:hover {
+            color: var(--primary-color);
+        }
+        .data-table th.sorted-asc::after {
+            content: " \25B2";
+            font-size: 10px;
+        }
+        .data-table th.sorted-desc::after {
+            content: " \25BC";
+            font-size: 10px;
+        }
+        .data-table td {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        .data-table tbody tr:hover {
+            background: var(--bg-warm);
+        }
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Status dots */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.4rem;
+        }
+        .status-dot.green { background: #5a8a5a; }
+        .status-dot.amber { background: #c49a3c; }
+        .status-dot.red { background: #9c5c5c; }
+
+        /* Heatmap cells */
+        .heat-cell {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            min-width: 32px;
+        }
+        .heat-cell.heat-0 { color: #9c5c5c; background: rgba(156, 92, 92, 0.08); }
+        .heat-cell.heat-1 { color: #c49a3c; background: rgba(196, 154, 60, 0.08); }
+        .heat-cell.heat-2, .heat-cell.heat-3 { color: #5a8a5a; background: rgba(90, 138, 90, 0.08); }
+
+        /* Filter buttons */
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.45rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .filter-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        /* Announcement cards */
+        .announcement-card {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.5rem;
+            background: #fff;
+            margin-bottom: 0.75rem;
+            transition: box-shadow var(--transition);
+        }
+        .announcement-card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .announcement-card.pinned {
+            border-left-color: var(--primary-color);
+        }
+        .announcement-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        .announcement-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .announcement-body {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* Event cards */
+        .event-week-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .event-card {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 14px;
+        }
+        .event-date-col {
+            width: 90px;
+            flex-shrink: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .event-type-badge {
+            display: inline-block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+            background: rgba(108, 73, 91, 0.08);
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        /* No data state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+        }
+        .empty-state h2 {
+            font-weight: 300;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Feedback block for juries */
+        .feedback-block {
+            border-left: 2px solid var(--accent-color);
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 14px;
+        }
+        .feedback-block .fb-panelist {
+            font-weight: 500;
+            color: var(--primary-color);
+            font-size: 13px;
+        }
+
+        /* Student detail sub-sections */
+        .detail-section {
+            margin-top: 1.25rem;
+        }
+        .detail-section h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .detail-section p, .detail-section li {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .detail-section ul {
+            padding-left: 1.25rem;
+            margin: 0.25rem 0;
+        }
+        .detail-section li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Days-since warning */
+        .days-warning { color: #9c5c5c; font-weight: 500; }
+
+        /* Pulse reflection cards */
+        .pulse-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.5rem;
+            background: #fff;
+            margin-bottom: 0.75rem;
+            transition: box-shadow var(--transition);
+        }
+        .pulse-card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .pulse-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .pulse-name {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        .pulse-status {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .pulse-status.submitted { color: #5a8a5a; }
+        .pulse-status.missing { color: #9c5c5c; }
+        .pulse-metric {
+            display: inline-block;
+            margin-right: 1.5rem;
+            font-size: 14px;
+            margin-bottom: 0.25rem;
+        }
+        .pulse-metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-right: 0.35rem;
+        }
+        .pulse-metric-value {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        .pulse-notes {
+            margin-top: 0.5rem;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .teacher-nav {
+                flex-wrap: wrap;
+            }
+            .teacher-nav-links {
+                gap: 0;
+            }
+            .nav-item {
+                padding: 0.35rem 0.5rem;
+                font-size: 11px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            .flag-tags {
+                margin-left: 0;
+            }
+            .demo-banner {
+                font-size: 12px;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Demo Banner -->
+<div class="demo-banner">
+    This is a demonstration of the Voice Studio teacher dashboard with sample data.
+</div>
+
+<!-- NAV -->
+<nav id="main-nav">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="teacher-nav">
+            <span class="nav-brand">Voice Studio <span class="demo-badge">Demo</span></span>
+            <div class="teacher-nav-links">
+                <button class="nav-item active" data-nav="today">Today</button>
+                <button class="nav-item" data-nav="pulse">Pulse</button>
+                <button class="nav-item" data-nav="students">Students</button>
+                <button class="nav-item" data-nav="repertoire">Repertoire</button>
+                <button class="nav-item" data-nav="announcements">Announcements</button>
+                <button class="nav-item" data-nav="events">Events</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+
+<!-- TODAY -->
+<div id="page-today" class="page active">
+    <div class="teacher-header">
+        <h1 id="greeting">Good morning</h1>
+        <div class="teacher-date" id="today-date"></div>
+    </div>
+    <div id="today-content"></div>
+</div>
+
+<!-- PULSE -->
+<div id="page-pulse" class="page">
+    <div class="teacher-header">
+        <h1>Studio Pulse</h1>
+        <div class="teacher-date">Health dashboard for the full studio</div>
+    </div>
+    <div id="pulse-content"></div>
+</div>
+
+<!-- STUDENTS -->
+<div id="page-students" class="page">
+    <div class="teacher-header">
+        <h1>Students</h1>
+        <div class="teacher-date">Full studio roster</div>
+    </div>
+    <div id="students-content"></div>
+</div>
+
+<!-- REPERTOIRE -->
+<div id="page-repertoire" class="page">
+    <div class="teacher-header">
+        <h1>Repertoire</h1>
+        <div class="teacher-date">All active repertoire across the studio</div>
+    </div>
+    <div id="repertoire-content"></div>
+</div>
+
+<!-- ANNOUNCEMENTS -->
+<div id="page-announcements" class="page">
+    <div class="teacher-header">
+        <h1>Announcements</h1>
+        <div class="teacher-date">Studio announcements</div>
+    </div>
+    <div id="announcements-content"></div>
+</div>
+
+<!-- EVENTS -->
+<div id="page-events" class="page">
+    <div class="teacher-header">
+        <h1>Events</h1>
+        <div class="teacher-date">Upcoming performances, juries, and recent feedback</div>
+    </div>
+    <div id="events-content"></div>
+</div>
+
+</main>
+
+<script>
+// ============================================================
+// SAMPLE DATA
+// ============================================================
+
+const STUDENTS = [
+    { id: 1, name: 'Alex Rivera', voice_type: 'Tenor', degree_program: 'MFA Musical Theater Vocal Ped, Year 1', lesson_day: 'monday', status: 'active' },
+    { id: 2, name: 'Maya Chen', voice_type: 'Soprano', degree_program: 'MM Vocal Pedagogy, Year 2', lesson_day: 'monday', status: 'active' },
+    { id: 3, name: 'Jordan Ellis', voice_type: 'Mezzo/Belter', degree_program: 'BFA Musical Theater, Year 2', lesson_day: 'wednesday', status: 'active' },
+    { id: 4, name: 'Sam Okafor', voice_type: 'Baritone', degree_program: 'MM Vocal Pedagogy, Year 1', lesson_day: 'monday', status: 'active' },
+    { id: 5, name: 'Riley Park', voice_type: 'Soprano', degree_program: 'MFA Musical Theater Vocal Ped, Year 2', lesson_day: 'thursday', status: 'active' }
+];
+
+const BRIEFS = {
+    1: {
+        student_id: 1,
+        flags: ['Fatigue: gig this weekend'],
+        content: `## WARM-UP (10 min)
+
+- Blowfish with tongue movement: target forward resonance without fold squeeze. Carry-forward from last lesson where this clicked in the upper range.
+- Chest voice anchoring on descending 5-note patterns: overdue category, last addressed 3 weeks ago.
+- Gentle range extension via lip trills to B4.
+
+## REPERTOIRE BLOCK 1: "Being Alive" (Sondheim)
+
+- Focus on the build from "someone to hold you too close" through the climax. Last lesson identified a tendency to arrive at the top without sufficient engagement energy in the approach.
+- Apply the "fall forward into momentum" cue from last session. Speech-first on the low bridge section.
+
+## REPERTOIRE BLOCK 2: "Comfort and Joy" (original)
+
+- Character work with pianist. This piece needs more dynamic contrast: the quiet moments are as important as the belt.
+- Explore the messa di voce on the final sustained note.
+
+---
+
+**Watch for**: Alex reported mild fatigue from a gig this weekend. Monitor ease and shorten if needed.`
+    },
+    2: {
+        student_id: 2,
+        flags: ['Allergies noted'],
+        content: `**Health note**: Submitted reflection noting voice feeling 7/10 and mild allergies. Proceed normally but monitor.
+
+## WARM-UP (8 min)
+
+- Mama made marmalade descending: speech access, forward placement.
+- Sustained vowel with piano leaning: breath engagement, rib expansion.
+
+## REPERTOIRE: Ravel "Chanson des cueilleuses de lentisques"
+
+- Jury panel feedback (Dr. Chen, 3/15): "Beautiful French, but find more colors in the middle voice. The piano sections need as much intention as the forte."
+- Work on dynamic shaping in the A section. Connect the panel feedback to our ongoing work on loft in the lower range.
+- Parachute deployment before the climactic phrase, same technique that worked in the Debussy last week.
+
+## REPERTOIRE: "Stars and the Moon" (Jason Robert Brown)
+
+- Run the cut for upcoming audition. Focus on speech-forward delivery in the listing sections.`
+    },
+    4: {
+        student_id: 4,
+        flags: [],
+        content: `## WARM-UP (10 min)
+
+- Lip trills on descending arpeggios, starting in the passaggio and working down. Focus on even airflow.
+- Tongue-out phonation on [a]: laryngeal freedom, reducing tongue root tension.
+- "Buh-buh-buh" staccato ascending: light chest onset, clean release.
+
+## REPERTOIRE: "If Ever I Would Leave You" (Lerner & Loewe)
+
+- Last lesson: good legato in the verse, but the high F on "leave you" was pressed. Try approaching from above with a "pour" gesture.
+- Map the breath plan for the long phrase in the bridge. Sam tends to tank up rather than pace. Work with the rib-swing cue.
+
+## REPERTOIRE: Schumann "Ich grolle nicht"
+
+- New piece, first coaching. Read through for text and general sound. Identify moments of declamatory weight vs. lyric flow.
+- Check German diction on the "Herz" and "Schmerz" vowels.
+
+---
+
+**Note**: Sam's reflection flagged a heavy rehearsal week. Keep the pacing moderate and check in about fatigue as the lesson progresses.`
+    }
+};
+
+const REFLECTIONS = {
+    1: { student_id: 1, voice_feeling: 8, engagement: 9, notes: '', date_submitted: '2026-03-24' },
+    2: { student_id: 2, voice_feeling: 7, engagement: 8, notes: 'Mild allergies, slight congestion. Voice feels clear once I warm up.', date_submitted: '2026-03-24' },
+    4: { student_id: 4, voice_feeling: 6, engagement: 7, notes: 'Heavy rehearsal week. Did a 3-hour tech run yesterday. Voice is a bit tired but not hoarse.', date_submitted: '2026-03-24' },
+    5: { student_id: 5, voice_feeling: 9, engagement: 9, notes: 'Feeling great. Had a really productive practice session this morning.', date_submitted: '2026-03-24' }
+};
+
+// Last 3 lessons of category data per student
+const LESSON_HISTORY = {
+    1: [
+        { date: '2026-03-17', categories: ['body','breath','speech_access','chest_voice','range_extension'] },
+        { date: '2026-03-10', categories: ['breath','speech_access','mix_registration','sustain'] },
+        { date: '2026-03-03', categories: ['body','breath','head_voice','mix_registration'] }
+    ],
+    2: [
+        { date: '2026-03-17', categories: ['breath','speech_access','head_voice','dynamics'] },
+        { date: '2026-03-10', categories: ['breath','speech_access','sustain','dynamics','middle_range'] },
+        { date: '2026-03-03', categories: ['body','breath','head_voice','sustain'] }
+    ],
+    3: [
+        { date: '2026-03-19', categories: ['body','breath','chest_voice','mix_registration','speech_access'] },
+        { date: '2026-03-12', categories: ['breath','speech_access','chest_voice','agility'] },
+        { date: '2026-03-05', categories: ['body','chest_voice','mix_registration','dynamics'] }
+    ],
+    4: [
+        { date: '2026-03-17', categories: ['breath','speech_access','sustain','head_voice'] },
+        { date: '2026-03-10', categories: ['body','breath','range_extension','mix_registration'] },
+        { date: '2026-03-03', categories: ['breath','sustain','middle_range'] }
+    ],
+    5: [
+        { date: '2026-03-20', categories: ['body','breath','speech_access','mix_registration','head_voice','dynamics'] },
+        { date: '2026-03-13', categories: ['breath','speech_access','sustain','agility','range_extension'] },
+        { date: '2026-03-06', categories: ['body','breath','chest_voice','mix_registration'] }
+    ]
+};
+
+const ALL_CATEGORIES = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
+const CATEGORY_LABELS = {
+    body: 'Body', breath: 'Breath', speech_access: 'Speech Access',
+    chest_voice: 'Chest Voice', sustain: 'Sustain', head_voice: 'Head Voice',
+    range_extension: 'Range Extension', middle_range: 'Middle Range',
+    mix_registration: 'Mix/Registration', dynamics: 'Dynamics', agility: 'Agility'
+};
+
+const REPERTOIRE = [
+    { student_id: 1, title: 'Being Alive', composer: 'Stephen Sondheim', style: 'MT', phase: 'polishing', notes: 'Working the build. Speech-first on bridge.' },
+    { student_id: 1, title: 'Comfort and Joy', composer: 'Original', style: 'Pop/Original', phase: 'coaching', notes: 'Needs dynamic contrast.' },
+    { student_id: 1, title: 'She Used to Be Mine', composer: 'Sara Bareilles', style: 'MT', phase: 'learned', notes: 'Audition cut ready.' },
+    { student_id: 2, title: 'Chanson des cueilleuses de lentisques', composer: 'Maurice Ravel', style: 'Art Song', phase: 'polishing', notes: 'Jury feedback: more colors in middle voice.' },
+    { student_id: 2, title: 'Stars and the Moon', composer: 'Jason Robert Brown', style: 'MT', phase: 'coaching', notes: 'Audition cut. Speech-forward delivery.' },
+    { student_id: 2, title: 'Nuit d\'etoiles', composer: 'Claude Debussy', style: 'Art Song', phase: 'performance-ready', notes: 'Parachute technique working well.' },
+    { student_id: 3, title: 'I\'m Not Afraid of Anything', composer: 'Jason Robert Brown', style: 'MT', phase: 'polishing', notes: 'Belt on the climax is strong. Working on vulnerability in the verses.' },
+    { student_id: 3, title: 'Pulled', composer: 'Laurence O\'Keefe', style: 'MT', phase: 'coaching', notes: 'Comedy timing, character voice choices.' },
+    { student_id: 3, title: 'At Last', composer: 'Harry Warren', style: 'Pop/Jazz', phase: 'learned', notes: 'Lounge setting arrangement. Breath pacing on long phrases.' },
+    { student_id: 4, title: 'If Ever I Would Leave You', composer: 'Lerner & Loewe', style: 'MT', phase: 'coaching', notes: 'Legato good. Working on high F approach.' },
+    { student_id: 4, title: 'Ich grolle nicht', composer: 'Robert Schumann', style: 'Art Song', phase: 'learning', notes: 'New piece. First coaching this week.' },
+    { student_id: 4, title: 'The Impossible Dream', composer: 'Mitch Leigh', style: 'MT', phase: 'polishing', notes: 'Jury piece. Strong overall, refining the final build.' },
+    { student_id: 5, title: 'Gimme Gimme', composer: 'Jeanine Tesori', style: 'MT', phase: 'performance-ready', notes: 'Recital piece. Belt is clean and connected.' },
+    { student_id: 5, title: 'Alto\'s Lament', composer: 'Zina Goldrich', style: 'MT/Comedy', phase: 'polishing', notes: 'Character work and comedic timing.' },
+    { student_id: 5, title: 'The Wizard and I', composer: 'Stephen Schwartz', style: 'MT', phase: 'coaching', notes: 'Building the long arc. Passaggio navigation on the final phrase.' }
+];
+
+const ANNOUNCEMENTS = [
+    {
+        id: 1,
+        title: 'NATS New England Regional: Registration Deadline April 5',
+        type: 'competition',
+        pinned: true,
+        date: '2026-03-20',
+        body: 'If you plan to compete at NATS New England Regional, registration closes April 5. Please confirm your selections and category with Prof. G before registering. Accompanist assignments will be finalized by April 1.'
+    },
+    {
+        id: 2,
+        title: 'Studio Recital: April 18, Houston Hall, 7 PM',
+        type: 'event',
+        pinned: false,
+        date: '2026-03-22',
+        body: 'Our spring studio recital is confirmed for April 18 at 7 PM in Houston Hall. Program order will be posted by April 10. Please submit your program notes (title, composer, brief context) by April 8.'
+    },
+    {
+        id: 3,
+        title: 'Jury repertoire lists due to Prof. G by April 1',
+        type: 'deadline',
+        pinned: false,
+        date: '2026-03-18',
+        body: 'Submit your jury repertoire list with all titles, composers, and any cuts you plan to make. Include the original language for art songs and the show for MT selections. Email or submit through the portal.'
+    }
+];
+
+const EVENTS = [
+    { id: 1, student_id: 2, student_name: 'Maya Chen', title: 'Recital Hearing', type: 'hearing', date: '2026-04-08' },
+    { id: 2, student_id: 1, student_name: 'Alex Rivera', title: 'NATS Regional', type: 'competition', date: '2026-04-12' },
+    { id: 3, student_id: null, student_name: null, title: 'Studio Recital', type: 'recital', date: '2026-04-18' },
+    { id: 4, student_id: 3, student_name: 'Jordan Ellis', title: 'Jury', type: 'jury', date: '2026-04-20' },
+    { id: 5, student_id: 4, student_name: 'Sam Okafor', title: 'Jury', type: 'jury', date: '2026-04-20' },
+    { id: 6, student_id: 5, student_name: 'Riley Park', title: 'Jury', type: 'jury', date: '2026-04-20' },
+    { id: 7, student_id: 1, student_name: 'Alex Rivera', title: 'Jury', type: 'jury', date: '2026-04-21' },
+    { id: 8, student_id: 2, student_name: 'Maya Chen', title: 'Jury', type: 'jury', date: '2026-04-21' }
+];
+
+const JURY_FEEDBACK = {
+    2: [
+        {
+            panelist: 'Dr. Chen',
+            date: '2026-03-15',
+            event: 'Mid-semester hearing',
+            comments: 'Beautiful French diction throughout. The high phrases are secure and well-supported. I would love to hear more timbral variety in the middle voice, especially in the piano passages. The quieter moments can carry as much intention as the forte sections. Lovely musicianship overall.'
+        },
+        {
+            panelist: 'Prof. Torres',
+            date: '2026-03-15',
+            event: 'Mid-semester hearing',
+            comments: 'Strong progress since the fall jury. Breath management is notably improved. For the Ravel, consider the pacing of the opening phrase: let the audience come to you. The JRB cut was effective, good instinct for where to start and end. Watch for a slight tendency to push on the F5.'
+        }
+    ]
+};
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+let currentPage = 'today';
+
+function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
+function todayStr() {
+    return '2026-03-24';
+}
+
+function formatDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+}
+
+function formatShortDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric'
+    });
+}
+
+function daysBetween(dateStr1, dateStr2) {
+    const d1 = new Date(dateStr1 + 'T12:00:00');
+    const d2 = new Date(dateStr2 + 'T12:00:00');
+    return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function addExpandHandlers(container) {
+    container.querySelectorAll('.card-header').forEach(el => {
+        el.addEventListener('click', () => {
+            el.closest('.card').classList.toggle('expanded');
+        });
+    });
+}
+
+// ============================================================
+// MARKDOWN RENDERING
+// ============================================================
+
+function markdownToHtml(md) {
+    if (!md) return '';
+    md = md.replace(/^---[\s\S]*?---\s*\n/, '');
+    md = md.replace(/^# .+\n/m, '');
+
+    let lines = md.split('\n');
+    let html = '';
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        if (line.match(/^## /)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h2>' + inlineFormat(line.replace(/^## /, '')) + '</h2>';
+            continue;
+        }
+        if (line.match(/^### /)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h3>' + inlineFormat(line.replace(/^### /, '')) + '</h3>';
+            continue;
+        }
+
+        if (line.match(/^---+$/)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<hr>';
+            continue;
+        }
+
+        if (line.match(/^[-*] /)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + inlineFormat(line.replace(/^[-*] /, '')) + '</li>';
+            continue;
+        }
+
+        if (inList && line.trim() === '') {
+            html += '</ul>';
+            inList = false;
+            continue;
+        }
+
+        if (line.trim()) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<p>' + inlineFormat(line) + '</p>';
+        }
+    }
+
+    if (inList) html += '</ul>';
+    return html;
+}
+
+function inlineFormat(text) {
+    text = escapeHtml(text);
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    text = text.replace(/`(.+?)`/g, '<code style="background:var(--bg-warm);padding:0.1rem 0.35rem;border-radius:3px;font-size:13px">$1</code>');
+    text = text.replace(/&quot;(.+?)&quot;/g, '\u201c$1\u201d');
+    return text;
+}
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+
+const PAGE_IDS = ['today', 'pulse', 'students', 'repertoire', 'announcements', 'events'];
+
+function navigateTo(page) {
+    currentPage = page;
+
+    PAGE_IDS.forEach(p => {
+        const el = document.getElementById('page-' + p);
+        el.classList.toggle('active', p === page);
+    });
+
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.nav === page);
+    });
+
+    const loaders = {
+        today: renderToday,
+        pulse: renderPulse,
+        students: renderStudents,
+        repertoire: renderRepertoire,
+        announcements: renderAnnouncements,
+        events: renderEvents
+    };
+    if (loaders[page]) loaders[page]();
+}
+
+document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => {
+        navigateTo(el.dataset.nav);
+    });
+});
+
+// ============================================================
+// TODAY VIEW
+// ============================================================
+
+function renderToday() {
+    const today = todayStr();
+    document.getElementById('greeting').textContent = getGreeting();
+    document.getElementById('today-date').textContent = formatDate(today);
+
+    const container = document.getElementById('today-content');
+    const withBrief = STUDENTS.filter(s => BRIEFS[s.id]);
+    const withoutBrief = STUDENTS.filter(s => !BRIEFS[s.id]);
+
+    let html = '';
+
+    if (withBrief.length > 0) {
+        html += '<div class="section-label">Today\'s Lessons</div>';
+        withBrief.forEach(s => {
+            html += renderTodayCard(s, BRIEFS[s.id], REFLECTIONS[s.id], LESSON_HISTORY[s.id] || [], true);
+        });
+    }
+
+    if (withoutBrief.length > 0) {
+        html += '<div class="section-label">Other Students</div>';
+        withoutBrief.forEach(s => {
+            html += renderTodayCard(s, null, REFLECTIONS[s.id], LESSON_HISTORY[s.id] || [], false);
+        });
+    }
+
+    container.innerHTML = html;
+    addExpandHandlers(container);
+
+    // Auto-expand today's students
+    container.querySelectorAll('.card.has-brief').forEach(el => {
+        el.classList.add('expanded');
+    });
+}
+
+function renderTodayCard(student, brief, reflection, lessons, hasBrief) {
+    const flags = brief ? (brief.flags || []) : [];
+    const lastLesson = lessons.length > 0 ? lessons[0] : null;
+
+    let flagsHtml = '';
+    if (flags.length > 0) {
+        flagsHtml = '<div class="flag-tags">' +
+            flags.map(f => '<span class="flag-tag">' + escapeHtml(f) + '</span>').join('') +
+            '</div>';
+    }
+
+    let metaText = escapeHtml((student.voice_type || '') + (student.degree_program ? ', ' + student.degree_program : ''));
+
+    let bodyHtml = '';
+
+    if (brief) {
+        bodyHtml += '<div class="brief-content">' + markdownToHtml(brief.content) + '</div>';
+    }
+
+    // Category coverage for last 3 lessons
+    if (lessons.length > 0) {
+        const coveredSet = new Set();
+        lessons.forEach(l => (l.categories || []).forEach(c => coveredSet.add(c)));
+
+        bodyHtml += '<div class="detail-section"><h4>Category Coverage (Last 3 Lessons)</h4><div>';
+        ALL_CATEGORIES.forEach(cat => {
+            const isCovered = coveredSet.has(cat);
+            bodyHtml += '<span class="category-check ' + (isCovered ? 'covered' : 'uncovered') + '">' +
+                escapeHtml(CATEGORY_LABELS[cat]) + '</span>';
+        });
+        bodyHtml += '</div></div>';
+    }
+
+    // Reflection summary
+    if (reflection) {
+        bodyHtml += '<div class="detail-section"><h4>Pre-lesson Reflection</h4>';
+        bodyHtml += '<div><span class="pulse-metric"><span class="pulse-metric-label">Voice:</span> <span class="pulse-metric-value">' + reflection.voice_feeling + '/10</span></span>';
+        bodyHtml += '<span class="pulse-metric"><span class="pulse-metric-label">Engagement:</span> <span class="pulse-metric-value">' + reflection.engagement + '/10</span></span></div>';
+        if (reflection.notes) {
+            bodyHtml += '<p style="font-size:13px;color:var(--text-muted);margin-top:0.35rem;font-style:italic">' + escapeHtml(reflection.notes) + '</p>';
+        }
+        bodyHtml += '</div>';
+    }
+
+    // Last lesson date
+    if (lastLesson) {
+        const days = daysBetween(lastLesson.date, todayStr());
+        let daysText = days + ' days ago (' + formatShortDate(lastLesson.date) + ')';
+        const daysClass = days > 14 ? ' class="days-warning"' : '';
+        bodyHtml += '<div class="detail-section"><h4>Last Lesson</h4><p' + daysClass + ' style="font-size:14px">' + daysText + '</p></div>';
+    }
+
+    return '<div class="card' + (hasBrief ? ' has-brief' : '') + '">' +
+        '<div class="card-header">' +
+            '<div>' +
+                '<span class="card-name">' + escapeHtml(student.name) + '</span>' +
+                flagsHtml +
+                '<div class="card-meta">' + metaText + '</div>' +
+            '</div>' +
+            '<span class="card-chevron">\u25BC</span>' +
+        '</div>' +
+        '<div class="card-body">' + bodyHtml + '</div>' +
+    '</div>';
+}
+
+// ============================================================
+// PULSE VIEW
+// ============================================================
+
+function renderPulse() {
+    const container = document.getElementById('pulse-content');
+    let html = '';
+
+    // Summary stats
+    const submitted = STUDENTS.filter(s => REFLECTIONS[s.id]).length;
+    const total = STUDENTS.length;
+    html += '<div style="margin-bottom:1.5rem;font-size:14px"><span class="pulse-metric"><span class="pulse-metric-label">Reflections:</span> <span class="pulse-metric-value">' + submitted + '/' + total + ' submitted</span></span></div>';
+
+    // Heatmap
+    html += '<div class="section-label">Category Heatmap (Last 3 Lessons)</div>';
+    html += '<div class="table-scroll"><table class="data-table"><thead><tr><th>Student</th>';
+    ALL_CATEGORIES.forEach(cat => {
+        html += '<th style="font-size:11px;writing-mode:vertical-lr;transform:rotate(180deg);padding:0.5rem 0.25rem">' + CATEGORY_LABELS[cat] + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    STUDENTS.forEach(s => {
+        const lessons = LESSON_HISTORY[s.id] || [];
+        const counts = {};
+        ALL_CATEGORIES.forEach(c => { counts[c] = 0; });
+        lessons.forEach(l => (l.categories || []).forEach(c => { if (counts[c] !== undefined) counts[c]++; }));
+
+        html += '<tr><td style="white-space:nowrap">' + escapeHtml(s.name) + '</td>';
+        ALL_CATEGORIES.forEach(cat => {
+            const n = counts[cat];
+            html += '<td class="heat-cell heat-' + n + '">' + n + '</td>';
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+
+    // Individual reflection cards
+    html += '<div class="section-label" style="margin-top:2rem">Student Reflections</div>';
+
+    STUDENTS.forEach(s => {
+        const r = REFLECTIONS[s.id];
+        html += '<div class="pulse-card">';
+        html += '<div class="pulse-card-header">';
+        html += '<span class="pulse-name">' + escapeHtml(s.name) + '</span>';
+        if (r) {
+            html += '<span class="pulse-status submitted">\u2713 Submitted</span>';
+        } else {
+            html += '<span class="pulse-status missing">\u25CB Not submitted</span>';
+        }
+        html += '</div>';
+
+        if (r) {
+            html += '<div>';
+            html += '<span class="pulse-metric"><span class="pulse-metric-label">Voice:</span> <span class="pulse-metric-value">' + r.voice_feeling + '/10</span></span>';
+            html += '<span class="pulse-metric"><span class="pulse-metric-label">Engagement:</span> <span class="pulse-metric-value">' + r.engagement + '/10</span></span>';
+            html += '</div>';
+            if (r.notes) {
+                html += '<div class="pulse-notes">' + escapeHtml(r.notes) + '</div>';
+            }
+        }
+
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+// ============================================================
+// STUDENTS VIEW
+// ============================================================
+
+function renderStudents() {
+    const container = document.getElementById('students-content');
+    let html = '';
+
+    STUDENTS.forEach(s => {
+        const lessons = LESSON_HISTORY[s.id] || [];
+        const rep = REPERTOIRE.filter(r => r.student_id === s.id);
+        const reflection = REFLECTIONS[s.id];
+        const feedback = JURY_FEEDBACK[s.id];
+
+        let bodyHtml = '';
+
+        // Category coverage
+        if (lessons.length > 0) {
+            const coveredSet = new Set();
+            lessons.forEach(l => (l.categories || []).forEach(c => coveredSet.add(c)));
+            bodyHtml += '<div class="detail-section"><h4>Category Coverage (Last 3 Lessons)</h4><div>';
+            ALL_CATEGORIES.forEach(cat => {
+                bodyHtml += '<span class="category-check ' + (coveredSet.has(cat) ? 'covered' : 'uncovered') + '">' +
+                    escapeHtml(CATEGORY_LABELS[cat]) + '</span>';
+            });
+            bodyHtml += '</div></div>';
+        }
+
+        // Repertoire
+        if (rep.length > 0) {
+            bodyHtml += '<div class="detail-section"><h4>Repertoire</h4>';
+            bodyHtml += '<table class="data-table"><thead><tr><th>Title</th><th>Composer</th><th>Style</th><th>Phase</th></tr></thead><tbody>';
+            rep.forEach(r => {
+                bodyHtml += '<tr><td>' + escapeHtml(r.title) + '</td><td>' + escapeHtml(r.composer) + '</td><td>' + escapeHtml(r.style) + '</td><td>' + escapeHtml(r.phase) + '</td></tr>';
+            });
+            bodyHtml += '</tbody></table></div>';
+        }
+
+        // Recent reflection
+        if (reflection) {
+            bodyHtml += '<div class="detail-section"><h4>Latest Reflection</h4>';
+            bodyHtml += '<div><span class="pulse-metric"><span class="pulse-metric-label">Voice:</span> <span class="pulse-metric-value">' + reflection.voice_feeling + '/10</span></span>';
+            bodyHtml += '<span class="pulse-metric"><span class="pulse-metric-label">Engagement:</span> <span class="pulse-metric-value">' + reflection.engagement + '/10</span></span></div>';
+            if (reflection.notes) {
+                bodyHtml += '<p style="font-size:13px;color:var(--text-muted);margin-top:0.35rem;font-style:italic">' + escapeHtml(reflection.notes) + '</p>';
+            }
+            bodyHtml += '</div>';
+        }
+
+        // Jury feedback
+        if (feedback) {
+            bodyHtml += '<div class="detail-section"><h4>Recent Jury Feedback</h4>';
+            feedback.forEach(fb => {
+                bodyHtml += '<div class="feedback-block"><div class="fb-panelist">' + escapeHtml(fb.panelist) + ' (' + escapeHtml(fb.event) + ', ' + formatShortDate(fb.date) + ')</div>';
+                bodyHtml += '<p style="margin-top:0.35rem">' + escapeHtml(fb.comments) + '</p></div>';
+            });
+            bodyHtml += '</div>';
+        }
+
+        // Last lesson
+        if (lessons.length > 0) {
+            const days = daysBetween(lessons[0].date, todayStr());
+            const daysClass = days > 14 ? ' class="days-warning"' : '';
+            bodyHtml += '<div class="detail-section"><h4>Last Lesson</h4><p' + daysClass + ' style="font-size:14px">' + days + ' days ago (' + formatShortDate(lessons[0].date) + ')</p></div>';
+        }
+
+        html += '<div class="card">' +
+            '<div class="card-header">' +
+                '<div>' +
+                    '<span class="card-name">' + escapeHtml(s.name) + '</span>' +
+                    '<div class="card-meta">' + escapeHtml(s.voice_type + ', ' + s.degree_program) + '</div>' +
+                '</div>' +
+                '<span class="card-chevron">\u25BC</span>' +
+            '</div>' +
+            '<div class="card-body">' + bodyHtml + '</div>' +
+        '</div>';
+    });
+
+    container.innerHTML = html;
+    addExpandHandlers(container);
+}
+
+// ============================================================
+// REPERTOIRE VIEW
+// ============================================================
+
+let repSortCol = null;
+let repSortDir = 'asc';
+
+function renderRepertoire() {
+    const container = document.getElementById('repertoire-content');
+
+    // Filter bar
+    const styles = [...new Set(REPERTOIRE.map(r => r.style))].sort();
+    const phases = [...new Set(REPERTOIRE.map(r => r.phase))].sort();
+
+    let html = '<div class="filter-bar">';
+    html += '<button class="filter-btn active" data-filter="all">All</button>';
+    styles.forEach(st => {
+        html += '<button class="filter-btn" data-filter="style:' + st + '">' + escapeHtml(st) + '</button>';
+    });
+    html += '</div>';
+
+    html += buildRepertoireTable(REPERTOIRE);
+
+    container.innerHTML = html;
+
+    // Filter handlers
+    container.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            let filtered = REPERTOIRE;
+            if (filter !== 'all') {
+                const [key, val] = filter.split(':');
+                filtered = REPERTOIRE.filter(r => r[key] === val);
+            }
+            container.querySelector('.table-scroll').outerHTML = buildRepertoireTable(filtered);
+            addSortHandlers(container);
+        });
+    });
+
+    addSortHandlers(container);
+}
+
+function buildRepertoireTable(data) {
+    const studentMap = {};
+    STUDENTS.forEach(s => { studentMap[s.id] = s.name; });
+
+    if (repSortCol !== null) {
+        data = [...data].sort((a, b) => {
+            let va, vb;
+            switch (repSortCol) {
+                case 0: va = studentMap[a.student_id] || ''; vb = studentMap[b.student_id] || ''; break;
+                case 1: va = a.title; vb = b.title; break;
+                case 2: va = a.composer; vb = b.composer; break;
+                case 3: va = a.style; vb = b.style; break;
+                case 4: va = a.phase; vb = b.phase; break;
+                default: va = ''; vb = '';
+            }
+            const cmp = va.localeCompare(vb);
+            return repSortDir === 'asc' ? cmp : -cmp;
+        });
+    }
+
+    let html = '<div class="table-scroll"><table class="data-table" id="rep-table"><thead><tr>';
+    const headers = ['Student', 'Title', 'Composer', 'Style', 'Phase', 'Notes'];
+    headers.forEach((h, i) => {
+        let cls = '';
+        if (i === repSortCol) cls = repSortDir === 'asc' ? ' class="sorted-asc"' : ' class="sorted-desc"';
+        html += '<th data-col="' + i + '"' + cls + '>' + h + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    data.forEach(r => {
+        html += '<tr>' +
+            '<td style="white-space:nowrap">' + escapeHtml(studentMap[r.student_id] || '') + '</td>' +
+            '<td>' + escapeHtml(r.title) + '</td>' +
+            '<td>' + escapeHtml(r.composer) + '</td>' +
+            '<td>' + escapeHtml(r.style) + '</td>' +
+            '<td>' + escapeHtml(r.phase) + '</td>' +
+            '<td style="font-size:13px;color:var(--text-muted)">' + escapeHtml(r.notes) + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    return html;
+}
+
+function addSortHandlers(container) {
+    container.querySelectorAll('.data-table th[data-col]').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = parseInt(th.dataset.col);
+            if (col >= 5) return; // Don't sort notes
+            if (repSortCol === col) {
+                repSortDir = repSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                repSortCol = col;
+                repSortDir = 'asc';
+            }
+            renderRepertoire();
+        });
+    });
+}
+
+// ============================================================
+// ANNOUNCEMENTS VIEW
+// ============================================================
+
+function renderAnnouncements() {
+    const container = document.getElementById('announcements-content');
+    let html = '';
+
+    const sorted = [...ANNOUNCEMENTS].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return b.date.localeCompare(a.date);
+    });
+
+    sorted.forEach(ann => {
+        const typeLabel = ann.type.charAt(0).toUpperCase() + ann.type.slice(1);
+        html += '<div class="announcement-card' + (ann.pinned ? ' pinned' : '') + '">' +
+            '<div class="announcement-title">' +
+                (ann.pinned ? '<span style="font-size:11px;color:var(--primary-color);text-transform:uppercase;letter-spacing:0.05em;margin-right:0.5rem">Pinned</span>' : '') +
+                escapeHtml(ann.title) +
+            '</div>' +
+            '<div class="announcement-meta">' +
+                '<span class="event-type-badge">' + escapeHtml(typeLabel) + '</span>' +
+                formatShortDate(ann.date) +
+            '</div>' +
+            '<div class="announcement-body">' + escapeHtml(ann.body) + '</div>' +
+        '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+// ============================================================
+// EVENTS VIEW
+// ============================================================
+
+function renderEvents() {
+    const container = document.getElementById('events-content');
+    let html = '';
+
+    // Group by week
+    const sorted = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date));
+    const weeks = {};
+
+    sorted.forEach(ev => {
+        const d = new Date(ev.date + 'T12:00:00');
+        const start = new Date(d);
+        start.setDate(d.getDate() - d.getDay());
+        const weekKey = start.toISOString().split('T')[0];
+        if (!weeks[weekKey]) weeks[weekKey] = [];
+        weeks[weekKey].push(ev);
+    });
+
+    Object.keys(weeks).sort().forEach(weekKey => {
+        const startDate = new Date(weekKey + 'T12:00:00');
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        html += '<div class="event-week-label">Week of ' + fmt(startDate) + ' to ' + fmt(endDate) + '</div>';
+
+        weeks[weekKey].forEach(ev => {
+            const daysUntil = daysBetween(todayStr(), ev.date);
+            let countdown = '';
+            if (daysUntil === 0) countdown = 'Today';
+            else if (daysUntil === 1) countdown = 'Tomorrow';
+            else if (daysUntil > 0) countdown = daysUntil + ' days';
+
+            html += '<div class="event-card">' +
+                '<div class="event-date-col">' + formatShortDate(ev.date) + '<br><span style="font-size:12px;color:var(--accent-color)">' + countdown + '</span></div>' +
+                '<div>' +
+                    '<span class="event-type-badge">' + escapeHtml(ev.type) + '</span>' +
+                    '<strong>' + escapeHtml(ev.title) + '</strong>' +
+                    (ev.student_name ? ' <span style="color:var(--text-muted)">(' + escapeHtml(ev.student_name) + ')</span>' : '') +
+                '</div>' +
+            '</div>';
+        });
+    });
+
+    // Jury feedback section
+    html += '<div class="section-label" style="margin-top:2rem">Recent Jury Feedback</div>';
+
+    Object.keys(JURY_FEEDBACK).forEach(sid => {
+        const student = STUDENTS.find(s => s.id === parseInt(sid));
+        if (!student) return;
+        const feedbacks = JURY_FEEDBACK[sid];
+
+        html += '<div class="card">' +
+            '<div class="card-header">' +
+                '<div>' +
+                    '<span class="card-name">' + escapeHtml(student.name) + '</span>' +
+                    '<div class="card-meta">' + escapeHtml(feedbacks[0].event) + ', ' + formatShortDate(feedbacks[0].date) + '</div>' +
+                '</div>' +
+                '<span class="card-chevron">\u25BC</span>' +
+            '</div>' +
+            '<div class="card-body">';
+
+        feedbacks.forEach(fb => {
+            html += '<div class="feedback-block">' +
+                '<div class="fb-panelist">' + escapeHtml(fb.panelist) + '</div>' +
+                '<p style="margin-top:0.35rem">' + escapeHtml(fb.comments) + '</p>' +
+            '</div>';
+        });
+
+        html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+    addExpandHandlers(container);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+renderToday();
+</script>
+
+</body>
+</html>

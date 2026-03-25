@@ -1012,6 +1012,30 @@
 
 const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+let ANTHROPIC_API_KEY = sessionStorage.getItem('vs_anthropic_key') || '';
+
+function ensureApiKey() {
+    if (ANTHROPIC_API_KEY) return true;
+    const key = prompt('Enter your Anthropic API key to enable practice plan generation:');
+    if (key && key.startsWith('sk-ant-')) {
+        ANTHROPIC_API_KEY = key;
+        sessionStorage.setItem('vs_anthropic_key', key);
+        return true;
+    }
+    return false;
+}
+const PRACTICE_PLAN_MODEL = 'claude-sonnet-4-6';
+const PRACTICE_PLAN_SYSTEM = `You are an AI assistant for a university voice studio run by Prof. Kayla Gautereaux. Generate practice plans in Kayla's co-investigative voice.
+
+Key principles:
+- Teacher and student are co-observers. Use warmth/brightness/buzziness as primary perceptual dimensions (three independent qualities, not a spectrum).
+- No em dashes. Use commas, periods, or colons instead.
+- Connect every exercise to its functional purpose and repertoire application.
+- Include "what to listen for" targets in warmth/brightness/buzziness terms.
+- Frame growth areas positively: "next level" not "problem."
+- Be concise and actionable. Address the student directly.
+- Include practice structure guidance (session structure, fatigue awareness).
+- Ease first. Easy not squeezy.`;
 const TEACHER_AUTH_ID = 'af095774-b74a-4f74-8507-95cdf2aaec77';
 const ALL_CATEGORIES = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
 const CATEGORY_LABELS = {
@@ -1672,7 +1696,7 @@ async function loadStudentDetail(bodyEl, studentId) {
 
     const [repRes, lessonsRes, reflRes, juryRes] = await Promise.all([
         sb.from('repertoire').select('*').eq('student_id', studentId).order('title'),
-        sb.from('lesson_logs').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(3),
+        sb.from('lesson_logs').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(10),
         sb.from('reflections').select('*').eq('student_id', studentId).order('date_submitted', { ascending: false }).limit(1),
         sb.from('jury_feedback').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(5)
     ]);
@@ -1706,14 +1730,22 @@ async function loadStudentDetail(bodyEl, studentId) {
     }
     html += '</div>';
 
-    // Last 3 lessons
-    html += '<div class="detail-section"><h4>Recent Lessons</h4>';
+    // Lessons with approve flow
+    html += '<div class="detail-section"><h4>Lesson Logs</h4>';
     if (lessons.length === 0) {
         html += '<p style="color: var(--text-muted);">No lessons recorded.</p>';
     } else {
         lessons.forEach(l => {
+            const approved = l.approved;
             html += '<div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">';
-            html += '<p><strong>' + escapeHtml(formatShortDate(l.date)) + '</strong></p>';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">';
+            html += '<strong>' + escapeHtml(formatShortDate(l.date)) + '</strong>';
+            if (approved) {
+                html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
+            } else {
+                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + studentId + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.3rem 0.75rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s;">Approve</button>';
+            }
+            html += '</div>';
             if (l.repertoire_worked) {
                 const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : l.repertoire_worked;
                 if (Array.isArray(rw) && rw.length > 0) {
@@ -1721,10 +1753,13 @@ async function loadStudentDetail(bodyEl, studentId) {
                 }
             }
             if (l.breakthroughs) {
-                html += '<p><strong>Breakthroughs:</strong> ' + escapeHtml(l.breakthroughs) + '</p>';
+                html += '<p style="font-size: 13px;"><strong>Breakthroughs:</strong> ' + escapeHtml(l.breakthroughs) + '</p>';
             }
             if (l.next_steps) {
-                html += '<p><strong>Next steps:</strong> ' + escapeHtml(l.next_steps) + '</p>';
+                html += '<p style="font-size: 13px;"><strong>Next steps:</strong> ' + escapeHtml(l.next_steps) + '</p>';
+            }
+            if (l.hand_observations) {
+                html += '<p style="font-size: 13px;"><strong>Hand:</strong> ' + escapeHtml(l.hand_observations.substring(0, 300)) + (l.hand_observations.length > 300 ? '...' : '') + '</p>';
             }
             html += '</div>';
         });
@@ -2516,6 +2551,160 @@ document.addEventListener('keydown', (e) => {
 // ============================================================
 // BOOT
 // ============================================================
+
+// ============================================================
+// LESSON APPROVAL + PRACTICE PLAN GENERATION
+// ============================================================
+
+document.addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('btn-approve')) return;
+
+    const btn = e.target;
+    const lessonId = btn.dataset.lessonId;
+    const studentId = btn.dataset.studentId;
+
+    if (!ensureApiKey()) {
+        showToast('API key required to generate practice plans.');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Generating plan...';
+    btn.style.opacity = '0.6';
+
+    try {
+        // 1. Mark lesson as approved
+        await sb.from('lesson_logs').update({ approved: true }).eq('id', lessonId);
+
+        // 2. Fetch full lesson data + student info
+        const [lessonRes, studentRes] = await Promise.all([
+            sb.from('lesson_logs').select('*').eq('id', lessonId).single(),
+            sb.from('students').select('*').eq('id', studentId).single()
+        ]);
+
+        const lesson = lessonRes.data;
+        const student = studentRes.data;
+
+        if (!lesson || !student) throw new Error('Could not load lesson or student data');
+
+        // 3. Generate practice plan via Claude API
+        const planText = await generatePracticePlan(student, lesson);
+
+        // 4. Insert practice plan
+        const repWorked = typeof lesson.repertoire_worked === 'string'
+            ? JSON.parse(lesson.repertoire_worked) : (lesson.repertoire_worked || []);
+        const exercises = typeof lesson.exercises === 'string'
+            ? JSON.parse(lesson.exercises) : (lesson.exercises || []);
+
+        await sb.from('practice_plans').insert({
+            student_id: studentId,
+            lesson_log_id: lessonId,
+            content: planText,
+            exercises: JSON.stringify(exercises),
+            repertoire_focus: JSON.stringify(repWorked.map(r => ({ title: typeof r === 'string' ? r : r.title || '' }))),
+            status: 'approved'
+        });
+
+        // 5. Update UI
+        btn.textContent = 'Approved';
+        btn.style.background = 'rgba(90, 138, 90, 0.12)';
+        btn.style.color = '#5a8a5a';
+        btn.style.opacity = '1';
+        btn.style.cursor = 'default';
+
+        showToast('Lesson approved. Practice plan generated and delivered.');
+    } catch (err) {
+        console.error('Approval error:', err);
+        btn.textContent = 'Error, retry';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        showToast('Error: ' + (err.message || 'Failed to approve'));
+    }
+});
+
+async function generatePracticePlan(student, lesson) {
+    const repWorked = typeof lesson.repertoire_worked === 'string'
+        ? JSON.parse(lesson.repertoire_worked) : (lesson.repertoire_worked || []);
+    const exercises = typeof lesson.exercises === 'string'
+        ? JSON.parse(lesson.exercises) : (lesson.exercises || []);
+
+    let prompt = `Generate a practice plan for this student based on their most recent lesson.\n\n`;
+    prompt += `## Student: ${student.name}\n`;
+    prompt += `- Voice type: ${student.voice_type || 'Not specified'}\n`;
+    prompt += `- Program: ${student.degree_program || 'Not specified'}\n\n`;
+    prompt += `## Lesson Date: ${lesson.date}\n\n`;
+
+    if (repWorked.length > 0) {
+        prompt += `### Repertoire Worked\n`;
+        repWorked.forEach(r => { prompt += `- ${typeof r === 'string' ? r : r.title || JSON.stringify(r)}\n`; });
+        prompt += '\n';
+    }
+
+    if (exercises.length > 0) {
+        prompt += `### Exercises Used\n`;
+        exercises.forEach(ex => {
+            prompt += `- **${ex.name || 'Unnamed'}**: ${ex.pattern || ''}\n`;
+            if (ex.functional_purpose) prompt += `  - Purpose: ${ex.functional_purpose}\n`;
+            if (ex.category) prompt += `  - Category: ${ex.category}\n`;
+        });
+        prompt += '\n';
+    }
+
+    prompt += `### Observations\n`;
+    prompt += `- **Head**: ${lesson.head_observations || 'Not recorded'}\n`;
+    prompt += `- **Heart**: ${lesson.heart_observations || 'Not recorded'}\n`;
+    prompt += `- **Hand**: ${lesson.hand_observations || 'Not recorded'}\n`;
+    prompt += `- **Motor learning**: ${lesson.motor_learning_phase || 'Not recorded'}\n`;
+    prompt += `- **Warmth/brightness/buzziness**: ${lesson.warmth_brightness_notes || 'Not recorded'}\n`;
+    prompt += `- **Ease**: ${lesson.ease_assessment || 'Not recorded'}\n\n`;
+
+    if (lesson.breakthroughs) prompt += `### Breakthroughs\n${lesson.breakthroughs}\n\n`;
+    if (lesson.next_steps) prompt += `### Next Steps\n${lesson.next_steps}\n\n`;
+
+    prompt += `## Instructions\n\n`;
+    prompt += `Write a practice plan that:\n`;
+    prompt += `1. Lists each exercise with what it sounds like, what it's for, how it connects to repertoire, and what to listen for (warmth, brightness, buzziness)\n`;
+    prompt += `2. Includes practice structure guidance (session length, fatigue awareness, when to stop)\n`;
+    prompt += `3. Includes repertoire work plan with sections to focus on and functional skills to apply\n`;
+    prompt += `4. Includes an "Areas for Growth" section framed positively\n`;
+    prompt += `5. Be concise and actionable. Address the student directly. No em dashes.\n`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: PRACTICE_PLAN_MODEL,
+            max_tokens: 3000,
+            system: PRACTICE_PLAN_SYSTEM,
+            messages: [{ role: 'user', content: prompt }]
+        })
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error('Claude API error: ' + response.status + ' ' + errText.substring(0, 200));
+    }
+
+    const data = await response.json();
+    return data.content[0].text;
+}
+
+function showToast(msg) {
+    let toast = document.getElementById('toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        toast.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; background: var(--primary-color); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; max-width: 400px;';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+}
 
 document.addEventListener('DOMContentLoaded', initApp);
 </script>

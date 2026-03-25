@@ -1154,6 +1154,10 @@ function navigateTo(page) {
     if (loaders[page]) loaders[page]();
 }
 
+function switchPage(page) {
+    navigateTo(page);
+}
+
 // Nav click handlers
 document.querySelectorAll('.nav-item').forEach(el => {
     el.addEventListener('click', () => {
@@ -1352,10 +1356,11 @@ async function renderToday() {
     const students = await getStudents();
 
     // Parallel fetches
-    const [briefsRes, reflectionsRes, lessonsRes] = await Promise.all([
+    const [briefsRes, reflectionsRes, lessonsRes, draftsRes] = await Promise.all([
         sb.from('pre_lesson_briefs').select('*').eq('date', today),
         sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
-        sb.from('lesson_logs').select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps, breakthroughs').order('date', { ascending: false })
+        sb.from('lesson_logs').select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps, breakthroughs').order('date', { ascending: false }),
+        sb.from('lesson_logs').select('id, student_id, date').eq('approved', false)
     ]);
 
     const briefs = briefsRes.data || [];
@@ -1378,6 +1383,24 @@ async function renderToday() {
     const withoutBrief = students.filter(s => !briefMap[s.id]);
 
     let html = '';
+
+    // Draft notification banner
+    const drafts = draftsRes.data || [];
+    if (drafts.length > 0) {
+        const studentNames = {};
+        students.forEach(s => { studentNames[s.id] = s.name; });
+        const draftsByStudent = {};
+        drafts.forEach(d => {
+            const name = studentNames[d.student_id] || 'Unknown';
+            if (!draftsByStudent[name]) draftsByStudent[name] = 0;
+            draftsByStudent[name]++;
+        });
+        const summary = Object.entries(draftsByStudent).map(([name, count]) => name + ' (' + count + ')').join(', ');
+        html += '<div style="background: rgba(156, 92, 92, 0.08); border: 1px solid rgba(156, 92, 92, 0.2); border-left: 3px solid #8b4040; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">';
+        html += '<div style="font-size: 14px;"><strong style="color: #8b4040;">' + drafts.length + ' lesson log' + (drafts.length > 1 ? 's' : '') + ' awaiting review</strong><br><span style="font-size: 13px; color: var(--text-muted);">' + summary + '</span></div>';
+        html += '<button onclick="switchPage(\'pulse\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Review</button>';
+        html += '</div>';
+    }
 
     if (withBrief.length > 0) {
         html += '<div class="section-label">Today\'s Lessons</div>';
@@ -1567,7 +1590,7 @@ async function renderPulse() {
     } else {
         const sMap = studentNameMap(students);
         html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-        html += '<th>Student</th><th>Date</th><th>Status</th>';
+        html += '<th>Student</th><th>Date</th><th>Status</th><th></th>';
         html += '</tr></thead><tbody>';
         unapproved.forEach(l => {
             const st = sMap[l.student_id];
@@ -1575,6 +1598,7 @@ async function renderPulse() {
             html += '<td>' + (st ? escapeHtml(st.name) : 'Unknown') + '</td>';
             html += '<td>' + escapeHtml(formatShortDate(l.date)) + '</td>';
             html += '<td><span class="draft-badge">Draft</span></td>';
+            html += '<td><button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + l.student_id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button></td>';
             html += '</tr>';
         });
         html += '</tbody></table></div>';
@@ -1639,27 +1663,36 @@ async function renderStudents() {
 
     const students = await getStudents();
 
-    // Get lesson counts and last dates
+    // Get lesson counts, last dates, and draft counts
     const { data: lessonsData } = await sb.from('lesson_logs')
-        .select('student_id, date')
+        .select('student_id, date, approved')
         .order('date', { ascending: false });
 
     const lessonCountMap = {};
     const lastLessonMap = {};
+    const draftCountMap = {};
     (lessonsData || []).forEach(l => {
         if (!lessonCountMap[l.student_id]) lessonCountMap[l.student_id] = 0;
         lessonCountMap[l.student_id]++;
         if (!lastLessonMap[l.student_id]) lastLessonMap[l.student_id] = l.date;
+        if (!l.approved) {
+            if (!draftCountMap[l.student_id]) draftCountMap[l.student_id] = 0;
+            draftCountMap[l.student_id]++;
+        }
     });
 
     let html = '';
     students.forEach(s => {
         const count = lessonCountMap[s.id] || 0;
         const lastDate = lastLessonMap[s.id];
+        const drafts = draftCountMap[s.id] || 0;
         html += '<div class="card" data-student-id="' + s.id + '">';
         html += '<div class="card-header">';
         html += '<div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">';
         html += '<span class="card-name">' + escapeHtml(s.name) + '</span>';
+        if (drafts > 0) {
+            html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(156, 92, 92, 0.12); color: #8b4040;">' + drafts + ' draft' + (drafts > 1 ? 's' : '') + ' pending</span>';
+        }
         html += '<span class="card-meta">' + escapeHtml((s.voice_type || '') + (s.degree_program ? ', ' + s.degree_program : '')) + '</span>';
         html += '<span class="card-meta">' + count + ' lessons' + (lastDate ? ' | Last: ' + formatShortDate(lastDate) : '') + '</span>';
         html += '</div>';

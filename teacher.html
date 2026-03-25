@@ -1718,7 +1718,12 @@ async function renderStudents() {
             if (!wasExpanded && card.dataset.loaded !== 'true') {
                 card.dataset.loaded = 'true';
                 const sid = card.dataset.studentId;
-                await loadStudentDetail(card.querySelector('.card-body'), sid);
+                try {
+                    await loadStudentDetail(card.querySelector('.card-body'), sid);
+                } catch (err) {
+                    console.error('Error loading student detail:', err);
+                    card.querySelector('.card-body').innerHTML = '<p style="color: #8b4040;">Error loading details: ' + escapeHtml(err.message) + '</p>';
+                }
             }
         });
     });

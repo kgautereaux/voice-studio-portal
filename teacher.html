@@ -1403,17 +1403,16 @@ async function renderToday() {
     }
 
     if (withBrief.length > 0) {
-        html += '<div class="section-label">Today\'s Lessons</div>';
+        html += '<div class="section-label">' + withBrief.length + ' Lesson' + (withBrief.length > 1 ? 's' : '') + ' Today</div>';
         withBrief.forEach(s => {
             html += renderTodayCard(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
         });
     }
 
     if (withoutBrief.length > 0) {
-        html += '<div class="section-label">Other Students</div>';
-        withoutBrief.forEach(s => {
-            html += renderTodayCard(s, null, reflectionMap[s.id], lessonMap[s.id] || [], false);
-        });
+        html += '<div style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--bg-warm); border-radius: var(--radius); font-size: 13px; color: var(--text-muted);">';
+        html += '<strong>No lessons today:</strong> ' + withoutBrief.map(s => escapeHtml(s.name)).join(', ');
+        html += '</div>';
     }
 
     if (!students || students.length === 0) {

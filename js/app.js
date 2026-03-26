@@ -219,11 +219,12 @@ async function loadStudentData() {
 
     studentData.studioFeedback = studioFeedback || [];
 
-    // Load lesson logs (student-visible fields)
+    // Load lesson logs (student-visible fields: four-section debrief)
     const { data: lessonLogs } = await sb
         .from('lesson_logs')
-        .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, breakthroughs, next_steps, plan_for_next_lesson, exercise_categories_addressed')
+        .select('id, date, duration_minutes, repertoire_worked, exercises, breakthroughs, pivots, motor_learning_phase, next_steps, plan_for_next_lesson')
         .eq('student_id', currentUser.id)
+        .eq('approved', true)
         .order('date', { ascending: false })
         .limit(10);
 
@@ -797,47 +798,51 @@ function renderLessonDebrief() {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
 
-        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
-
         html += `<div class="lesson-debrief-entry">
             <div class="practice-plan-letter">
                 <p class="plan-date">${dateStr}${l.duration_minutes ? ' · ' + l.duration_minutes + ' min' : ''}</p>`;
 
+        // SECTION 1: What We Worked On (repertoire + exercises with purpose and listening targets)
+        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+        const exercises = typeof l.exercises === 'string' ? JSON.parse(l.exercises || '[]') : (l.exercises || []);
+
+        html += '<h3>What We Worked On</h3>';
         if (rep.length > 0) {
-            html += '<h3>What We Worked On</h3><ul>';
-            for (const r of rep) html += `<li>${escapeHtml(r)}</li>`;
+            html += '<ul>';
+            for (const r of rep) {
+                const title = typeof r === 'string' ? r.split(' — ')[0].split(' -- ')[0] : (r.title || r);
+                html += `<li>${escapeHtml(typeof title === 'string' ? title : JSON.stringify(title))}</li>`;
+            }
+            html += '</ul>';
+        }
+        if (exercises.length > 0) {
+            html += '<p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p><ul>';
+            for (const ex of exercises) {
+                let desc = escapeHtml(ex.name || 'Unnamed');
+                if (ex.functional_purpose) desc += ': ' + escapeHtml(ex.functional_purpose);
+                else if (ex.pattern) desc += ': ' + escapeHtml(ex.pattern);
+                html += `<li>${desc}</li>`;
+            }
             html += '</ul>';
         }
 
-        if (l.head_observations || l.heart_observations || l.hand_observations) {
-            html += '<h3>Observations</h3>';
-            if (l.head_observations) html += `<p><strong>Intention + Learning:</strong> ${escapeHtml(l.head_observations)}</p>`;
-            if (l.heart_observations) html += `<p><strong>Expression:</strong> ${escapeHtml(l.heart_observations)}</p>`;
-            if (l.hand_observations) html += `<p><strong>Function:</strong> ${escapeHtml(l.hand_observations)}</p>`;
+        // SECTION 2: What Shifted (breakthroughs framed as wins)
+        const shifted = l.breakthroughs || l.pivots;
+        if (shifted) {
+            html += `<h3>What Shifted</h3>`;
+            html += markdownToHtml(shifted);
         }
 
-        if (l.warmth_brightness_notes) {
-            html += `<h3>Warmth + Brightness</h3><p>${escapeHtml(l.warmth_brightness_notes)}</p>`;
+        // SECTION 3: Where You Are (motor learning in plain language)
+        if (l.motor_learning_phase) {
+            html += `<h3>Where You Are</h3><p>${escapeHtml(l.motor_learning_phase)}</p>`;
         }
 
-        if (l.breakthroughs) {
-            html += `<h3>Breakthroughs</h3><p>${escapeHtml(l.breakthroughs)}</p>`;
-        }
-
-        // Areas for growth: drawn from hand observations, motor learning phase, ease assessment
-        const growthParts = [];
-        if (l.hand_observations) growthParts.push(l.hand_observations);
-        if (l.motor_learning_phase) growthParts.push(l.motor_learning_phase);
-        if (l.ease_assessment) growthParts.push(l.ease_assessment);
-        if (growthParts.length > 0) {
-            html += '<h3>Areas for Growth</h3>';
-            for (const g of growthParts) {
-                html += `<p>${escapeHtml(g)}</p>`;
-            }
-        }
-
-        if (l.plan_for_next_lesson) {
-            html += `<h3>What We Are Working Toward</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
+        // SECTION 4: What's Next
+        const nextSteps = l.plan_for_next_lesson || l.next_steps;
+        if (nextSteps) {
+            html += `<h3>What's Next</h3>`;
+            html += markdownToHtml(nextSteps);
         }
 
         html += `<p class="plan-signoff">Prof. G</p></div></div>`;

@@ -2656,56 +2656,22 @@ document.addEventListener('click', async (e) => {
     const lessonId = btn.dataset.lessonId;
     const studentId = btn.dataset.studentId;
 
-    if (!ensureApiKey()) {
-        showToast('API key required to generate practice plans.');
-        return;
-    }
-
     btn.disabled = true;
-    btn.textContent = 'Generating plan...';
+    btn.textContent = 'Approving...';
     btn.style.opacity = '0.6';
 
     try {
-        // 1. Mark lesson as approved
+        // Mark lesson as approved in Supabase
         await sb.from('lesson_logs').update({ approved: true }).eq('id', lessonId);
 
-        // 2. Fetch full lesson data + student info
-        const [lessonRes, studentRes] = await Promise.all([
-            sb.from('lesson_logs').select('*').eq('id', lessonId).single(),
-            sb.from('students').select('*').eq('id', studentId).single()
-        ]);
-
-        const lesson = lessonRes.data;
-        const student = studentRes.data;
-
-        if (!lesson || !student) throw new Error('Could not load lesson or student data');
-
-        // 3. Generate practice plan via Claude API
-        const planText = await generatePracticePlan(student, lesson);
-
-        // 4. Insert practice plan
-        const repWorked = typeof lesson.repertoire_worked === 'string'
-            ? JSON.parse(lesson.repertoire_worked) : (lesson.repertoire_worked || []);
-        const exercises = typeof lesson.exercises === 'string'
-            ? JSON.parse(lesson.exercises) : (lesson.exercises || []);
-
-        await sb.from('practice_plans').insert({
-            student_id: studentId,
-            lesson_log_id: lessonId,
-            content: planText,
-            exercises: JSON.stringify(exercises),
-            repertoire_focus: JSON.stringify(repWorked.map(r => ({ title: typeof r === 'string' ? r : r.title || '' }))),
-            status: 'approved'
-        });
-
-        // 5. Update UI
+        // Update UI
         btn.textContent = 'Approved';
         btn.style.background = 'rgba(90, 138, 90, 0.12)';
         btn.style.color = '#5a8a5a';
         btn.style.opacity = '1';
         btn.style.cursor = 'default';
 
-        showToast('Lesson approved. Practice plan generated and delivered.');
+        showToast('Lesson approved. Practice plan will generate shortly.');
     } catch (err) {
         console.error('Approval error:', err);
         btn.textContent = 'Error, retry';

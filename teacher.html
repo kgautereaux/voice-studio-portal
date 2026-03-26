@@ -2458,6 +2458,18 @@ async function viewAsStudent(studentId) {
     html += '<div class="sv-card-summary">' + (repertoire.length > 0 ? repertoire.slice(0, 2).map(r => escapeHtml(r.title)).join(', ') + (repertoire.length > 2 ? ', ...' : '') : 'No repertoire entries') + '</div>';
     html += '</div>';
 
+    // Performance Feedback card
+    const perfEventsWithNotes = events.filter(e => e.notes && e.notes.length > 20);
+    const juryRes = await sb.from('jury_feedback').select('*').eq('student_id', studentId).order('date', { ascending: false });
+    const juryFeedback = juryRes.data || [];
+    const totalFeedback = perfEventsWithNotes.length + (juryFeedback.length > 0 ? 1 : 0);
+
+    html += '<div class="sv-card" onclick="svShowDetail(\'feedback\')">';
+    html += '<div class="sv-card-label">Performance Feedback</div>';
+    html += '<div class="sv-card-value">' + (totalFeedback > 0 ? totalFeedback + ' event' + (totalFeedback !== 1 ? 's' : '') : '--') + '</div>';
+    html += '<div class="sv-card-summary">' + (totalFeedback > 0 ? (perfEventsWithNotes.length > 0 ? escapeHtml(perfEventsWithNotes[0].title || 'Event') : 'Panel feedback available') : 'Feedback will appear here') + '</div>';
+    html += '</div>';
+
     // Vocal Progress card
     html += '<div class="sv-card" onclick="svShowDetail(\'wins\')">';
     html += '<div class="sv-card-label">Vocal Progress</div>';
@@ -2503,7 +2515,7 @@ async function viewAsStudent(studentId) {
 
     // Store data for detail panels
     body._svData = {
-        lessons, plans, reflections, repertoire, studioFeedback, wins, studentName
+        lessons, plans, reflections, repertoire, studioFeedback, wins, studentName, perfEventsWithNotes, juryFeedback, events
     };
     svCurrentDetail = null;
 }
@@ -2526,37 +2538,112 @@ function svShowDetail(type) {
     html += '<button class="btn btn-secondary btn-small" style="margin-bottom: 1rem; font-size: 12px; padding: 0.35rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius, 2px); background: #fff; cursor: pointer; font-family: inherit;" onclick="document.getElementById(\'sv-detail-area\').innerHTML=\'\'; svCurrentDetail=null;">Back to Dashboard</button>';
 
     if (type === 'lesson') {
-        html += '<h2>Lesson Debrief</h2>';
-        if (data.lessons.length === 0) {
-            html += '<p style="color: var(--text-muted);">No lessons recorded yet.</p>';
+        html += '<h2>Lesson Debriefs</h2>';
+        const approvedLessons = data.lessons.filter(l => l.approved);
+        if (approvedLessons.length === 0) {
+            html += '<p style="color: var(--text-muted);">No lesson debriefs available yet.</p>';
         } else {
-            data.lessons.forEach(l => {
-                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<p><strong>' + escapeHtml(formatDate(l.date)) + '</strong></p>';
-                if (l.repertoire_worked) {
-                    const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : l.repertoire_worked;
-                    if (Array.isArray(rw) && rw.length > 0) {
-                        html += '<p style="font-size: 13px; color: var(--text-muted);">Repertoire: ' + rw.map(r => escapeHtml(typeof r === 'string' ? r : r.title || '')).join(', ') + '</p>';
-                    }
+            approvedLessons.forEach(l => {
+                html += '<div style="margin-bottom: 2rem; padding: 2rem 2.5rem; border: 1px solid var(--border-color); border-radius: 2px; background: var(--bg-light, #fff);">';
+                html += '<p class="plan-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(l.date)) + (l.duration_minutes ? ' · ' + l.duration_minutes + ' min' : '') + '</p>';
+
+                // Section 1: What We Worked On
+                const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked || '[]') : (l.repertoire_worked || []);
+                const exArr = typeof l.exercises === 'string' ? JSON.parse(l.exercises || '[]') : (l.exercises || []);
+                html += '<h3>What We Worked On</h3>';
+                if (rw.length > 0) {
+                    html += '<ul>';
+                    rw.forEach(r => {
+                        const title = typeof r === 'string' ? r.split(' — ')[0].split(' -- ')[0] : (r.title || '');
+                        html += '<li>' + escapeHtml(title) + '</li>';
+                    });
+                    html += '</ul>';
                 }
-                if (l.exercise_categories_addressed && l.exercise_categories_addressed.length > 0) {
-                    html += '<p style="font-size: 13px; color: var(--text-muted);">Categories: ' + l.exercise_categories_addressed.map(c => escapeHtml(CATEGORY_LABELS[c] || c)).join(', ') + '</p>';
+                if (exArr.length > 0) {
+                    html += '<p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p><ul>';
+                    exArr.forEach(ex => {
+                        let desc = escapeHtml(ex.name || 'Unnamed');
+                        if (ex.functional_purpose) desc += ': ' + escapeHtml(ex.functional_purpose);
+                        else if (ex.pattern) desc += ': ' + escapeHtml(ex.pattern);
+                        html += '<li>' + desc + '</li>';
+                    });
+                    html += '</ul>';
                 }
-                if (l.breakthroughs) html += '<p><strong>Breakthroughs:</strong> ' + escapeHtml(l.breakthroughs) + '</p>';
-                if (l.next_steps) html += '<div><strong>Next steps:</strong>' + markdownToHtml(l.next_steps) + '</div>';
-                if (l.student_facing_summary) html += '<div style="margin-top: 0.5rem;">' + markdownToHtml(l.student_facing_summary) + '</div>';
+
+                // Section 2: What Shifted
+                const shifted = l.breakthroughs || l.pivots;
+                if (shifted) {
+                    html += '<h3>What Shifted</h3>';
+                    html += markdownToHtml(shifted);
+                }
+
+                // Section 3: Where You Are
+                if (l.motor_learning_phase) {
+                    html += '<h3>Where You Are</h3><p>' + escapeHtml(l.motor_learning_phase) + '</p>';
+                }
+
+                // Section 4: What's Next
+                const nextSteps = l.plan_for_next_lesson || l.next_steps;
+                if (nextSteps) {
+                    html += '<h3>What\'s Next</h3>';
+                    html += markdownToHtml(nextSteps);
+                }
+
+                html += '<p class="plan-signoff" style="margin-top: 1.5rem; font-style: italic; color: var(--text-muted);">Prof. G</p>';
                 html += '</div>';
             });
         }
+    } else if (type === 'feedback') {
+        html += '<h2>Performance Feedback</h2>';
+        html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Notes from dress rehearsals, hearings, juries, and other performance events.</p>';
+        const pe = data.perfEventsWithNotes || [];
+        const jf = data.juryFeedback || [];
+        if (pe.length === 0 && jf.length === 0) {
+            html += '<p style="color: var(--text-muted);">No performance feedback yet.</p>';
+        } else {
+            pe.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            pe.forEach(e => {
+                html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
+                html += '<h3 style="font-size: 1rem; font-weight: 500;">' + escapeHtml(e.title || 'Performance') + '</h3>';
+                html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(e.date)) + '</p>';
+                e.notes.split(/\n\n+/).filter(p => p.trim()).forEach(p => {
+                    html += '<p style="margin-bottom: 0.5rem;">' + escapeHtml(p.trim()) + '</p>';
+                });
+                html += '</div>';
+            });
+            if (jf.length > 0) {
+                const grouped = {};
+                jf.forEach(j => {
+                    const key = j.date + '|' + j.event_type;
+                    if (!grouped[key]) grouped[key] = { date: j.date, event_type: j.event_type, outcome: j.outcome, comments: [] };
+                    grouped[key].comments.push(j);
+                });
+                Object.values(grouped).sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(g => {
+                    const typeLabel = (g.event_type || 'jury').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
+                    html += '<h3 style="font-size: 1rem; font-weight: 500;">' + escapeHtml(typeLabel) + '</h3>';
+                    html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(g.date)) + (g.outcome ? ' · ' + escapeHtml(g.outcome) : '') + '</p>';
+                    g.comments.forEach(c => {
+                        html += '<div style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color);">';
+                        html += '<p style="font-weight: 500; font-size: 14px;">' + escapeHtml(c.panelist_name) + (c.panelist_role ? ' <span style="font-weight: 400; color: var(--text-muted);">(' + escapeHtml(c.panelist_role) + ')</span>' : '') + '</p>';
+                        html += '<p style="font-size: 14px;">' + escapeHtml(c.comments) + '</p>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                });
+            }
+        }
     } else if (type === 'plan') {
-        html += '<h2>Practice Plan</h2>';
+        html += '<h2>Practice Plans</h2>';
         if (data.plans.length === 0) {
             html += '<p style="color: var(--text-muted);">No practice plans available yet.</p>';
         } else {
             data.plans.forEach((p, i) => {
-                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem;' + (i < data.plans.length - 1 ? ' border-bottom: 1px solid var(--border-color);' : '') + '">';
-                html += '<p><strong>' + escapeHtml(formatDate(p.date_generated)) + '</strong></p>';
-                if (p.plan_content) {
+                html += '<div style="margin-bottom: 2rem; padding: 2rem 2.5rem; border: 1px solid var(--border-color); border-radius: 2px; background: var(--bg-light, #fff);">';
+                html += '<p class="plan-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(p.date_generated)) + '</p>';
+                if (p.content) {
+                    html += '<div class="brief-content">' + markdownToHtml(p.content) + '</div>';
+                } else if (p.plan_content) {
                     html += '<div class="brief-content">' + markdownToHtml(p.plan_content) + '</div>';
                 }
                 html += '</div>';

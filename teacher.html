@@ -2598,6 +2598,7 @@ function svShowDetail(type) {
         html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Notes from dress rehearsals, hearings, juries, and other performance events.</p>';
         const pe = data.perfEventsWithNotes || [];
         const jf = data.juryFeedback || [];
+        console.log('Performance feedback debug:', { perfEvents: pe.length, jury: jf.length, peData: pe });
         if (pe.length === 0 && jf.length === 0) {
             html += '<p style="color: var(--text-muted);">No performance feedback yet.</p>';
         } else {

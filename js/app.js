@@ -229,6 +229,15 @@ async function loadStudentData() {
 
     studentData.lessonLogs = lessonLogs || [];
 
+    // Load jury/hearing feedback
+    const { data: juryFeedback } = await sb
+        .from('jury_feedback')
+        .select('*')
+        .eq('student_id', currentUser.id)
+        .order('date', { ascending: false });
+
+    studentData.juryFeedback = juryFeedback || [];
+
     // Load upcoming events
     const { data: events } = await sb
         .from('performance_events')
@@ -533,6 +542,26 @@ function renderDashCards() {
         document.getElementById('dash-wins-summary').textContent = 'Wins and breakthroughs will appear here';
     }
 
+    // PERFORMANCE FEEDBACK — show most recent event with notes
+    const perfEvents = (studentData.events || []).filter(e => e.notes && e.notes.length > 20 && e.status === 'completed');
+    const juryFb = studentData.juryFeedback || [];
+    const totalFeedback = perfEvents.length + (juryFb.length > 0 ? 1 : 0);
+
+    if (totalFeedback > 0) {
+        const latest = perfEvents.length > 0 ? perfEvents[perfEvents.length - 1] : null;
+        const latestJury = juryFb.length > 0 ? juryFb[0] : null;
+        let displayDate = latest ? latest.date : (latestJury ? latestJury.date : '');
+        let displayTitle = latest ? latest.title : (latestJury ? latestJury.event_type.replace(/_/g, ' ') : '');
+        const d = new Date(displayDate + 'T12:00:00');
+        document.getElementById('dash-feedback-value').textContent =
+            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        document.getElementById('dash-feedback-summary').textContent =
+            displayTitle + (juryFb.length > 0 ? ' · ' + juryFb.length + ' panel comment' + (juryFb.length > 1 ? 's' : '') : '');
+    } else {
+        document.getElementById('dash-feedback-value').textContent = '--';
+        document.getElementById('dash-feedback-summary').textContent = 'Feedback from performances will appear here';
+    }
+
     // STUDIO CLASS — show next upcoming studio class
     const studioPlans = studentData.studioPlans || [];
     const today = new Date().toISOString().split('T')[0];
@@ -597,7 +626,84 @@ function renderDetailPanel(panelId) {
     else if (panelId === 'detail-plan') { renderPracticePlan(); renderPastPlans(); }
     else if (panelId === 'detail-repertoire') { renderRepertoire(); setupRepForm(); }
     else if (panelId === 'detail-wins') renderWins();
+    else if (panelId === 'detail-feedback') renderPerformanceFeedback();
     else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
+}
+
+function renderPerformanceFeedback() {
+    const container = document.getElementById('feedback-content');
+    if (!container || !studentData) return;
+
+    const events = (studentData.events || []).filter(e => e.notes && e.notes.length > 20);
+    const juryFb = studentData.juryFeedback || [];
+
+    if (events.length === 0 && juryFb.length === 0) {
+        container.innerHTML = '<p class="text-muted">No performance feedback yet. Notes from dress rehearsals, hearings, and juries will appear here.</p>';
+        return;
+    }
+
+    let html = '';
+
+    // Performance event notes (dress rehearsals, etc.)
+    events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    events.forEach(e => {
+        const d = new Date(e.date + 'T12:00:00');
+        const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
+        html += '<h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">' + escapeHtml(e.title || 'Performance') + '</h3>';
+        html += '<p class="text-muted" style="font-size: 13px; margin-bottom: 1rem;">' + dateStr + '</p>';
+        // Render notes as paragraphs, splitting on double newlines
+        const paragraphs = e.notes.split(/\n\n+/).filter(p => p.trim());
+        paragraphs.forEach(p => {
+            p = p.trim();
+            if (p.startsWith('**') || p.includes('**:')) {
+                // Bold section header (like "California: ...")
+                html += '<p style="margin-bottom: 0.5rem;">' + inlineFormat(escapeHtml(p)) + '</p>';
+            } else {
+                html += '<p style="margin-bottom: 0.5rem;">' + escapeHtml(p) + '</p>';
+            }
+        });
+        html += '</div>';
+    });
+
+    // Jury/hearing panel feedback
+    if (juryFb.length > 0) {
+        // Group by date + event_type
+        const grouped = {};
+        juryFb.forEach(j => {
+            const key = j.date + '|' + (j.event_type || 'jury');
+            if (!grouped[key]) grouped[key] = { date: j.date, event_type: j.event_type, outcome: j.outcome, comments: [] };
+            grouped[key].comments.push(j);
+        });
+
+        Object.values(grouped).sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(g => {
+            const d = new Date(g.date + 'T12:00:00');
+            const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            const typeLabel = (g.event_type || 'jury').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
+            html += '<h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">' + escapeHtml(typeLabel) + '</h3>';
+            html += '<p class="text-muted" style="font-size: 13px; margin-bottom: 1rem;">' + dateStr;
+            if (g.outcome) html += ' · ' + escapeHtml(g.outcome);
+            html += '</p>';
+
+            g.comments.forEach(c => {
+                html += '<div style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color);">';
+                html += '<p style="font-weight: 500; font-size: 14px; margin-bottom: 0.25rem;">' + escapeHtml(c.panelist_name);
+                if (c.panelist_role) html += ' <span class="text-muted" style="font-weight: 400;">(' + escapeHtml(c.panelist_role) + ')</span>';
+                html += '</p>';
+                html += '<p style="font-size: 14px;">' + escapeHtml(c.comments) + '</p>';
+                html += '</div>';
+            });
+            html += '</div>';
+        });
+    }
+
+    container.innerHTML = html;
+}
+
+function inlineFormat(text) {
+    // Handle **bold** patterns
+    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 function renderWins() {

@@ -1792,7 +1792,7 @@ async function loadStudentDetail(bodyEl, studentId) {
             if (approved) {
                 html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
             } else {
-                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + studentId + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;" onclick="event.stopPropagation()">Approve</button>';
+                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + studentId + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
             }
             html += '<span style="font-size: 11px; color: var(--text-muted);">&#9660;</span>';
             html += '</div></div>';
@@ -1851,7 +1851,8 @@ async function loadStudentDetail(bodyEl, studentId) {
     // Add lesson expand/collapse handlers after render
     setTimeout(() => {
         document.querySelectorAll('.lesson-log-header').forEach(el => {
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-approve')) return;
                 const target = document.getElementById(el.dataset.target);
                 if (target) target.style.display = target.style.display === 'none' ? 'block' : 'none';
             });

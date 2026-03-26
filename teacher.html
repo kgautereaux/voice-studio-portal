@@ -1398,7 +1398,7 @@ async function renderToday() {
         const summary = Object.entries(draftsByStudent).map(([name, count]) => name + ' (' + count + ')').join(', ');
         html += '<div style="background: rgba(156, 92, 92, 0.08); border: 1px solid rgba(156, 92, 92, 0.2); border-left: 3px solid #8b4040; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">';
         html += '<div style="font-size: 14px;"><strong style="color: #8b4040;">' + drafts.length + ' lesson log' + (drafts.length > 1 ? 's' : '') + ' awaiting review</strong><br><span style="font-size: 13px; color: var(--text-muted);">' + summary + '</span></div>';
-        html += '<button onclick="switchPage(\'pulse\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Review</button>';
+        html += '<button onclick="switchPage(\'students\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Review</button>';
         html += '</div>';
     }
 

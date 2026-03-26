@@ -1767,41 +1767,96 @@ async function loadStudentDetail(bodyEl, studentId) {
     }
     html += '</div>';
 
-    // Lessons with approve flow
-    html += '<div class="detail-section"><h4>Lesson Logs</h4>';
+    // Lessons with approve flow and full content
+    html += '<div class="detail-section"><h4>Lesson Logs (' + lessons.length + ')</h4>';
     if (lessons.length === 0) {
         html += '<p style="color: var(--text-muted);">No lessons recorded.</p>';
     } else {
         lessons.forEach(l => {
             const approved = l.approved;
-            html += '<div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">';
-            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">';
-            html += '<strong>' + escapeHtml(formatShortDate(l.date)) + '</strong>';
-            if (approved) {
-                html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-            } else {
-                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + studentId + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.3rem 0.75rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s;">Approve</button>';
-            }
-            html += '</div>';
+            const lid = 'lesson-detail-' + l.id;
+            html += '<div style="margin-bottom: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius);">';
+            // Header row (clickable to expand)
+            html += '<div class="lesson-log-header" data-target="' + lid + '" style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'var(--bg-warm)\'" onmouseout="this.style.background=\'transparent\'">';
+            html += '<div style="display: flex; align-items: center; gap: 0.75rem;">';
+            html += '<strong style="font-size: 14px;">' + escapeHtml(formatShortDate(l.date)) + '</strong>';
             if (l.repertoire_worked) {
                 const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : l.repertoire_worked;
                 if (Array.isArray(rw) && rw.length > 0) {
-                    html += '<p style="font-size: 13px; color: var(--text-muted);">Repertoire: ' + rw.map(r => escapeHtml(typeof r === 'string' ? r : r.title || JSON.stringify(r))).join(', ') + '</p>';
+                    const titles = rw.map(r => typeof r === 'string' ? r.split(' — ')[0].split(' -- ')[0] : (r.title || '')).filter(Boolean);
+                    html += '<span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(titles.join(', ').substring(0, 80)) + '</span>';
                 }
             }
-            if (l.breakthroughs) {
-                html += '<p style="font-size: 13px;"><strong>Breakthroughs:</strong> ' + escapeHtml(l.breakthroughs) + '</p>';
-            }
-            if (l.next_steps) {
-                html += '<p style="font-size: 13px;"><strong>Next steps:</strong> ' + escapeHtml(l.next_steps) + '</p>';
-            }
-            if (l.hand_observations) {
-                html += '<p style="font-size: 13px;"><strong>Hand:</strong> ' + escapeHtml(l.hand_observations.substring(0, 300)) + (l.hand_observations.length > 300 ? '...' : '') + '</p>';
-            }
             html += '</div>';
+            html += '<div style="display: flex; align-items: center; gap: 0.5rem;">';
+            if (approved) {
+                html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
+            } else {
+                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + studentId + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;" onclick="event.stopPropagation()">Approve</button>';
+            }
+            html += '<span style="font-size: 11px; color: var(--text-muted);">&#9660;</span>';
+            html += '</div></div>';
+            // Expandable detail
+            html += '<div id="' + lid + '" style="display: none; padding: 0 1rem 1rem; border-top: 1px solid var(--border-color); font-size: 13px; line-height: 1.7;">';
+            // Render all available fields
+            const fields = [
+                { key: 'head_observations', label: 'Head (Intention)' },
+                { key: 'heart_observations', label: 'Heart (Expression)' },
+                { key: 'hand_observations', label: 'Hand (Function)' },
+                { key: 'warmth_brightness_notes', label: 'Warmth/Brightness/Buzziness' },
+                { key: 'motor_learning_phase', label: 'Motor Learning Phase' },
+                { key: 'ease_assessment', label: 'Ease Assessment' },
+                { key: 'breakthroughs', label: 'Breakthroughs / What Shifted' },
+                { key: 'pivots', label: 'Pivots' },
+                { key: 'next_steps', label: 'Next Steps' },
+                { key: 'plan_for_next_lesson', label: 'Plan for Next Lesson' },
+            ];
+            fields.forEach(f => {
+                const val = l[f.key];
+                if (val && val.trim()) {
+                    html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">' + f.label + '</strong>';
+                    html += '<div style="margin-top: 0.25rem;">' + markdownToHtml(val) + '</div></div>';
+                }
+            });
+            // Exercises
+            if (l.exercises) {
+                const exArr = typeof l.exercises === 'string' ? JSON.parse(l.exercises) : l.exercises;
+                if (Array.isArray(exArr) && exArr.length > 0) {
+                    html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">Exercises (' + exArr.length + ')</strong>';
+                    exArr.forEach(ex => {
+                        html += '<div style="margin: 0.5rem 0 0.5rem 0.75rem; padding-left: 0.75rem; border-left: 2px solid var(--border-color);">';
+                        html += '<strong>' + escapeHtml(ex.name || 'Unnamed') + '</strong>';
+                        if (ex.pattern) html += '<br><span style="color: var(--text-muted);">' + escapeHtml(ex.pattern) + '</span>';
+                        if (ex.functional_purpose) html += '<br>' + escapeHtml(ex.functional_purpose);
+                        if (ex.category) html += '<br><span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">' + escapeHtml(ex.category) + '</span>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+            }
+            // Categories
+            if (l.exercise_categories_addressed && l.exercise_categories_addressed.length > 0) {
+                html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">Categories</strong><div style="margin-top: 0.25rem;">';
+                ALL_CATEGORIES.forEach(c => {
+                    const covered = l.exercise_categories_addressed.includes(c);
+                    html += '<span class="category-check ' + (covered ? 'covered' : 'uncovered') + '">' + (CATEGORY_LABELS[c] || c) + '</span>';
+                });
+                html += '</div></div>';
+            }
+            html += '</div></div>';
         });
     }
     html += '</div>';
+
+    // Add lesson expand/collapse handlers after render
+    setTimeout(() => {
+        document.querySelectorAll('.lesson-log-header').forEach(el => {
+            el.addEventListener('click', () => {
+                const target = document.getElementById(el.dataset.target);
+                if (target) target.style.display = target.style.display === 'none' ? 'block' : 'none';
+            });
+        });
+    }, 100);
 
     // Motor learning phase from most recent lesson
     if (lessons.length > 0 && lessons[0].motor_learning_phase) {

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pianist Portal : Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* ============================================================
+           Pianist Portal Styles
+           ============================================================ */
+
+        /* Nav */
+        .pianist-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .nav-brand {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--primary-color);
+            letter-spacing: 0.02em;
+        }
+        .nav-role {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            padding: 0.2rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            background: var(--bg-warm);
+        }
+        .nav-signout {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.35rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+        }
+        .nav-signout:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Header block */
+        .pianist-header {
+            padding: 1.5rem 0 1rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .pianist-header h1 {
+            font-size: 1.6rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+        .pianist-date {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Login */
+        .pianist-login-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 2rem 1.5rem;
+        }
+        .pianist-login-inner {
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+        }
+        .pianist-login-inner h2 {
+            font-weight: 300;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .pianist-login-inner p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 2rem;
+        }
+        .pianist-login-inner .form-group {
+            text-align: left;
+            margin-bottom: 1.25rem;
+        }
+        .pianist-login-inner input[type="text"],
+        .pianist-login-inner input[type="password"] {
+            width: 100%;
+            padding: 0.75rem 0.85rem;
+            font-size: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-family: inherit;
+            transition: border-color var(--transition);
+        }
+        .pianist-login-inner input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .pianist-login-inner label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+        .login-error {
+            color: #8b4040;
+            font-size: 13px;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Card system */
+        .student-card {
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            background: #fff;
+            overflow: hidden;
+            transition: box-shadow var(--transition);
+        }
+        .student-card:hover {
+            box-shadow: var(--shadow-card);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .card-header:hover {
+            background: var(--bg-warm);
+        }
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+        .card-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        .card-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .card-body {
+            display: none;
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .student-card.expanded .card-body {
+            display: block;
+        }
+        .card-chevron {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+        .student-card.expanded .card-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Section labels inside cards */
+        .section-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            margin-top: 1.25rem;
+        }
+        .section-label:first-child {
+            margin-top: 0.75rem;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin: 0.5rem 0;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Score link */
+        .score-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 13px;
+            color: var(--accent-color);
+            border-bottom: 1px solid rgba(156, 124, 92, 0.3);
+            transition: color var(--transition), border-color var(--transition);
+        }
+        .score-link:hover {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .score-icon {
+            font-size: 14px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+        }
+        .badge-approved {
+            background: rgba(90, 125, 94, 0.12);
+            color: #5a7d5e;
+        }
+        .badge-proposed {
+            background: rgba(176, 141, 62, 0.12);
+            color: #8b6e1f;
+        }
+        .badge-dropped {
+            background: rgba(156, 92, 92, 0.1);
+            color: #8b4040;
+            text-decoration: line-through;
+        }
+        .badge-phase {
+            background: var(--bg-warm);
+            color: var(--text-muted);
+        }
+
+        /* Events list */
+        .event-item {
+            display: flex;
+            gap: 1rem;
+            align-items: baseline;
+            padding: 0.4rem 0;
+            font-size: 14px;
+        }
+        .event-date {
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            min-width: 5rem;
+        }
+        .event-type {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        /* Jury section */
+        .jury-info {
+            background: var(--bg-warm);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        .jury-date {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-style: italic;
+            padding: 0.5rem 0;
+        }
+
+        /* Loading spinner */
+        .loading {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
+            .card-body {
+                padding: 0 1rem 1rem;
+            }
+            .card-header-left {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            .data-table {
+                font-size: 13px;
+            }
+            .data-table th,
+            .data-table td {
+                padding: 0.4rem 0.5rem;
+            }
+            .event-item {
+                flex-direction: column;
+                gap: 0.15rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="main-nav" style="display: none;">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="pianist-nav">
+            <span class="nav-brand">Voice Studio</span>
+            <span class="nav-role" id="pianist-name-badge"></span>
+        </div>
+        <button class="nav-signout" onclick="signOut()">Sign Out</button>
+    </div>
+</nav>
+
+<main class="container">
+
+<!-- LOGIN -->
+<div id="page-login" style="display: none;">
+    <div class="pianist-login-wrap">
+        <div class="pianist-login-inner">
+            <h2>Pianist Portal</h2>
+            <p>Repertoire, events, and scores for collaborative pianists.</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" id="login-email" placeholder="pianist@studio.kaylagautereaux.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+                <div class="login-error" id="login-error"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="page-main" style="display: none;">
+    <div class="pianist-header">
+        <h1 id="greeting">Repertoire Overview</h1>
+        <div class="pianist-date" id="today-date"></div>
+    </div>
+    <div id="students-content">
+        <div class="loading">Loading students...</div>
+    </div>
+</div>
+
+</main>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+
+const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+
+let sb = null;
+let currentUser = null;
+let pianistName = null;
+
+// ============================================================
+// INIT
+// ============================================================
+
+async function initApp() {
+    const { createClient } = window.supabase;
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (session) {
+        currentUser = session.user;
+        const role = currentUser.user_metadata?.role;
+        if (role !== 'pianist') {
+            alert('This page is for collaborative pianists only.');
+            await sb.auth.signOut();
+            showLogin();
+            return;
+        }
+        pianistName = currentUser.user_metadata?.pianist_name || 'Pianist';
+        showMain();
+    } else {
+        showLogin();
+    }
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            currentUser = session.user;
+            const role = currentUser.user_metadata?.role;
+            if (role !== 'pianist') {
+                alert('This page is for collaborative pianists only.');
+                await sb.auth.signOut();
+                return;
+            }
+            pianistName = currentUser.user_metadata?.pianist_name || 'Pianist';
+            showMain();
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            pianistName = null;
+            showLogin();
+        }
+    });
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+
+    let loginEmail = email;
+    if (!email.includes('@')) {
+        loginEmail = email + '@studio.kaylagautereaux.com';
+    }
+
+    const { error } = await sb.auth.signInWithPassword({ email: loginEmail, password });
+    if (error) {
+        errorEl.textContent = 'Invalid credentials.';
+        errorEl.style.display = 'block';
+    }
+}
+
+async function signOut() {
+    await sb.auth.signOut();
+    showLogin();
+}
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+
+function showLogin() {
+    document.getElementById('main-nav').style.display = 'none';
+    document.getElementById('page-main').style.display = 'none';
+    document.getElementById('page-login').style.display = 'block';
+}
+
+async function showMain() {
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('main-nav').style.display = '';
+    document.getElementById('page-main').style.display = 'block';
+
+    document.getElementById('pianist-name-badge').textContent = pianistName;
+    document.getElementById('today-date').textContent = formatDateLong(new Date());
+
+    await loadStudents();
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+
+async function loadStudents() {
+    const container = document.getElementById('students-content');
+    container.innerHTML = '<div class="loading">Loading students...</div>';
+
+    try {
+        // Get students assigned to this pianist
+        const { data: students, error: studentsErr } = await sb
+            .from('students')
+            .select('id, name, voice_type')
+            .eq('pianist_name', pianistName)
+            .order('name');
+
+        if (studentsErr) throw studentsErr;
+
+        if (!students || students.length === 0) {
+            container.innerHTML = '<div class="empty-state">No students currently assigned.</div>';
+            return;
+        }
+
+        const studentIds = students.map(s => s.id);
+
+        // Fetch repertoire, events, and jury plans in parallel
+        const [repResult, eventsResult, juryResult] = await Promise.all([
+            sb.from('repertoire')
+                .select('*')
+                .in('student_id', studentIds)
+                .or('status.eq.active,status.eq.current,status.is.null'),
+            sb.from('performance_events')
+                .select('*')
+                .in('student_id', studentIds)
+                .gte('date', todayISO())
+                .order('date'),
+            sb.from('jury_plans')
+                .select('*')
+                .in('student_id', studentIds)
+        ]);
+
+        const repertoire = repResult.data || [];
+        const events = eventsResult.data || [];
+        const juryPlans = juryResult.data || [];
+
+        // Also fetch jury selections for pieces on jury
+        let jurySelections = [];
+        if (juryPlans.length > 0) {
+            const planIds = juryPlans.map(j => j.id);
+            const { data: selData } = await sb
+                .from('jury_selections')
+                .select('*')
+                .in('jury_plan_id', planIds)
+                .neq('status', 'dropped');
+            jurySelections = selData || [];
+        }
+
+        // Index data by student
+        const repByStudent = groupBy(repertoire, 'student_id');
+        const eventsByStudent = groupBy(events, 'student_id');
+        const juryByStudent = groupBy(juryPlans, 'student_id');
+        const selByPlan = groupBy(jurySelections, 'jury_plan_id');
+
+        // Build cards
+        container.innerHTML = '';
+        students.forEach(student => {
+            const studentRep = repByStudent[student.id] || [];
+            const studentEvents = eventsByStudent[student.id] || [];
+            const studentJury = juryByStudent[student.id] || [];
+            const nextEvent = studentEvents[0];
+
+            const card = document.createElement('div');
+            card.className = 'student-card';
+            card.innerHTML = buildCardHTML(student, studentRep, studentEvents, studentJury, selByPlan, nextEvent);
+            container.appendChild(card);
+
+            // Toggle expand/collapse
+            card.querySelector('.card-header').addEventListener('click', () => {
+                card.classList.toggle('expanded');
+            });
+        });
+
+    } catch (err) {
+        container.innerHTML = '<div class="empty-state">Error loading data. Please try refreshing.</div>';
+        console.error('Load error:', err);
+    }
+}
+
+function buildCardHTML(student, repertoire, events, juryPlans, selByPlan, nextEvent) {
+    const metaParts = [];
+    if (student.voice_type) metaParts.push(student.voice_type);
+    if (nextEvent) metaParts.push('Next: ' + formatDateShort(nextEvent.date));
+
+    let html = `
+        <div class="card-header">
+            <div class="card-header-left">
+                <span class="card-name">${esc(student.name)}</span>
+                <span class="card-meta">${esc(metaParts.join('  /  '))}</span>
+            </div>
+            <span class="card-chevron">&#9662;</span>
+        </div>
+        <div class="card-body">
+    `;
+
+    // Active Repertoire
+    html += '<div class="section-label">Active Repertoire</div>';
+    if (repertoire.length === 0) {
+        html += '<div class="empty-state">No active repertoire.</div>';
+    } else {
+        html += `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Piece</th>
+                        <th>Composer</th>
+                        <th>Style</th>
+                        <th>Phase</th>
+                        <th>Jury</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        repertoire.forEach(r => {
+            const juryCell = r.jury_slot
+                ? `${esc(r.jury_slot)} <span class="badge ${badgeClass(r.jury_status)}">${esc(r.jury_status || '')}</span>`
+                : '';
+            const scoreCell = r.sheet_music_url
+                ? `<a href="${esc(r.sheet_music_url)}" target="_blank" rel="noopener" class="score-link"><span class="score-icon">&#9835;</span> PDF</a>`
+                : '';
+            const phaseCell = r.learning_phase
+                ? `<span class="badge badge-phase">${esc(r.learning_phase)}</span>`
+                : '';
+
+            html += `
+                <tr>
+                    <td>${esc(r.title || '')}</td>
+                    <td>${esc(r.composer || '')}</td>
+                    <td>${esc(r.style || '')}</td>
+                    <td>${phaseCell}</td>
+                    <td>${juryCell}</td>
+                    <td>${scoreCell}</td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table>';
+    }
+
+    // Upcoming Events
+    html += '<div class="section-label">Upcoming Events</div>';
+    if (events.length === 0) {
+        html += '<div class="empty-state">No upcoming events.</div>';
+    } else {
+        events.forEach(ev => {
+            html += `
+                <div class="event-item">
+                    <span class="event-date">${formatDateShort(ev.date)}</span>
+                    <span>
+                        ${ev.event_type ? '<span class="event-type">' + esc(ev.event_type) + '</span> ' : ''}
+                        ${esc(ev.title || '')}
+                        ${ev.location ? ' <span style="color: var(--text-muted); font-size: 13px;">(' + esc(ev.location) + ')</span>' : ''}
+                    </span>
+                </div>
+            `;
+        });
+    }
+
+    // Jury Info
+    const activeJury = juryPlans.filter(j => j.status !== 'exempt');
+    if (activeJury.length > 0) {
+        html += '<div class="section-label">Jury</div>';
+        activeJury.forEach(jury => {
+            const selections = selByPlan[jury.id] || [];
+            html += `
+                <div class="jury-info">
+                    <div class="jury-date">${jury.jury_date ? formatDateShort(jury.jury_date) : 'Date TBD'} ${jury.status ? '(' + esc(jury.status) + ')' : ''}</div>
+            `;
+            if (selections.length === 0) {
+                html += '<div class="empty-state">No pieces assigned to jury slots yet.</div>';
+            } else {
+                selections.forEach(sel => {
+                    html += `
+                        <div style="display: flex; gap: 0.75rem; align-items: baseline; padding: 0.25rem 0; font-size: 14px;">
+                            <span style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; min-width: 4rem;">${esc(sel.requirement_slot || '')}</span>
+                            <span>${esc(sel.title || '')}${sel.composer ? ', ' + esc(sel.composer) : ''}</span>
+                            <span class="badge ${badgeClass(sel.status)}">${esc(sel.status || '')}</span>
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+        });
+    }
+
+    html += '</div>';
+    return html;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function todayISO() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function formatDateLong(date) {
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function groupBy(arr, key) {
+    const map = {};
+    arr.forEach(item => {
+        const k = item[key];
+        if (!map[k]) map[k] = [];
+        map[k].push(item);
+    });
+    return map;
+}
+
+function badgeClass(status) {
+    if (!status) return '';
+    switch (status.toLowerCase()) {
+        case 'approved': return 'badge-approved';
+        case 'proposed': return 'badge-proposed';
+        case 'dropped': return 'badge-dropped';
+        default: return '';
+    }
+}
+
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+</body>
+</html>

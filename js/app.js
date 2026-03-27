@@ -625,7 +625,9 @@ function renderDashCards() {
     const jurySlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
 
     if (juryPlan) {
-        const approvedCount = jurySels.filter(s => s.status === 'approved').length;
+        const confirmedCount = jurySels.filter(s => s.status === 'confirmed').length;
+        const acceptedCount = jurySels.filter(s => s.status === 'accepted' || s.status === 'confirmed').length;
+        const proposedCount = jurySels.filter(s => s.status === 'proposed').length;
         const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
         if (juryPlan.jury_date) {
@@ -635,8 +637,9 @@ function renderDashCards() {
         } else {
             document.getElementById('dash-jury-value').textContent = statusLabel;
         }
-        document.getElementById('dash-jury-summary').textContent =
-            approvedCount + ' / ' + jurySlots.length + ' slots approved';
+        let jurySummary = confirmedCount + ' confirmed, ' + acceptedCount + ' accepted / ' + jurySlots.length + ' slots';
+        if (proposedCount > 0) jurySummary += ' · ' + proposedCount + ' pending';
+        document.getElementById('dash-jury-summary').textContent = jurySummary;
     } else {
         document.getElementById('dash-jury-value').textContent = '--';
         document.getElementById('dash-jury-summary').textContent = 'No jury plan yet';

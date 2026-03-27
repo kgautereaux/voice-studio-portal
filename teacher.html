@@ -1433,7 +1433,7 @@ async function renderToday() {
         activePlans.forEach(plan => {
             const name = studentNames[plan.student_id] || 'Unknown';
             const studentRep = juryRep.filter(r => r.student_id === plan.student_id && r.jury_status !== 'dropped');
-            const approved = studentRep.filter(r => r.jury_status === 'approved').length;
+            const approved = studentRep.filter(r => r.jury_status === 'accepted' || r.jury_status === 'confirmed').length;
             const proposed = studentRep.filter(r => r.jury_status === 'proposed').length;
             const parts = [];
             if (proposed > 0) parts.push(proposed + ' awaiting approval');
@@ -3069,7 +3069,7 @@ document.addEventListener('click', async (e) => {
         btn.textContent = 'Approving...';
         btn.style.opacity = '0.6';
         try {
-            await sb.from('jury_selections').update({ status: 'approved' }).eq('id', selId);
+            await sb.from('jury_selections').update({ status: 'accepted' }).eq('id', selId);
             btn.textContent = 'Approved';
             btn.style.background = 'rgba(90, 138, 90, 0.12)';
             btn.style.color = '#5a8a5a';

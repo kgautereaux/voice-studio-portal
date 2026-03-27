@@ -1374,11 +1374,13 @@ async function renderToday() {
     const students = await getStudents();
 
     // Parallel fetches
-    const [briefsRes, reflectionsRes, lessonsRes, draftsRes] = await Promise.all([
+    const [briefsRes, reflectionsRes, lessonsRes, draftsRes, juryPlansRes, juryRepRes] = await Promise.all([
         sb.from('pre_lesson_briefs').select('*').eq('date', today),
         sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
         sb.from('lesson_logs').select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps, breakthroughs').order('date', { ascending: false }),
-        sb.from('lesson_logs').select('id, student_id, date').eq('approved', false)
+        sb.from('lesson_logs').select('id, student_id, date').eq('approved', false),
+        sb.from('jury_plans').select('*').eq('status', 'planning'),
+        sb.from('repertoire').select('student_id, title, jury_slot, jury_status, jury_semester').not('jury_slot', 'is', null)
     ]);
 
     const briefs = briefsRes.data || [];
@@ -1418,6 +1420,36 @@ async function renderToday() {
         html += '<div style="font-size: 14px;"><strong style="color: #8b4040;">' + drafts.length + ' lesson log' + (drafts.length > 1 ? 's' : '') + ' awaiting review</strong><br><span style="font-size: 13px; color: var(--text-muted);">' + summary + '</span></div>';
         html += '<button onclick="switchPage(\'students\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Review</button>';
         html += '</div>';
+    }
+
+    // Jury readiness banner
+    const activePlans = juryPlansRes.data || [];
+    const juryRep = juryRepRes.data || [];
+    if (activePlans.length > 0) {
+        const studentNames = {};
+        students.forEach(s => { studentNames[s.id] = s.name; });
+
+        const alerts = [];
+        activePlans.forEach(plan => {
+            const name = studentNames[plan.student_id] || 'Unknown';
+            const studentRep = juryRep.filter(r => r.student_id === plan.student_id && r.jury_status !== 'dropped');
+            const approved = studentRep.filter(r => r.jury_status === 'approved').length;
+            const proposed = studentRep.filter(r => r.jury_status === 'proposed').length;
+            const parts = [];
+            if (proposed > 0) parts.push(proposed + ' awaiting approval');
+            if (approved < 6) parts.push((6 - approved) + ' slots unfilled');
+            if (parts.length > 0) {
+                alerts.push(name + ': ' + parts.join(', '));
+            }
+        });
+
+        if (alerts.length > 0) {
+            html += '<div style="background: rgba(156, 124, 92, 0.08); border: 1px solid rgba(156, 124, 92, 0.2); border-left: 3px solid var(--accent-color); border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">';
+            html += '<div style="font-size: 14px;"><strong style="color: var(--accent-color);">Jury Prep</strong><br>';
+            html += '<span style="font-size: 13px; color: var(--text-muted);">' + alerts.join(' · ') + '</span></div>';
+            html += '<button onclick="switchPage(\'students\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--accent-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">View</button>';
+            html += '</div>';
+        }
     }
 
     if (withBrief.length > 0) {

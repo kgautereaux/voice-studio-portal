@@ -17,6 +17,24 @@ let sb = null;
 let currentUser = null;
 let studentData = null;
 
+const JURY_REQUIREMENTS = {
+    'MFA_MT_Vocal_Pedagogy': ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song', 'Wildcard'],
+    'MM_Vocal_Pedagogy': ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4', 'Wildcard'],
+    'BFA_MT_Sophomore': ['32-bar cut', 'Legit selection', 'Additional selection 1', 'Additional selection 2', 'Wildcard']
+};
+
+function programKeyFromDegree(degree) {
+    if (!degree) return null;
+    const d = degree.toLowerCase();
+    if (d.includes('mfa') && d.includes('mt')) return 'MFA_MT_Vocal_Pedagogy';
+    if (d.includes('mm') && d.includes('ped')) return 'MM_Vocal_Pedagogy';
+    if (d.includes('bfa') && d.includes('mt') && d.includes('soph')) return 'BFA_MT_Sophomore';
+    if (d.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
+    if (d.includes('mm')) return 'MM_Vocal_Pedagogy';
+    if (d.includes('bfa')) return 'BFA_MT_Sophomore';
+    return null;
+}
+
 // ============================================================
 // INITIALIZATION
 // ============================================================
@@ -255,6 +273,28 @@ async function loadStudentData() {
         .order('studio_class_date');
 
     studentData.studioPlans = studioPlans || [];
+
+    // Load jury plan
+    const { data: juryPlans } = await sb
+        .from('jury_plans')
+        .select('*')
+        .eq('student_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    studentData.juryPlan = (juryPlans || [])[0] || null;
+
+    if (studentData.juryPlan) {
+        const { data: jurySelections } = await sb
+            .from('jury_selections')
+            .select('*')
+            .eq('jury_plan_id', studentData.juryPlan.id)
+            .order('requirement_slot');
+
+        studentData.jurySelections = jurySelections || [];
+    } else {
+        studentData.jurySelections = [];
+    }
 }
 
 // ============================================================
@@ -577,6 +617,30 @@ function renderDashCards() {
         document.getElementById('dash-studio-date').textContent = '--';
         document.getElementById('dash-studio-summary').textContent = 'No upcoming studio class';
     }
+
+    // JURY PLAN
+    const juryPlan = studentData.juryPlan;
+    const jurySels = studentData.jurySelections || [];
+    const pk = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
+    const jurySlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
+
+    if (juryPlan) {
+        const approvedCount = jurySels.filter(s => s.status === 'approved').length;
+        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+        if (juryPlan.jury_date) {
+            const jd = new Date(juryPlan.jury_date + 'T12:00:00');
+            document.getElementById('dash-jury-value').textContent =
+                jd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } else {
+            document.getElementById('dash-jury-value').textContent = statusLabel;
+        }
+        document.getElementById('dash-jury-summary').textContent =
+            approvedCount + ' / ' + jurySlots.length + ' slots approved';
+    } else {
+        document.getElementById('dash-jury-value').textContent = '--';
+        document.getElementById('dash-jury-summary').textContent = 'No jury plan yet';
+    }
 }
 
 function setupCardNavigation() {
@@ -629,6 +693,7 @@ function renderDetailPanel(panelId) {
     else if (panelId === 'detail-wins') renderWins();
     else if (panelId === 'detail-feedback') renderPerformanceFeedback();
     else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
+    else if (panelId === 'detail-jury') renderJuryPlan();
 }
 
 function renderPerformanceFeedback() {
@@ -1766,6 +1831,173 @@ async function submitStudioRep(plan, myEntry) {
 // ============================================================
 // UTILITIES
 // ============================================================
+
+// ============================================================
+// JURY PLAN (Student Portal)
+// ============================================================
+
+function renderJuryPlan() {
+    const container = document.getElementById('jury-plan-content');
+    if (!container || !studentData) return;
+
+    const juryPlan = studentData.juryPlan;
+    const sels = studentData.jurySelections || [];
+    const pk = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
+    const slots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
+
+    if (!juryPlan) {
+        container.innerHTML = '<p class="text-muted">No jury plan has been created yet. Contact Prof. G if you have questions about your jury requirements.</p>';
+        return;
+    }
+
+    const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    let html = '<p style="font-size: 14px; margin-bottom: 1rem;">';
+    html += '<strong>Status:</strong> ' + escapeHtml(statusLabel);
+    if (juryPlan.jury_date) {
+        const jd = new Date(juryPlan.jury_date + 'T12:00:00');
+        html += ' · <strong>Jury Date:</strong> ' + jd.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+    if (juryPlan.status === 'exempt' && juryPlan.exemption_reason) {
+        html += ' · ' + escapeHtml(juryPlan.exemption_reason);
+    }
+    html += '</p>';
+
+    if (juryPlan.status === 'exempt') {
+        container.innerHTML = html;
+        return;
+    }
+
+    // Requirements table
+    const activeSelections = sels.filter(s => s.status !== 'dropped');
+    const droppedSelections = sels.filter(s => s.status === 'dropped');
+
+    html += '<table><thead><tr><th>Requirement</th><th>Piece</th><th>Composer</th><th>Status</th></tr></thead><tbody>';
+
+    slots.forEach(slot => {
+        const matching = activeSelections.filter(s => s.requirement_slot === slot);
+        if (matching.length === 0) {
+            html += '<tr><td>' + escapeHtml(slot) + '</td><td colspan="3" class="text-muted">No selection yet</td></tr>';
+        } else {
+            matching.forEach(sel => {
+                html += '<tr>';
+                html += '<td>' + escapeHtml(slot) + '</td>';
+                html += '<td><strong>' + escapeHtml(sel.title || '') + '</strong></td>';
+                html += '<td>' + escapeHtml(sel.composer || '') + '</td>';
+                html += '<td>';
+                if (sel.status === 'approved') {
+                    html += '<span class="tag" style="background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
+                } else if (sel.status === 'proposed' && sel.proposed_by === 'teacher') {
+                    html += '<span class="tag" style="background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed by Prof. G</span>';
+                    html += ' <button class="btn btn-primary btn-small btn-jury-accept" data-sel-id="' + sel.id + '" style="font-size: 11px; padding: 0.2rem 0.5rem; margin-left: 0.35rem;">Accept</button>';
+                } else if (sel.status === 'proposed' && sel.proposed_by === 'student') {
+                    html += '<span class="tag" style="background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Awaiting Prof. G</span>';
+                }
+                html += '</td></tr>';
+            });
+        }
+    });
+
+    html += '</tbody></table>';
+
+    // Dropped pieces
+    if (droppedSelections.length > 0) {
+        html += '<h3 style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">Dropped</h3>';
+        droppedSelections.forEach(sel => {
+            html += '<p style="text-decoration: line-through; color: var(--text-muted); font-size: 13px;">';
+            html += escapeHtml(sel.requirement_slot) + ': ' + escapeHtml(sel.title || '');
+            if (sel.composer) html += ' (' + escapeHtml(sel.composer) + ')';
+            html += '</p>';
+        });
+    }
+
+    // Propose a piece form
+    html += '<h3 style="margin-top: 2rem;">Propose a Piece</h3>';
+    html += '<form id="jury-student-propose-form" class="dash-add-rep">';
+    html += '<div class="form-group"><label for="jury-s-slot">Requirement Slot</label>';
+    html += '<select id="jury-s-slot">';
+    slots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
+    html += '</select></div>';
+    html += '<div class="dash-rep-grid">';
+    html += '<div class="form-group"><label for="jury-s-title">Title</label><input type="text" id="jury-s-title" required placeholder="Song or aria title"></div>';
+    html += '<div class="form-group"><label for="jury-s-composer">Composer</label><input type="text" id="jury-s-composer" placeholder="Composer name"></div>';
+    html += '</div>';
+    html += '<div class="form-group"><label for="jury-s-notes">Notes <span class="hint">(optional)</span></label><input type="text" id="jury-s-notes" placeholder="Why this piece, or other context"></div>';
+    html += '<button type="submit" class="btn btn-primary btn-small">Propose to Prof. G</button>';
+    html += '</form>';
+
+    container.innerHTML = html;
+
+    // Bind form submit
+    const form = document.getElementById('jury-student-propose-form');
+    if (form && !form.dataset.bound) {
+        form.dataset.bound = 'true';
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !studentData.juryPlan) return;
+
+            const title = document.getElementById('jury-s-title').value.trim();
+            const composer = document.getElementById('jury-s-composer').value.trim();
+            const slot = document.getElementById('jury-s-slot').value;
+            const notes = document.getElementById('jury-s-notes').value.trim();
+
+            if (!title) return;
+
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            const { error } = await sb.from('jury_selections').insert({
+                jury_plan_id: studentData.juryPlan.id,
+                requirement_slot: slot,
+                title: title,
+                composer: composer || null,
+                proposed_by: 'student',
+                status: 'proposed',
+                notes: notes || null
+            });
+
+            if (error) {
+                alert('Error proposing piece: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Propose to Prof. G';
+                return;
+            }
+
+            form.reset();
+            btn.disabled = false;
+            btn.textContent = 'Propose to Prof. G';
+
+            // Reload data and re-render
+            await loadStudentData();
+            renderJuryPlan();
+        });
+    }
+
+    // Bind accept buttons
+    container.querySelectorAll('.btn-jury-accept').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const selId = btn.dataset.selId;
+            btn.disabled = true;
+            btn.textContent = 'Accepting...';
+
+            const { error } = await sb.from('jury_selections')
+                .update({ status: 'approved' })
+                .eq('id', selId);
+
+            if (error) {
+                alert('Error: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Accept';
+                return;
+            }
+
+            // Reload and re-render
+            await loadStudentData();
+            renderJuryPlan();
+        });
+    });
+}
 
 function escapeHtml(str) {
     if (!str) return '';

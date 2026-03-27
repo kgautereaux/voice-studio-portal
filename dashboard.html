@@ -325,6 +325,11 @@
                 <div class="dash-card-value" id="dash-studio-date">--</div>
                 <div class="dash-card-summary" id="dash-studio-summary">Loading...</div>
             </div>
+            <div class="dash-card" data-detail="detail-jury">
+                <div class="dash-card-label">Jury Plan</div>
+                <div class="dash-card-value" id="dash-jury-value">--</div>
+                <div class="dash-card-summary" id="dash-jury-summary">Loading...</div>
+            </div>
         </div>
 
         <!-- DETAIL PANELS (hidden by default, shown on card click) -->
@@ -413,6 +418,15 @@
 
                 <h3 style="margin-top: 2rem;">Upcoming Studio Class</h3>
                 <div id="studio-class-plan"><p class="text-muted">Loading...</p></div>
+            </div>
+        </div>
+
+        <div class="detail-panel" id="detail-jury" style="display:none;">
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Jury Plan</h2>
+                <p class="text-muted" style="margin-bottom: 1.5rem;">Your jury repertoire requirements, proposed pieces, and approval status.</p>
+                <div id="jury-plan-content"><p class="text-muted">Loading...</p></div>
             </div>
         </div>
 

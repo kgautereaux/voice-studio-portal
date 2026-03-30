@@ -2519,17 +2519,9 @@ async function renderEvents() {
     futureDate.setDate(futureDate.getDate() + 60);
     const futureDateStr = futureDate.toLocaleDateString('en-CA');
 
-    // Past 30 days
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 30);
-    const pastDateStr = pastDate.toLocaleDateString('en-CA');
-
-    let eventsRes, feedbackRes;
+    let eventsRes;
     try {
-        [eventsRes, feedbackRes] = await Promise.all([
-            sb.from('performance_events').select('*').gte('date', today).lte('date', futureDateStr).order('date'),
-            sb.from('jury_feedback').select('*').gte('date', pastDateStr).lte('date', today).order('date', { ascending: false })
-        ]);
+        eventsRes = await sb.from('performance_events').select('*').gte('date', today).lte('date', futureDateStr).order('date');
     } catch (err) {
         console.error('[Teacher] renderEvents fetch error:', err);
         container.innerHTML = '<p class="text-muted">Error loading events. Check console for details.</p>';
@@ -2537,7 +2529,6 @@ async function renderEvents() {
     }
 
     const events = eventsRes.data || [];
-    const feedback = feedbackRes.data || [];
 
     let html = '';
 
@@ -2572,22 +2563,6 @@ async function renderEvents() {
                 html += '</div>';
                 html += '</div>';
             });
-        });
-    }
-
-    // Recent feedback
-    if (feedback.length > 0) {
-        html += '<div class="section-label" style="margin-top: 2rem;">Recent Feedback (Last 30 Days)</div>';
-        feedback.forEach(f => {
-            const st = sMap[f.student_id];
-            html += '<div class="feedback-block">';
-            html += '<p><strong>' + escapeHtml(st ? st.name : 'Unknown') + '</strong>';
-            html += ' : ' + escapeHtml(f.event_type || '') + ' on ' + escapeHtml(formatShortDate(f.date));
-            if (f.outcome) html += ' : ' + escapeHtml(f.outcome);
-            html += '</p>';
-            if (f.panelist_name) html += '<p class="fb-panelist">' + escapeHtml(f.panelist_name) + (f.panelist_role ? ' (' + escapeHtml(f.panelist_role) + ')' : '') + '</p>';
-            if (f.comments) html += '<p>' + escapeHtml(f.comments) + '</p>';
-            html += '</div>';
         });
     }
 

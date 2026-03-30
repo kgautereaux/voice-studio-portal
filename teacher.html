@@ -1976,23 +1976,29 @@ async function loadStudentDetail(bodyEl, studentId) {
 
         html += '</tbody></table></div>';
 
-        // Propose a piece form (if jury plan exists and not exempt)
+        // Unified "Add a Piece" form with optional jury slot
+        html += '<div class="form-card" style="margin-top: 1rem;"><h3>Add a Piece</h3>';
+        html += '<form class="teacher-add-piece-form" data-student-id="' + studentId + '"' + (juryPlan ? ' data-plan-id="' + juryPlan.id + '"' : '') + '>';
+        html += '<div class="form-row-inline">';
+        html += '<div class="form-row"><label>Title</label><input type="text" name="piece-title" required></div>';
+        html += '<div class="form-row"><label>Composer</label><input type="text" name="piece-composer"></div>';
+        html += '</div>';
+        html += '<div class="form-row-inline">';
+        html += '<div class="form-row"><label>Style</label>';
+        html += '<select name="piece-style"><option value="">Select...</option>';
+        html += '<option value="classical">Classical</option><option value="MT">Musical Theater</option>';
+        html += '<option value="pop-rock">Pop/Rock</option><option value="jazz">Jazz</option>';
+        html += '<option value="folk">Folk</option><option value="art song">Art Song</option>';
+        html += '<option value="other">Other</option></select></div>';
         if (juryPlan && juryPlan.status !== 'exempt') {
-            html += '<div class="form-card" style="margin-top: 1rem;"><h3>Propose a Jury Piece</h3>';
-            html += '<form class="jury-propose-form" data-plan-id="' + juryPlan.id + '" data-student-id="' + studentId + '">';
-            html += '<div class="form-row-inline">';
-            html += '<div class="form-row"><label>Slot</label><select name="jury-slot">';
+            html += '<div class="form-row"><label>Jury Slot</label><select name="piece-jury-slot">';
+            html += '<option value="">Not for jury</option>';
             jurySlots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
             html += '</select></div>';
-            html += '<div class="form-row"><label>Title</label><input type="text" name="jury-title" required></div>';
-            html += '</div>';
-            html += '<div class="form-row-inline">';
-            html += '<div class="form-row"><label>Composer</label><input type="text" name="jury-composer"></div>';
-            html += '<div class="form-row"><label>Notes</label><input type="text" name="jury-notes" placeholder="Optional"></div>';
-            html += '</div>';
-            html += '<button type="submit" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-top: 0.5rem;">Propose</button>';
-            html += '</form></div>';
         }
+        html += '</div>';
+        html += '<button type="submit" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-top: 0.5rem;">Add</button>';
+        html += '</form></div>';
     }
     html += '</div>';
 
@@ -3123,36 +3129,57 @@ document.addEventListener('click', async (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-    if (!e.target.classList.contains('jury-propose-form')) return;
+    if (!e.target.classList.contains('teacher-add-piece-form')) return;
     e.preventDefault();
     const form = e.target;
-    const planId = form.dataset.planId;
     const studentId = form.dataset.studentId;
-    const slot = form.querySelector('[name="jury-slot"]').value;
-    const title = form.querySelector('[name="jury-title"]').value.trim();
-    const composer = form.querySelector('[name="jury-composer"]').value.trim();
-    const notes = form.querySelector('[name="jury-notes"]').value.trim();
+    const planId = form.dataset.planId;
+    const title = form.querySelector('[name="piece-title"]').value.trim();
+    const composer = form.querySelector('[name="piece-composer"]').value.trim();
+    const style = form.querySelector('[name="piece-style"]')?.value || '';
+    const jurySlotEl = form.querySelector('[name="piece-jury-slot"]');
+    const jurySlot = jurySlotEl ? jurySlotEl.value : '';
 
     if (!title) return;
 
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.textContent = 'Submitting...';
+    btn.textContent = 'Adding...';
 
     try {
-        await sb.from('jury_selections').insert({
-            jury_plan_id: planId,
-            requirement_slot: slot,
+        // Add to repertoire
+        const record = {
+            student_id: studentId,
             title: title,
             composer: composer || null,
-            proposed_by: 'teacher',
-            status: 'proposed',
-            notes: notes || null
-        });
+            style: style || null,
+            status: 'in_progress',
+            assignment_type: 'short_term',
+        };
+        if (jurySlot) {
+            record.jury_slot = jurySlot;
+            record.jury_status = 'proposed';
+            record.proposed_by = 'teacher';
+        }
+
+        await sb.from('repertoire').insert(record);
+
+        // If jury slot selected and plan exists, also create jury_selection
+        if (jurySlot && planId) {
+            await sb.from('jury_selections').insert({
+                jury_plan_id: planId,
+                requirement_slot: jurySlot,
+                title: title,
+                composer: composer || null,
+                proposed_by: 'teacher',
+                status: 'proposed',
+            });
+        }
+
         form.reset();
         btn.disabled = false;
-        btn.textContent = 'Propose';
-        showToast('Piece proposed.');
+        btn.textContent = 'Add';
+        showToast(jurySlot ? 'Piece added and proposed for jury.' : 'Piece added to repertoire.');
 
         // Reload the student detail
         const card = form.closest('.card');
@@ -3163,8 +3190,8 @@ document.addEventListener('submit', async (e) => {
         }
     } catch (err) {
         btn.disabled = false;
-        btn.textContent = 'Propose';
-        showToast('Error: ' + (err.message || 'Failed to propose'));
+        btn.textContent = 'Add';
+        showToast('Error: ' + (err.message || 'Failed to add piece'), 'error');
     }
 });
 

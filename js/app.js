@@ -690,7 +690,7 @@ function setupCardNavigation() {
 function renderDetailPanel(panelId) {
     if (panelId === 'detail-lesson') renderLessonDebrief();
     else if (panelId === 'detail-plan') { renderPracticePlan(); renderPastPlans(); }
-    else if (panelId === 'detail-repertoire') { renderRepertoire(); setupRepForm(); }
+    else if (panelId === 'detail-repertoire') { renderRepertoire(); }
     else if (panelId === 'detail-wins') renderWins();
     else if (panelId === 'detail-feedback') renderPerformanceFeedback();
     else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
@@ -1259,22 +1259,32 @@ function renderRepertoire() {
         html += '</tbody></table>';
     }
 
-    // Propose a jury piece form (if jury plan exists and not exempt)
+    // Unified "Add a Piece" form with optional jury slot
+    html += '<h3 style="margin-top: 2rem;">Add a Piece</h3>';
+    html += '<form id="add-rep-form" class="dash-add-rep">';
+    html += '<div class="form-group"><label for="rep-title">Title</label>';
+    html += '<input type="text" id="rep-title" required placeholder="Song or aria title"></div>';
+    html += '<div class="dash-rep-grid">';
+    html += '<div class="form-group"><label for="rep-composer">Composer</label>';
+    html += '<input type="text" id="rep-composer" placeholder="Composer name"></div>';
+    html += '<div class="form-group"><label for="rep-style">Style</label>';
+    html += '<select id="rep-style"><option value="">Select...</option>';
+    html += '<option value="classical">Classical</option><option value="MT">Musical Theater</option>';
+    html += '<option value="pop-rock">Pop/Rock</option><option value="jazz">Jazz</option>';
+    html += '<option value="folk">Folk</option><option value="art song">Art Song</option>';
+    html += '<option value="other">Other</option></select></div>';
+    html += '</div>';
+    // Jury slot dropdown (only if jury plan exists and not exempt)
     if (juryPlan && juryPlan.status !== 'exempt') {
-        html += '<h3 style="margin-top: 2rem;">Propose a Jury Piece</h3>';
-        html += '<form id="jury-student-propose-form" class="dash-add-rep">';
-        html += '<div class="form-group"><label for="jury-s-slot">Requirement Slot</label>';
-        html += '<select id="jury-s-slot">';
+        html += '<div class="form-group"><label for="rep-jury-slot">Jury Slot <span class="hint">(optional: assign to a jury requirement)</span></label>';
+        html += '<select id="rep-jury-slot"><option value="">Not for jury</option>';
         jurySlots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
         html += '</select></div>';
-        html += '<div class="dash-rep-grid">';
-        html += '<div class="form-group"><label for="jury-s-title">Title</label><input type="text" id="jury-s-title" required placeholder="Song or aria title"></div>';
-        html += '<div class="form-group"><label for="jury-s-composer">Composer</label><input type="text" id="jury-s-composer" placeholder="Composer name"></div>';
-        html += '</div>';
-        html += '<div class="form-group"><label for="jury-s-notes">Notes <span class="hint">(optional)</span></label><input type="text" id="jury-s-notes" placeholder="Why this piece, or other context"></div>';
-        html += '<button type="submit" class="btn btn-primary btn-small">Propose to Prof. G</button>';
-        html += '</form>';
     }
+    html += '<div class="form-group"><label for="rep-sheet-music">Sheet Music Link <span class="hint">(optional)</span></label>';
+    html += '<input type="url" id="rep-sheet-music" placeholder="https://drive.google.com/..."></div>';
+    html += '<button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>';
+    html += '</form>';
 
     // Dropped jury selections
     const droppedSels = jurySels.filter(s => s.status === 'dropped');
@@ -1346,47 +1356,76 @@ function renderRepertoire() {
         });
     });
 
-    // Jury propose form
-    const juryForm = document.getElementById('jury-student-propose-form');
-    if (juryForm && !juryForm.dataset.bound) {
-        juryForm.dataset.bound = 'true';
-        juryForm.addEventListener('submit', async (e) => {
+    // Unified add-piece form (repertoire + optional jury selection)
+    const addForm = document.getElementById('add-rep-form');
+    if (addForm && !addForm.dataset.bound) {
+        addForm.dataset.bound = 'true';
+        addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUser || !studentData.juryPlan) return;
+            if (!currentUser) return;
 
-            const title = document.getElementById('jury-s-title').value.trim();
-            const composer = document.getElementById('jury-s-composer').value.trim();
-            const slot = document.getElementById('jury-s-slot').value;
-            const notes = document.getElementById('jury-s-notes').value.trim();
+            const title = document.getElementById('rep-title').value.trim();
+            const composer = document.getElementById('rep-composer').value.trim();
+            const style = document.getElementById('rep-style').value;
+            const sheetMusic = document.getElementById('rep-sheet-music')?.value.trim();
+            const jurySlotEl = document.getElementById('rep-jury-slot');
+            const jurySlotVal = jurySlotEl ? jurySlotEl.value : '';
 
             if (!title) return;
 
-            const btn = juryForm.querySelector('button[type="submit"]');
+            const btn = addForm.querySelector('button[type="submit"]');
             btn.disabled = true;
-            btn.textContent = 'Submitting...';
+            btn.textContent = 'Adding...';
 
-            const { error } = await sb.from('jury_selections').insert({
-                jury_plan_id: studentData.juryPlan.id,
-                requirement_slot: slot,
-                title: title,
-                composer: composer || null,
-                proposed_by: 'student',
-                status: 'proposed',
-                notes: notes || null
-            });
+            try {
+                // Add to repertoire
+                const record = {
+                    student_id: currentUser.id,
+                    title: title,
+                    composer: composer || null,
+                    style: style || null,
+                    status: 'in_progress',
+                    assignment_type: 'short_term',
+                };
+                if (sheetMusic) record.sheet_music_url = sheetMusic;
+                if (jurySlotVal) {
+                    record.jury_slot = jurySlotVal;
+                    record.jury_status = 'proposed';
+                    record.proposed_by = 'student';
+                }
 
-            if (error) {
-                alert('Error proposing piece: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = 'Propose to Prof. G';
-                return;
+                const { error: repError } = await sb.from('repertoire').insert(record);
+                if (repError) {
+                    alert('Error adding piece: ' + repError.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Add to Repertoire';
+                    return;
+                }
+
+                // If jury slot selected and jury plan exists, also create jury_selection
+                if (jurySlotVal && studentData.juryPlan) {
+                    const { error: juryError } = await sb.from('jury_selections').insert({
+                        jury_plan_id: studentData.juryPlan.id,
+                        requirement_slot: jurySlotVal,
+                        title: title,
+                        composer: composer || null,
+                        proposed_by: 'student',
+                        status: 'proposed',
+                    });
+                    if (juryError) {
+                        console.error('[VS] Jury selection insert error:', juryError);
+                    }
+                }
+
+                addForm.reset();
+                await loadStudentData();
+                renderRepertoire();
+            } catch (err) {
+                console.error('[VS] Add piece error:', err);
+                alert('Something went wrong. Please try again.');
             }
-
-            juryForm.reset();
             btn.disabled = false;
-            btn.textContent = 'Propose to Prof. G';
-            await loadStudentData();
-            renderRepertoire();
+            btn.textContent = 'Add to Repertoire';
         });
     }
 }

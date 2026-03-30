@@ -50,6 +50,9 @@ async function initApp() {
     const { data: { session } } = await sb.auth.getSession();
     console.log('[VS] session:', session ? session.user.email : 'none');
 
+    // Set up navigation first so form handlers are always bound
+    setupNavigation();
+
     if (session) {
         currentUser = session.user;
         const hasConsent = await checkConsent();
@@ -62,7 +65,11 @@ async function initApp() {
                 return;
             }
         } else {
-            await loadStudentData();
+            try {
+                await loadStudentData();
+            } catch (err) {
+                console.error('[VS] loadStudentData error:', err);
+            }
             if (window.location.pathname.includes('consent.html')) {
                 window.location.href = 'dashboard.html';
                 return;
@@ -86,7 +93,11 @@ async function initApp() {
             if (!hasConsent) {
                 window.location.href = 'consent.html';
             } else {
-                await loadStudentData();
+                try {
+                    await loadStudentData();
+                } catch (err) {
+                    console.error('[VS] loadStudentData error:', err);
+                }
                 showDashboard();
             }
         } else if (event === 'SIGNED_OUT') {
@@ -95,9 +106,6 @@ async function initApp() {
             showLogin();
         }
     });
-
-    // Set up navigation
-    setupNavigation();
 }
 
 // ============================================================
@@ -1426,87 +1434,107 @@ function renderProgressChart(sv) {
 async function handleReflectionSubmit(event) {
     event.preventDefault();
 
-    if (!currentUser) return;
+    if (!currentUser) {
+        alert('You must be logged in to submit a reflection. Please refresh and log in again.');
+        return;
+    }
 
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
-    // Collect vocal load entries
-    const vocalLoad = [];
-    document.querySelectorAll('.vocal-load-entry').forEach(entry => {
-        const activity = entry.querySelector('[name="vl-activity"]')?.value;
-        const duration = entry.querySelector('[name="vl-duration"]')?.value;
-        const intensity = entry.querySelector('[name="vl-intensity"]')?.value;
-        const fatigue = entry.querySelector('[name="vl-fatigue"]')?.value;
-        if (activity) {
-            vocalLoad.push({
-                activity,
-                duration_minutes: parseInt(duration) || null,
-                intensity,
-                fatigue_noticed: fatigue === 'yes',
-            });
+    try {
+        // Collect vocal load entries
+        const vocalLoad = [];
+        document.querySelectorAll('.vocal-load-entry').forEach(entry => {
+            const activity = entry.querySelector('[name="vl-activity"]')?.value;
+            const duration = entry.querySelector('[name="vl-duration"]')?.value;
+            const intensity = entry.querySelector('[name="vl-intensity"]')?.value;
+            const fatigue = entry.querySelector('[name="vl-fatigue"]')?.value;
+            if (activity) {
+                vocalLoad.push({
+                    activity,
+                    duration_minutes: parseInt(duration) || null,
+                    intensity,
+                    fatigue_noticed: fatigue === 'yes',
+                });
+            }
+        });
+
+        // Collect repertoire progress
+        const repProgress = [];
+        document.querySelectorAll('.rep-progress-entry').forEach(entry => {
+            const title = entry.querySelector('[name="rep-title"]')?.value;
+            const phase = entry.querySelector('[name="rep-phase"]')?.value;
+            const notes = entry.querySelector('[name="rep-notes"]')?.value;
+            if (title) {
+                repProgress.push({ title, current_phase: phase, notes });
+            }
+        });
+
+        const reflection = {
+            student_id: currentUser.id,
+            practice_focus: form.querySelector('#practice-focus')?.value || null,
+            self_observations: form.querySelector('#self-observations')?.value || null,
+            fatigue_notes: form.querySelector('#fatigue-notes')?.value || null,
+            vocal_load: vocalLoad,
+            voice_feeling: parseInt(form.querySelector('#voice-feeling')?.value) || null,
+            artistic_confidence: parseInt(form.querySelector('#artistic-confidence')?.value) || null,
+            engagement: parseInt(form.querySelector('#engagement')?.value) || null,
+            repertoire_progress: repProgress,
+            questions: form.querySelector('#questions')?.value || null,
+            wins: form.querySelector('#wins')?.value || null,
+        };
+
+        console.log('[VS] Submitting reflection for', currentUser.id);
+
+        const { data, error } = await sb
+            .from('reflections')
+            .insert(reflection)
+            .select();
+
+        if (error) {
+            console.error('[VS] Reflection insert error:', error);
+            alert('Error submitting reflection: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Reflection';
+            return;
         }
-    });
 
-    // Collect repertoire progress
-    const repProgress = [];
-    document.querySelectorAll('.rep-progress-entry').forEach(entry => {
-        const title = entry.querySelector('[name="rep-title"]')?.value;
-        const phase = entry.querySelector('[name="rep-phase"]')?.value;
-        const notes = entry.querySelector('[name="rep-notes"]')?.value;
-        if (title) {
-            repProgress.push({ title, current_phase: phase, notes });
-        }
-    });
+        console.log('[VS] Reflection submitted:', data);
 
-    const reflection = {
-        student_id: currentUser.id,
-        practice_focus: form.querySelector('#practice-focus')?.value || null,
-        self_observations: form.querySelector('#self-observations')?.value || null,
-        fatigue_notes: form.querySelector('#fatigue-notes')?.value || null,
-        vocal_load: vocalLoad,
-        voice_feeling: parseInt(form.querySelector('#voice-feeling')?.value) || null,
-        artistic_confidence: parseInt(form.querySelector('#artistic-confidence')?.value) || null,
-        engagement: parseInt(form.querySelector('#engagement')?.value) || null,
-        repertoire_progress: repProgress,
-        questions: form.querySelector('#questions')?.value || null,
-        wins: form.querySelector('#wins')?.value || null,
-    };
+        // Success
+        form.reset();
+        document.querySelectorAll('#reflection-form input[type="range"]').forEach(input => {
+            const display = document.getElementById(input.id + '-value');
+            if (display) display.textContent = '5';
+            input.value = 5;
+        });
 
-    const { data, error } = await sb
-        .from('reflections')
-        .insert(reflection);
-
-    if (error) {
-        alert('Error submitting reflection: ' + error.message);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Reflection';
-        return;
+
+        // Show confirmation
+        const msg = document.createElement('div');
+        msg.className = 'card';
+        msg.style.borderLeftColor = 'var(--success-color)';
+        msg.innerHTML = '<p><strong>Reflection submitted.</strong> Your input will be part of your next pre-lesson brief.</p>';
+        form.parentNode.insertBefore(msg, form);
+        setTimeout(() => msg.remove(), 5000);
+
+        // Reload data
+        try {
+            await loadStudentData();
+        } catch (err) {
+            console.error('[VS] Reload after reflection failed:', err);
+        }
+    } catch (err) {
+        console.error('[VS] Reflection submission error:', err);
+        alert('Something went wrong submitting your reflection. Please try again, or let Prof. G know.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Reflection';
     }
-
-    // Success
-    form.reset();
-    document.querySelectorAll('input[type="range"]').forEach(input => {
-        const display = document.getElementById(input.id + '-value');
-        if (display) display.textContent = '5';
-        input.value = 5;
-    });
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Reflection';
-
-    // Show confirmation
-    const msg = document.createElement('div');
-    msg.className = 'card';
-    msg.style.borderLeftColor = 'var(--success-color)';
-    msg.innerHTML = '<p><strong>Reflection submitted.</strong> Your input will be part of your next pre-lesson brief.</p>';
-    form.parentNode.insertBefore(msg, form);
-    setTimeout(() => msg.remove(), 5000);
-
-    // Reload data
-    await loadStudentData();
 }
 
 function addVocalLoadEntry() {

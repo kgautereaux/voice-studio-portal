@@ -1195,7 +1195,13 @@ function getGreeting() {
 }
 
 function todayStr() {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toLocaleDateString('en-CA');
+}
+
+function tomorrowStr() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toLocaleDateString('en-CA');
 }
 
 function formatDate(d) {
@@ -1365,6 +1371,7 @@ function inlineFormat(text) {
 
 async function renderToday() {
     const today = todayStr();
+    const tomorrow = tomorrowStr();
     document.getElementById('greeting').textContent = getGreeting();
     document.getElementById('today-date').textContent = formatDate(today);
 
@@ -1373,22 +1380,31 @@ async function renderToday() {
 
     const students = await getStudents();
 
-    // Parallel fetches
-    const [briefsRes, reflectionsRes, lessonsRes, draftsRes, juryPlansRes, juryRepRes] = await Promise.all([
-        sb.from('pre_lesson_briefs').select('*').eq('date', today),
-        sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
-        sb.from('lesson_logs').select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps, breakthroughs').order('date', { ascending: false }),
-        sb.from('lesson_logs').select('id, student_id, date').eq('approved', false),
-        sb.from('jury_plans').select('*').eq('status', 'planning'),
-        sb.from('repertoire').select('student_id, title, jury_slot, jury_status, jury_semester').not('jury_slot', 'is', null)
-    ]);
+    // Parallel fetches: briefs for today and tomorrow
+    let briefsRes, reflectionsRes, lessonsRes, draftsRes, juryPlansRes, juryRepRes;
+    try {
+        [briefsRes, reflectionsRes, lessonsRes, draftsRes, juryPlansRes, juryRepRes] = await Promise.all([
+            sb.from('pre_lesson_briefs').select('*').gte('date', today).lte('date', tomorrow),
+            sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
+            sb.from('lesson_logs').select('student_id, date, repertoire_worked, exercise_categories_addressed, next_steps, breakthroughs').order('date', { ascending: false }),
+            sb.from('lesson_logs').select('id, student_id, date').eq('approved', false),
+            sb.from('jury_plans').select('*').eq('status', 'planning'),
+            sb.from('repertoire').select('student_id, title, jury_slot, jury_status, jury_semester').not('jury_slot', 'is', null)
+        ]);
+    } catch (err) {
+        console.error('[Teacher] renderToday fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading data. Check console for details.</p>';
+        return;
+    }
 
     const briefs = briefsRes.data || [];
     const reflections = reflectionsRes.data || [];
     const lessons = lessonsRes.data || [];
 
+    // Group briefs by student, preferring today over tomorrow
     const briefMap = {};
-    briefs.forEach(b => { briefMap[b.student_id] = b; });
+    briefs.sort((a, b) => a.date.localeCompare(b.date));
+    briefs.forEach(b => { if (!briefMap[b.student_id]) briefMap[b.student_id] = b; });
 
     const reflectionMap = {};
     reflections.forEach(r => { if (!reflectionMap[r.student_id]) reflectionMap[r.student_id] = r; });
@@ -1453,10 +1469,22 @@ async function renderToday() {
     }
 
     if (withBrief.length > 0) {
-        html += '<div class="section-label">' + withBrief.length + ' Lesson' + (withBrief.length > 1 ? 's' : '') + ' Today</div>';
-        withBrief.forEach(s => {
-            html += renderTodayCard(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
-        });
+        // Group by brief date for labeling
+        const todayBriefs = withBrief.filter(s => briefMap[s.id].date === today);
+        const tomorrowBriefs = withBrief.filter(s => briefMap[s.id].date === tomorrow);
+
+        if (todayBriefs.length > 0) {
+            html += '<div class="section-label">' + todayBriefs.length + ' Lesson' + (todayBriefs.length > 1 ? 's' : '') + ' Today</div>';
+            todayBriefs.forEach(s => {
+                html += renderTodayCard(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
+            });
+        }
+        if (tomorrowBriefs.length > 0) {
+            html += '<div class="section-label" style="margin-top: 1.5rem;">' + tomorrowBriefs.length + ' Lesson' + (tomorrowBriefs.length > 1 ? 's' : '') + ' Tomorrow</div>';
+            tomorrowBriefs.forEach(s => {
+                html += renderTodayCard(s, briefMap[s.id], reflectionMap[s.id], lessonMap[s.id] || [], true);
+            });
+        }
     }
 
     if (withoutBrief.length > 0) {
@@ -1570,13 +1598,20 @@ async function renderPulse() {
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() + mondayOffset);
-    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekStartStr = weekStart.toLocaleDateString('en-CA');
 
-    const [reflectionsRes, logsRes, lessonsRes] = await Promise.all([
-        sb.from('reflections').select('student_id, date_submitted, voice_feeling, engagement').gte('date_submitted', weekStartStr),
-        sb.from('lesson_logs').select('id, student_id, date, approved, exercise_categories_addressed').order('date', { ascending: false }),
-        sb.from('lesson_logs').select('student_id, date').order('date', { ascending: false })
-    ]);
+    let reflectionsRes, logsRes, lessonsRes;
+    try {
+        [reflectionsRes, logsRes, lessonsRes] = await Promise.all([
+            sb.from('reflections').select('student_id, date_submitted, voice_feeling, engagement').gte('date_submitted', weekStartStr),
+            sb.from('lesson_logs').select('id, student_id, date, approved, exercise_categories_addressed').order('date', { ascending: false }),
+            sb.from('lesson_logs').select('student_id, date').order('date', { ascending: false })
+        ]);
+    } catch (err) {
+        console.error('[Teacher] renderPulse fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading pulse data. Check console for details.</p>';
+        return;
+    }
 
     const reflections = reflectionsRes.data || [];
     const allLogs = logsRes.data || [];
@@ -2143,7 +2178,15 @@ async function renderRepertoire() {
     const students = await getStudents();
     const sMap = studentNameMap(students);
 
-    const { data } = await sb.from('repertoire').select('*').order('title');
+    let data;
+    try {
+        const res = await sb.from('repertoire').select('*').order('title');
+        data = res.data;
+    } catch (err) {
+        console.error('[Teacher] renderRepertoire fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading repertoire. Check console for details.</p>';
+        return;
+    }
     repertoireData = (data || []).map(r => ({
         ...r,
         studentName: sMap[r.student_id] ? sMap[r.student_id].name : 'Unknown'
@@ -2246,8 +2289,15 @@ async function renderAnnouncements() {
     const students = await getStudents();
     announcementStudents = students;
 
-    const { data } = await sb.from('studio_announcements').select('*').order('created_at', { ascending: false });
-    const announcements = data || [];
+    let announcements;
+    try {
+        const res = await sb.from('studio_announcements').select('*').order('created_at', { ascending: false });
+        announcements = res.data || [];
+    } catch (err) {
+        console.error('[Teacher] renderAnnouncements fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading announcements. Check console for details.</p>';
+        return;
+    }
     const today = todayStr();
 
     const active = announcements.filter(a => !a.expires_at || a.expires_at >= today);
@@ -2467,17 +2517,24 @@ async function renderEvents() {
     // Next 60 days
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 60);
-    const futureDateStr = futureDate.toISOString().split('T')[0];
+    const futureDateStr = futureDate.toLocaleDateString('en-CA');
 
     // Past 30 days
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 30);
-    const pastDateStr = pastDate.toISOString().split('T')[0];
+    const pastDateStr = pastDate.toLocaleDateString('en-CA');
 
-    const [eventsRes, feedbackRes] = await Promise.all([
-        sb.from('performance_events').select('*').gte('date', today).lte('date', futureDateStr).order('date'),
-        sb.from('jury_feedback').select('*').gte('date', pastDateStr).lte('date', today).order('date', { ascending: false })
-    ]);
+    let eventsRes, feedbackRes;
+    try {
+        [eventsRes, feedbackRes] = await Promise.all([
+            sb.from('performance_events').select('*').gte('date', today).lte('date', futureDateStr).order('date'),
+            sb.from('jury_feedback').select('*').gte('date', pastDateStr).lte('date', today).order('date', { ascending: false })
+        ]);
+    } catch (err) {
+        console.error('[Teacher] renderEvents fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading events. Check console for details.</p>';
+        return;
+    }
 
     const events = eventsRes.data || [];
     const feedback = feedbackRes.data || [];
@@ -2495,7 +2552,7 @@ async function renderEvents() {
             const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
             const monday = new Date(d);
             monday.setDate(d.getDate() + mondayOffset);
-            const weekKey = monday.toISOString().split('T')[0];
+            const weekKey = monday.toLocaleDateString('en-CA');
             if (!weeks[weekKey]) weeks[weekKey] = [];
             weeks[weekKey].push(ev);
         });
@@ -2914,8 +2971,8 @@ function svShowDetail(type) {
             data.studioFeedback.forEach(f => {
                 html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
                 html += '<p><strong>' + escapeHtml(formatDate(f.studio_class_date)) + '</strong></p>';
-                if (f.feedback) html += '<div class="brief-content">' + markdownToHtml(f.feedback) + '</div>';
-                if (f.peer_observations) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Peer observations:</strong> ' + escapeHtml(f.peer_observations) + '</p>';
+                if (f.kayla_feedback) html += '<div class="brief-content">' + markdownToHtml(f.kayla_feedback) + '</div>';
+                if (f.peer_feedback) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Peer feedback:</strong> ' + escapeHtml(typeof f.peer_feedback === 'string' ? f.peer_feedback : JSON.stringify(f.peer_feedback)) + '</p>';
                 html += '</div>';
             });
         }
@@ -3042,19 +3099,6 @@ async function generatePracticePlan(student, lesson) {
 
     const data = await response.json();
     return data.content[0].text;
-}
-
-function showToast(msg) {
-    let toast = document.getElementById('toast-notification');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast-notification';
-        toast.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; background: var(--primary-color); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; max-width: 400px;';
-        document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.style.opacity = '1';
-    setTimeout(() => { toast.style.opacity = '0'; }, 4000);
 }
 
 // ============================================================

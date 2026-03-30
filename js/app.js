@@ -313,12 +313,14 @@ function showLogin() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-login').classList.add('active');
     document.getElementById('nav-authenticated').style.display = 'none';
+    document.getElementById('nav-actions').style.display = 'none';
 }
 
 function showDashboard() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-dashboard').classList.add('active');
     document.getElementById('nav-authenticated').style.display = 'flex';
+    document.getElementById('nav-actions').style.display = 'flex';
 
     renderDashboard();
 }
@@ -449,7 +451,7 @@ function renderUpcomingEvents() {
 
 function renderDashCards() {
     const events = studentData.events || [];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('en-CA');
     const nextLesson = events.find(e =>
         e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
     );
@@ -593,11 +595,12 @@ function renderDashCards() {
 
     // PERFORMANCE FEEDBACK — show most recent event with notes
     const perfEvents = (studentData.events || []).filter(e => e.notes && e.notes.length > 20 && e.status === 'completed');
+    perfEvents.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const juryFb = studentData.juryFeedback || [];
     const totalFeedback = perfEvents.length + (juryFb.length > 0 ? 1 : 0);
 
     if (totalFeedback > 0) {
-        const latest = perfEvents.length > 0 ? perfEvents[perfEvents.length - 1] : null;
+        const latest = perfEvents.length > 0 ? perfEvents[0] : null;
         const latestJury = juryFb.length > 0 ? juryFb[0] : null;
         let displayDate = latest ? latest.date : (latestJury ? latestJury.date : '');
         let displayTitle = latest ? latest.title : (latestJury ? latestJury.event_type.replace(/_/g, ' ') : '');
@@ -613,7 +616,7 @@ function renderDashCards() {
 
     // STUDIO CLASS — show next upcoming studio class
     const studioPlans = studentData.studioPlans || [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
     const nextStudio = studioPlans.find(p => p.studio_class_date >= today);
     if (nextStudio) {
         const d = new Date(nextStudio.studio_class_date + 'T12:00:00');
@@ -1703,7 +1706,7 @@ function renderStudioClassPlan() {
     if (!container || !studentData) return;
 
     const plans = studentData.studioPlans || [];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('en-CA');
     const nextPlan = plans.find(p => p.studio_class_date >= todayStr);
 
     if (!nextPlan) {

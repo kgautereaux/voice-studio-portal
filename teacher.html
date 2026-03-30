@@ -1874,25 +1874,125 @@ async function loadStudentDetail(bodyEl, studentId) {
 
     let html = '<div class="brief-content">';
 
-    // Repertoire
-    html += '<div class="detail-section"><h4>Current Repertoire</h4>';
-    if (rep.length === 0) {
+    // Repertoire & Jury Plan (integrated)
+    const studentRec = (await sb.from('students').select('*').eq('id', studentId).single()).data;
+    const programKey = studentRec ? (studentRec.program_key || programKeyFromDegree(studentRec.degree_program)) : null;
+    const jurySlots = (programKey && JURY_REQUIREMENTS[programKey]) ? JURY_REQUIREMENTS[programKey] : [];
+
+    const { data: juryPlansData } = await sb.from('jury_plans').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(1);
+    const juryPlan = (juryPlansData || [])[0];
+    let jurySelections = [];
+    if (juryPlan) {
+        const { data: selData } = await sb.from('jury_selections').select('*').eq('jury_plan_id', juryPlan.id).order('requirement_slot');
+        jurySelections = selData || [];
+    }
+
+    // Build a map: title (lowercase) → jury selection info
+    const juryByTitle = {};
+    jurySelections.forEach(s => {
+        if (s.title) juryByTitle[s.title.toLowerCase()] = s;
+    });
+
+    html += '<div class="detail-section"><h4>Repertoire & Jury Plan</h4>';
+
+    // Jury plan summary header
+    if (juryPlan) {
+        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const filledCount = jurySelections.filter(s => s.status === 'accepted' || s.status === 'confirmed' || s.status === 'approved').length;
+        const proposedCount = jurySelections.filter(s => s.status === 'proposed').length;
+        html += '<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 0.75rem;">';
+        html += '<strong>Jury:</strong> ' + escapeHtml(statusLabel);
+        html += ' · ' + filledCount + '/' + jurySlots.length + ' slots filled';
+        if (proposedCount > 0) html += ' · ' + proposedCount + ' pending';
+        if (juryPlan.jury_date) html += ' · Date: ' + escapeHtml(formatShortDate(juryPlan.jury_date));
+        if (juryPlan.status === 'exempt') html += ' · ' + escapeHtml(juryPlan.exemption_reason || 'Exempt');
+        html += '</div>';
+    }
+
+    if (rep.length === 0 && jurySelections.length === 0) {
         html += '<p style="color: var(--text-muted);">No repertoire entries.</p>';
     } else {
         html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-        html += '<th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th><th>Status</th><th>Timeline</th>';
+        html += '<th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th><th>Status</th><th>Jury Slot</th>';
         html += '</tr></thead><tbody>';
+
+        // Track which jury selections are represented in rep
+        const juryTitlesShown = new Set();
+
         rep.forEach(r => {
+            const jurySel = juryByTitle[(r.title || '').toLowerCase()];
+            if (jurySel) juryTitlesShown.add(jurySel.id);
+
             html += '<tr>';
             html += '<td>' + escapeHtml(r.title) + '</td>';
             html += '<td>' + escapeHtml(r.composer || '') + '</td>';
             html += '<td>' + escapeHtml(r.style || '') + '</td>';
             html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
             html += '<td>' + escapeHtml(r.status || '') + '</td>';
-            html += '<td>' + escapeHtml(r.timeline ? formatShortDate(r.timeline) : '') + '</td>';
+            html += '<td>';
+            if (jurySel && jurySel.status !== 'dropped') {
+                html += '<span style="font-size: 11px;">' + escapeHtml(jurySel.requirement_slot || '') + '</span> ';
+                if (jurySel.status === 'approved' || jurySel.status === 'accepted' || jurySel.status === 'confirmed') {
+                    html += '<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
+                } else if (jurySel.status === 'proposed') {
+                    html += '<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
+                    if (jurySel.proposed_by === 'student') {
+                        html += ' <button class="btn-jury-approve" data-sel-id="' + jurySel.id + '" style="font-size: 10px; padding: 0.15rem 0.4rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
+                    }
+                }
+            }
+            html += '</td>';
             html += '</tr>';
         });
+
+        // Show jury selections not yet in the repertoire table
+        jurySelections.filter(s => !juryTitlesShown.has(s.id) && s.status !== 'dropped').forEach(sel => {
+            html += '<tr style="color: var(--text-muted); font-style: italic;">';
+            html += '<td>' + escapeHtml(sel.title || '') + '</td>';
+            html += '<td>' + escapeHtml(sel.composer || '') + '</td>';
+            html += '<td></td><td></td><td></td>';
+            html += '<td>';
+            html += '<span style="font-size: 11px;">' + escapeHtml(sel.requirement_slot || '') + '</span> ';
+            if (sel.status === 'proposed') {
+                html += '<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
+                if (sel.proposed_by === 'student') {
+                    html += ' <button class="btn-jury-approve" data-sel-id="' + sel.id + '" style="font-size: 10px; padding: 0.15rem 0.4rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
+                }
+            }
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        // Show unfilled jury slots
+        if (juryPlan && juryPlan.status !== 'exempt') {
+            const filledSlots = new Set(jurySelections.filter(s => s.status !== 'dropped').map(s => s.requirement_slot));
+            jurySlots.filter(slot => !filledSlots.has(slot)).forEach(slot => {
+                html += '<tr style="color: var(--text-muted);">';
+                html += '<td colspan="5"></td>';
+                html += '<td><span style="font-size: 11px;">' + escapeHtml(slot) + '</span> <span style="font-size: 10px; font-style: italic;">unfilled</span></td>';
+                html += '</tr>';
+            });
+        }
+
         html += '</tbody></table></div>';
+
+        // Propose a piece form (if jury plan exists and not exempt)
+        if (juryPlan && juryPlan.status !== 'exempt') {
+            html += '<div class="form-card" style="margin-top: 1rem;"><h3>Propose a Jury Piece</h3>';
+            html += '<form class="jury-propose-form" data-plan-id="' + juryPlan.id + '" data-student-id="' + studentId + '">';
+            html += '<div class="form-row-inline">';
+            html += '<div class="form-row"><label>Slot</label><select name="jury-slot">';
+            jurySlots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
+            html += '</select></div>';
+            html += '<div class="form-row"><label>Title</label><input type="text" name="jury-title" required></div>';
+            html += '</div>';
+            html += '<div class="form-row-inline">';
+            html += '<div class="form-row"><label>Composer</label><input type="text" name="jury-composer"></div>';
+            html += '<div class="form-row"><label>Notes</label><input type="text" name="jury-notes" placeholder="Optional"></div>';
+            html += '</div>';
+            html += '<button type="submit" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-top: 0.5rem;">Propose</button>';
+            html += '</form></div>';
+        }
     }
     html += '</div>';
 
@@ -2025,116 +2125,6 @@ async function loadStudentDetail(bodyEl, studentId) {
         });
         html += '</div>';
     }
-
-    // Jury Plan
-    const student = (await sb.from('students').select('*').eq('id', studentId).single()).data;
-    const programKey = student ? (student.program_key || programKeyFromDegree(student.degree_program)) : null;
-    const slots = (programKey && JURY_REQUIREMENTS[programKey]) ? JURY_REQUIREMENTS[programKey] : [];
-
-    const { data: juryPlans } = await sb.from('jury_plans').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(1);
-    const juryPlan = (juryPlans || [])[0];
-
-    html += '<div class="detail-section"><h4>Jury Plan</h4>';
-
-    if (!juryPlan) {
-        html += '<p style="color: var(--text-muted);">No jury plan created yet.</p>';
-    } else {
-        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        html += '<p style="font-size: 13px; margin-bottom: 0.75rem;">';
-        html += '<strong>Status:</strong> ' + escapeHtml(statusLabel);
-        if (juryPlan.jury_date) html += ' · <strong>Jury Date:</strong> ' + escapeHtml(formatShortDate(juryPlan.jury_date));
-        if (juryPlan.status === 'exempt' && juryPlan.exemption_reason) html += ' · ' + escapeHtml(juryPlan.exemption_reason);
-        html += '</p>';
-
-        if (juryPlan.status !== 'exempt') {
-            const { data: selections } = await sb.from('jury_selections').select('*').eq('jury_plan_id', juryPlan.id).order('requirement_slot');
-            const selList = selections || [];
-
-            html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-            html += '<th>Slot</th><th>Piece</th><th>Composer</th><th>Proposed By</th><th>Status</th><th></th>';
-            html += '</tr></thead><tbody>';
-
-            slots.forEach(slot => {
-                const matching = selList.filter(s => s.requirement_slot === slot);
-                if (matching.length === 0) {
-                    html += '<tr><td>' + escapeHtml(slot) + '</td><td colspan="5" style="color: var(--text-muted);">No selection</td></tr>';
-                } else {
-                    matching.forEach(sel => {
-                        const isDropped = sel.status === 'dropped';
-                        const rowStyle = isDropped ? ' style="text-decoration: line-through; color: var(--text-muted);"' : '';
-                        html += '<tr' + rowStyle + '>';
-                        html += '<td>' + escapeHtml(slot) + '</td>';
-                        html += '<td>' + escapeHtml(sel.title || '') + '</td>';
-                        html += '<td>' + escapeHtml(sel.composer || '') + '</td>';
-                        html += '<td>' + escapeHtml(sel.proposed_by === 'teacher' ? 'Prof. G' : 'Student') + '</td>';
-                        html += '<td>';
-                        if (sel.status === 'approved') {
-                            html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-                        } else if (sel.status === 'proposed') {
-                            html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
-                        } else if (isDropped) {
-                            html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Dropped</span>';
-                        }
-                        html += '</td>';
-                        html += '<td>';
-                        if (sel.status === 'proposed' && sel.proposed_by === 'student') {
-                            html += '<button class="btn-jury-approve" data-sel-id="' + sel.id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-right: 0.35rem;">Approve</button>';
-                            html += '<button class="btn-jury-drop" data-sel-id="' + sel.id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: #fff; color: #9c5c5c; border: 1px solid #9c5c5c; cursor: pointer; font-family: inherit;">Drop</button>';
-                        } else if (sel.status === 'proposed' && sel.proposed_by === 'teacher') {
-                            html += '<span style="font-size: 12px; color: var(--text-muted);">Awaiting student</span>';
-                        }
-                        html += '</td>';
-                        html += '</tr>';
-                    });
-                }
-            });
-
-            // Show any wildcard/extra selections not in the slots list
-            const unmatched = selList.filter(s => !slots.includes(s.requirement_slot));
-            unmatched.forEach(sel => {
-                const isDropped = sel.status === 'dropped';
-                const rowStyle = isDropped ? ' style="text-decoration: line-through; color: var(--text-muted);"' : '';
-                html += '<tr' + rowStyle + '>';
-                html += '<td>' + escapeHtml(sel.requirement_slot || '') + '</td>';
-                html += '<td>' + escapeHtml(sel.title || '') + '</td>';
-                html += '<td>' + escapeHtml(sel.composer || '') + '</td>';
-                html += '<td>' + escapeHtml(sel.proposed_by === 'teacher' ? 'Prof. G' : 'Student') + '</td>';
-                html += '<td>';
-                if (sel.status === 'approved') {
-                    html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-                } else if (sel.status === 'proposed') {
-                    html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
-                }
-                html += '</td><td>';
-                if (sel.status === 'proposed' && sel.proposed_by === 'student') {
-                    html += '<button class="btn-jury-approve" data-sel-id="' + sel.id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-right: 0.35rem;">Approve</button>';
-                    html += '<button class="btn-jury-drop" data-sel-id="' + sel.id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: #fff; color: #9c5c5c; border: 1px solid #9c5c5c; cursor: pointer; font-family: inherit;">Drop</button>';
-                } else if (sel.status === 'proposed' && sel.proposed_by === 'teacher') {
-                    html += '<span style="font-size: 12px; color: var(--text-muted);">Awaiting student</span>';
-                }
-                html += '</td></tr>';
-            });
-
-            html += '</tbody></table></div>';
-
-            // Propose a piece form
-            html += '<div class="form-card" style="margin-top: 1rem;"><h3>Propose a Piece</h3>';
-            html += '<form class="jury-propose-form" data-plan-id="' + juryPlan.id + '" data-student-id="' + studentId + '">';
-            html += '<div class="form-row-inline">';
-            html += '<div class="form-row"><label>Slot</label><select name="jury-slot">';
-            slots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
-            html += '</select></div>';
-            html += '<div class="form-row"><label>Title</label><input type="text" name="jury-title" required></div>';
-            html += '</div>';
-            html += '<div class="form-row-inline">';
-            html += '<div class="form-row"><label>Composer</label><input type="text" name="jury-composer"></div>';
-            html += '<div class="form-row"><label>Notes</label><input type="text" name="jury-notes" placeholder="Optional"></div>';
-            html += '</div>';
-            html += '<button type="submit" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-top: 0.5rem;">Propose</button>';
-            html += '</form></div>';
-        }
-    }
-    html += '</div>';
 
     // Category coverage (last 3 lessons)
     if (lessons.length > 0) {

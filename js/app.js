@@ -527,14 +527,27 @@ function renderDashCards() {
             'Submit before ' + nextLessonLabel;
     }
 
-    // REPERTOIRE
+    // REPERTOIRE & JURY
     const rep = studentData.repertoire || [];
+    const jurySels = studentData.jurySelections || [];
+    const juryPlanCard = studentData.juryPlan;
+    const activeSels = jurySels.filter(s => s.status !== 'dropped');
+    const pkCard = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
+    const jurySlotsCard = (pkCard && JURY_REQUIREMENTS[pkCard]) ? JURY_REQUIREMENTS[pkCard] : [];
+
     document.getElementById('dash-rep-count').textContent =
         rep.length > 0 ? rep.length + ' pieces' : '--';
-    if (rep.length > 0) {
-        const nearest = rep.filter(r => r.timeline).sort((a, b) => a.timeline.localeCompare(b.timeline))[0];
-        document.getElementById('dash-rep-summary').textContent =
-            nearest ? 'Next: ' + new Date(nearest.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    if (rep.length > 0 || juryPlanCard) {
+        const parts = [];
+        if (rep.length > 0) {
+            const nearest = rep.filter(r => r.timeline).sort((a, b) => a.timeline.localeCompare(b.timeline))[0];
+            if (nearest) parts.push('Next: ' + new Date(nearest.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        }
+        if (juryPlanCard && jurySlotsCard.length > 0) {
+            const filledCount = activeSels.filter(s => s.status === 'accepted' || s.status === 'confirmed' || s.status === 'approved').length;
+            parts.push('Jury: ' + filledCount + '/' + jurySlotsCard.length);
+        }
+        document.getElementById('dash-rep-summary').textContent = parts.join(' · ') || 'No repertoire tracked yet';
     } else {
         document.getElementById('dash-rep-summary').textContent = 'No repertoire tracked yet';
     }
@@ -629,32 +642,6 @@ function renderDashCards() {
         document.getElementById('dash-studio-summary').textContent = 'No upcoming studio class';
     }
 
-    // JURY PLAN
-    const juryPlan = studentData.juryPlan;
-    const jurySels = studentData.jurySelections || [];
-    const pk = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
-    const jurySlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
-
-    if (juryPlan) {
-        const confirmedCount = jurySels.filter(s => s.status === 'confirmed').length;
-        const acceptedCount = jurySels.filter(s => s.status === 'accepted' || s.status === 'confirmed').length;
-        const proposedCount = jurySels.filter(s => s.status === 'proposed').length;
-        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-        if (juryPlan.jury_date) {
-            const jd = new Date(juryPlan.jury_date + 'T12:00:00');
-            document.getElementById('dash-jury-value').textContent =
-                jd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        } else {
-            document.getElementById('dash-jury-value').textContent = statusLabel;
-        }
-        let jurySummary = confirmedCount + ' confirmed, ' + acceptedCount + ' accepted / ' + jurySlots.length + ' slots';
-        if (proposedCount > 0) jurySummary += ' · ' + proposedCount + ' pending';
-        document.getElementById('dash-jury-summary').textContent = jurySummary;
-    } else {
-        document.getElementById('dash-jury-value').textContent = '--';
-        document.getElementById('dash-jury-summary').textContent = 'No jury plan yet';
-    }
 }
 
 function setupCardNavigation() {
@@ -707,7 +694,6 @@ function renderDetailPanel(panelId) {
     else if (panelId === 'detail-wins') renderWins();
     else if (panelId === 'detail-feedback') renderPerformanceFeedback();
     else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
-    else if (panelId === 'detail-jury') renderJuryPlan();
 }
 
 function renderPerformanceFeedback() {
@@ -1129,17 +1115,52 @@ function renderRepertoire() {
     const rep = studentData.repertoire || [];
     const prevRep = studentData.previousRepertoire || [];
 
-    if (rep.length === 0 && prevRep.length === 0) {
-        container.innerHTML = '<p class="text-muted">No repertoire tracked yet.</p>';
-        return;
-    }
+    // Jury plan data
+    const juryPlan = studentData.juryPlan;
+    const jurySels = studentData.jurySelections || [];
+    const pk = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
+    const jurySlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
+    const activeJurySels = jurySels.filter(s => s.status !== 'dropped');
+
+    // Map: title (lowercase) → jury selection
+    const juryByTitle = {};
+    activeJurySels.forEach(s => { if (s.title) juryByTitle[s.title.toLowerCase()] = s; });
 
     let html = '';
 
-    // Active repertoire
-    if (rep.length > 0) {
-        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Sheet Music</th><th>Due</th></tr></thead><tbody>';
+    // Jury plan summary
+    if (juryPlan) {
+        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const filledCount = activeJurySels.filter(s => s.status === 'accepted' || s.status === 'confirmed' || s.status === 'approved').length;
+        const proposedCount = activeJurySels.filter(s => s.status === 'proposed').length;
+        html += '<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--bg-warm, #f9f7f4); border-radius: 6px;">';
+        html += '<strong>Jury:</strong> ' + escapeHtml(statusLabel);
+        html += ' · ' + filledCount + '/' + jurySlots.length + ' slots filled';
+        if (proposedCount > 0) html += ' · ' + proposedCount + ' pending';
+        if (juryPlan.jury_date) {
+            const jd = new Date(juryPlan.jury_date + 'T12:00:00');
+            html += ' · ' + jd.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        }
+        if (juryPlan.status === 'exempt') html += ' · ' + escapeHtml(juryPlan.exemption_reason || 'Exempt');
+        html += '</div>';
+    }
+
+    if (rep.length === 0 && prevRep.length === 0 && activeJurySels.length === 0) {
+        html += '<p class="text-muted">No repertoire tracked yet.</p>';
+        container.innerHTML = html;
+        return;
+    }
+
+    // Active repertoire table with jury column
+    if (rep.length > 0 || activeJurySels.length > 0) {
+        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Sheet Music</th><th>Jury Slot</th></tr></thead><tbody>';
+
+        const juryTitlesShown = new Set();
+
         for (const r of rep) {
+            const jurySel = juryByTitle[(r.title || '').toLowerCase()];
+            if (jurySel) juryTitlesShown.add(jurySel.id);
+
             const timeline = r.timeline
                 ? new Date(r.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : '';
@@ -1170,17 +1191,57 @@ function renderRepertoire() {
                 sheetMusic = `<button class="btn btn-secondary btn-small rep-add-link" data-rep-id="${r.id}" style="font-size: 11px;">+ Add Link</button>`;
             }
 
+            // Jury slot column
+            let juryCell = '';
+            if (jurySel) {
+                juryCell = `<span style="font-size: 11px;">${escapeHtml(jurySel.requirement_slot || '')}</span> `;
+                if (jurySel.status === 'approved' || jurySel.status === 'accepted' || jurySel.status === 'confirmed') {
+                    juryCell += '<span class="tag" style="font-size: 10px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
+                } else if (jurySel.status === 'proposed' && jurySel.proposed_by === 'teacher') {
+                    juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
+                    juryCell += ` <button class="btn btn-primary btn-small btn-jury-accept" data-sel-id="${jurySel.id}" style="font-size: 10px; padding: 0.15rem 0.4rem;">Accept</button>`;
+                } else if (jurySel.status === 'proposed' && jurySel.proposed_by === 'student') {
+                    juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Awaiting Prof. G</span>';
+                }
+            }
+
             html += `<tr>
                 <td><strong>${escapeHtml(r.title)}</strong>${r.composer ? '<br><span class="text-muted text-small">' + escapeHtml(r.composer) + '</span>' : ''}</td>
                 <td>${phaseSelect}</td>
                 <td>${statusSelect}</td>
                 <td>${sheetMusic}</td>
-                <td>${timeline}</td>
+                <td>${juryCell}</td>
             </tr>`;
         }
+
+        // Jury selections not yet in repertoire
+        activeJurySels.filter(s => !juryTitlesShown.has(s.id)).forEach(sel => {
+            let juryCell = `<span style="font-size: 11px;">${escapeHtml(sel.requirement_slot || '')}</span> `;
+            if (sel.status === 'proposed' && sel.proposed_by === 'teacher') {
+                juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
+                juryCell += ` <button class="btn btn-primary btn-small btn-jury-accept" data-sel-id="${sel.id}" style="font-size: 10px; padding: 0.15rem 0.4rem;">Accept</button>`;
+            } else if (sel.status === 'proposed' && sel.proposed_by === 'student') {
+                juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Awaiting Prof. G</span>';
+            }
+            html += `<tr style="color: var(--text-muted); font-style: italic;">
+                <td><strong>${escapeHtml(sel.title || '')}</strong>${sel.composer ? '<br><span class="text-small">' + escapeHtml(sel.composer) + '</span>' : ''}</td>
+                <td></td><td></td><td></td>
+                <td>${juryCell}</td>
+            </tr>`;
+        });
+
+        // Unfilled jury slots
+        if (juryPlan && juryPlan.status !== 'exempt') {
+            const filledSlots = new Set(activeJurySels.map(s => s.requirement_slot));
+            jurySlots.filter(slot => !filledSlots.has(slot)).forEach(slot => {
+                html += `<tr style="color: var(--text-muted);">
+                    <td colspan="4"></td>
+                    <td><span style="font-size: 11px;">${escapeHtml(slot)}</span> <span style="font-size: 10px; font-style: italic;">unfilled</span></td>
+                </tr>`;
+            });
+        }
+
         html += '</tbody></table>';
-    } else {
-        html += '<p class="text-muted">No active repertoire.</p>';
     }
 
     // Previous repertoire
@@ -1196,6 +1257,35 @@ function renderRepertoire() {
             </tr>`;
         }
         html += '</tbody></table>';
+    }
+
+    // Propose a jury piece form (if jury plan exists and not exempt)
+    if (juryPlan && juryPlan.status !== 'exempt') {
+        html += '<h3 style="margin-top: 2rem;">Propose a Jury Piece</h3>';
+        html += '<form id="jury-student-propose-form" class="dash-add-rep">';
+        html += '<div class="form-group"><label for="jury-s-slot">Requirement Slot</label>';
+        html += '<select id="jury-s-slot">';
+        jurySlots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
+        html += '</select></div>';
+        html += '<div class="dash-rep-grid">';
+        html += '<div class="form-group"><label for="jury-s-title">Title</label><input type="text" id="jury-s-title" required placeholder="Song or aria title"></div>';
+        html += '<div class="form-group"><label for="jury-s-composer">Composer</label><input type="text" id="jury-s-composer" placeholder="Composer name"></div>';
+        html += '</div>';
+        html += '<div class="form-group"><label for="jury-s-notes">Notes <span class="hint">(optional)</span></label><input type="text" id="jury-s-notes" placeholder="Why this piece, or other context"></div>';
+        html += '<button type="submit" class="btn btn-primary btn-small">Propose to Prof. G</button>';
+        html += '</form>';
+    }
+
+    // Dropped jury selections
+    const droppedSels = jurySels.filter(s => s.status === 'dropped');
+    if (droppedSels.length > 0) {
+        html += '<h3 style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">Dropped Jury Selections</h3>';
+        droppedSels.forEach(sel => {
+            html += '<p style="text-decoration: line-through; color: var(--text-muted); font-size: 13px;">';
+            html += escapeHtml(sel.requirement_slot) + ': ' + escapeHtml(sel.title || '');
+            if (sel.composer) html += ' (' + escapeHtml(sel.composer) + ')';
+            html += '</p>';
+        });
     }
 
     container.innerHTML = html;
@@ -1214,7 +1304,6 @@ function renderRepertoire() {
             const repId = select.dataset.repId;
             const newStatus = select.value;
             await updateRepertoireField(repId, 'status', newStatus);
-            // If shelved, reload to shift it to previous section
             if (newStatus === 'shelved') {
                 await loadStudentData();
                 renderRepertoire();
@@ -1238,6 +1327,68 @@ function renderRepertoire() {
             }
         });
     });
+
+    // Jury accept buttons
+    container.querySelectorAll('.btn-jury-accept').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const selId = btn.dataset.selId;
+            btn.disabled = true;
+            btn.textContent = 'Accepting...';
+            const { error } = await sb.from('jury_selections').update({ status: 'accepted' }).eq('id', selId);
+            if (error) {
+                alert('Error accepting piece: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Accept';
+                return;
+            }
+            await loadStudentData();
+            renderRepertoire();
+        });
+    });
+
+    // Jury propose form
+    const juryForm = document.getElementById('jury-student-propose-form');
+    if (juryForm && !juryForm.dataset.bound) {
+        juryForm.dataset.bound = 'true';
+        juryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !studentData.juryPlan) return;
+
+            const title = document.getElementById('jury-s-title').value.trim();
+            const composer = document.getElementById('jury-s-composer').value.trim();
+            const slot = document.getElementById('jury-s-slot').value;
+            const notes = document.getElementById('jury-s-notes').value.trim();
+
+            if (!title) return;
+
+            const btn = juryForm.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            const { error } = await sb.from('jury_selections').insert({
+                jury_plan_id: studentData.juryPlan.id,
+                requirement_slot: slot,
+                title: title,
+                composer: composer || null,
+                proposed_by: 'student',
+                status: 'proposed',
+                notes: notes || null
+            });
+
+            if (error) {
+                alert('Error proposing piece: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Propose to Prof. G';
+                return;
+            }
+
+            juryForm.reset();
+            btn.disabled = false;
+            btn.textContent = 'Propose to Prof. G';
+            await loadStudentData();
+            renderRepertoire();
+        });
+    }
 }
 
 async function updateRepertoireField(repId, field, value) {

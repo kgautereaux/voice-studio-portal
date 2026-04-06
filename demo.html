@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Demo Dashboard — Voice Studio</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
         .demo-banner {
             background: var(--bg-warm);
@@ -18,7 +19,7 @@
         .demo-banner strong { color: var(--accent-color); }
         .demo-banner a { color: var(--accent-color); margin-left: 0.5rem; }
 
-        /* Dashboard styles */
+        /* Reuse dashboard styles */
         .dash-welcome { padding: 1.5rem 0 0.5rem; }
         .dash-welcome h1 { font-size: 1.8rem; font-weight: 300; margin-bottom: 0.25rem; }
         .dash-welcome-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 0; }
@@ -69,42 +70,6 @@
             font-size: 12px;
             padding: 0.2rem 0.4rem;
         }
-
-        /* Lesson debrief entry spacing */
-        .lesson-debrief-entry {
-            margin-bottom: 2.5rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .lesson-debrief-entry:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        /* Performance feedback sections */
-        .feedback-event {
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .feedback-event:last-child {
-            border-bottom: none;
-        }
-        .panelist-comment {
-            margin-bottom: 1rem;
-            padding-left: 1rem;
-            border-left: 2px solid var(--border-color);
-        }
-        .panelist-comment p:first-child {
-            font-weight: 500;
-            font-size: 14px;
-            margin-bottom: 0.25rem;
-        }
-        .panelist-comment p:last-child {
-            font-size: 14px;
-        }
-
         @media (max-width: 768px) {
             .dash-rep-grid {
                 grid-template-columns: 1fr;
@@ -132,7 +97,6 @@
             <li><a href="#" id="nav-dashboard" class="active">Dashboard</a></li>
             <li><a href="#" id="nav-plan">Practice Plan</a></li>
             <li><a href="#" id="nav-debrief">Lesson Debrief</a></li>
-            <li><a href="#" id="nav-feedback">Performance Feedback</a></li>
             <li><a href="#" id="nav-repertoire">Repertoire</a></li>
             <li><a href="#" id="nav-reflection">Reflection</a></li>
         </ul>
@@ -144,47 +108,37 @@
     <!-- DASHBOARD VIEW -->
     <div id="view-dashboard">
         <div class="dash-welcome">
-            <h1>Welcome, Maya</h1>
+            <h1>Welcome, Alex</h1>
             <p class="dash-welcome-sub">Here is what is happening in your studio this week.</p>
         </div>
 
         <!-- Upcoming Events -->
         <div class="upcoming-events">
-            <strong>Tuesday Mar 31</strong>: Voice Lesson (11:00 AM, 60 min) &nbsp;&middot;&nbsp;
-            <strong>Friday Apr 4</strong>: Studio Class (10:00 AM, Houston Hall)
+            <strong>Monday Apr 7</strong>: Voice Lesson (10:00 AM, 60 min) &nbsp;&middot;&nbsp;
+            <strong>Friday Apr 11</strong>: Studio Class (10:00 AM, Houston Hall)
         </div>
 
         <!-- Dashboard Cards -->
         <div class="dashboard-grid">
             <div class="dash-card" onclick="showView('debrief')">
                 <div class="dash-card-label">Latest Lesson</div>
-                <div class="dash-card-value">Mar 25</div>
-                <div class="dash-card-summary">"Dove sono," resonance balancing, passaggio work &middot; Next: Tue Mar 31</div>
+                <div class="dash-card-value">Apr 1</div>
+                <div class="dash-card-summary">Breath management, "Somewhere Over the Rainbow," registration work &middot; Next: Mon Apr 7</div>
             </div>
             <div class="dash-card" onclick="showView('plan')">
                 <div class="dash-card-label">Practice Plan</div>
-                <div class="dash-card-value">Mar 25</div>
-                <div class="dash-card-summary">4 exercises &middot; "Dove sono," "Ain't It a Pretty Night," recital prep</div>
+                <div class="dash-card-value">Apr 1</div>
+                <div class="dash-card-summary">3 exercises &middot; Somewhere Over the Rainbow, Come to My Garden</div>
             </div>
             <div class="dash-card dash-card-action" onclick="showView('reflection')">
                 <div class="dash-card-label">Reflection</div>
-                <div class="dash-card-value">Due Sun Mar 30</div>
-                <div class="dash-card-summary">Submit before Tuesday Mar 31 lesson</div>
+                <div class="dash-card-value">Due Sun Apr 6</div>
+                <div class="dash-card-summary">Submit before Monday Apr 7 lesson</div>
             </div>
             <div class="dash-card" onclick="showView('repertoire')">
                 <div class="dash-card-label">Repertoire</div>
                 <div class="dash-card-value">6 pieces</div>
-                <div class="dash-card-summary">Next: Apr 18 (pre-recital hearing)</div>
-            </div>
-            <div class="dash-card" onclick="showView('feedback')">
-                <div class="dash-card-label">Performance Feedback</div>
-                <div class="dash-card-value">Mar 14</div>
-                <div class="dash-card-summary">Dress rehearsal notes + pre-recital hearing comments</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Vocal Progress</div>
-                <div class="dash-card-value">4 highlights</div>
-                <div class="dash-card-summary">Passaggio ease in "Dove sono" landed for the first time...</div>
+                <div class="dash-card-summary">Next: Apr 25 (jury)</div>
             </div>
             <div class="dash-card">
                 <div class="dash-card-label">Voice Analytics</div>
@@ -192,8 +146,13 @@
                 <div class="dash-card-summary">Data collection pending</div>
             </div>
             <div class="dash-card">
+                <div class="dash-card-label">Vocal Progress</div>
+                <div class="dash-card-value">3 highlights</div>
+                <div class="dash-card-summary">Registration shift on "Garden" landed cleanly for the first time...</div>
+            </div>
+            <div class="dash-card">
                 <div class="dash-card-label">Studio Class</div>
-                <div class="dash-card-value">Apr 4</div>
+                <div class="dash-card-value">Apr 11</div>
                 <div class="dash-card-summary">10:00 AM &middot; Houston Hall</div>
             </div>
         </div>
@@ -205,60 +164,61 @@
         <h2>Practice Plan</h2>
         <div class="dash-detail-wrap">
             <div class="practice-plan-letter">
-                <p class="plan-date">Tuesday, March 25, 2026</p>
+                <p class="plan-date">Tuesday, April 1, 2026</p>
 
                 <h2>What We Worked On and Why</h2>
-                <p>Today we focused on resonance balancing across the passaggio in "Dove sono." The core discovery: when you let the vowel narrow slightly on the ascending line, the warmth stays without losing brightness. You do not have to choose one or the other. The key is listening for both qualities at the same time and trusting the vowel modification to do the work.</p>
-                <p>We also spent time on "Ain't It a Pretty Night," where the same principle applies in the chest-to-mix transition. The buzziness you are hearing on the D4 phrase is a good sign. It means the resonance is engaged. We just need to smooth the transition so it does not arrive suddenly.</p>
+                <p>Today we focused on breath management and how it connects to your registration work in "Somewhere Over the Rainbow." The core discovery: when you maintain rib expansion through the ascending phrase, the registration shift takes care of itself. Your body already knows the coordination. We just needed to give it enough air to work with.</p>
 
                 <h2>Exercises for This Week</h2>
 
-                <h3>1. Descending five-note scale on [u] to [o] (warm-up)</h3>
-                <p><strong>What it sounds like:</strong> Start on a comfortable pitch on "oo," open to "oh" on the way down. Move up by half steps.</p>
-                <p><strong>What it is for:</strong> Establishes warmth as the baseline resonance quality. The [u] keeps the vocal tract long and the larynx easy.</p>
-                <p><strong>What to listen for:</strong> Warmth through the whole scale. If the sound gets thin at the bottom, the jaw may be dropping too far. Keep the vowel space inside, not outside.</p>
+                <h3>1. Lip trill with rib expansion (warm-up)</h3>
+                <p><strong>What it sounds like:</strong> Lip trill on a 5-note descending scale, starting in your comfortable range and moving up by half steps.</p>
+                <p><strong>What it's for:</strong> Connects breath flow to phonation without any registration pressure. The trill regulates airflow for you.</p>
+                <p><strong>What to listen for:</strong> Evenness. If the trill sputters, you are pushing too much air. If it stops, not enough. Find the sweet spot where it hums along easily.</p>
 
-                <h3>2. Ascending arpeggio on [i] with slight [e] modification above E5</h3>
-                <p><strong>What it sounds like:</strong> "ee" on a 1-3-5-8 pattern. Above E5, let the vowel drift toward "eh" without losing the forward placement.</p>
-                <p><strong>What it is for:</strong> Builds brightness through the passaggio without pressing. The [i] keeps the resonance focused. The modification above E5 prevents the squeeze that happens when you try to maintain pure [i] too high.</p>
-                <p><strong>What to listen for:</strong> Brightness that feels easy, not pushed. If you hear a hard edge or feel tension at the top, the modification is not happening soon enough. Start the vowel change a half step earlier.</p>
+                <h3>2. Sustained [u] with rib monitoring</h3>
+                <p><strong>What it sounds like:</strong> Sustained "oo" on a comfortable pitch, hands on your ribs.</p>
+                <p><strong>What it's for:</strong> Builds awareness of rib expansion during phonation. Your pattern has been to collapse the ribs early. This teaches you to keep the tank full longer.</p>
+                <p><strong>What to listen for:</strong> Warmth. The [u] should feel round and easy. If it thins out, the ribs have probably dropped. Check with your hands.</p>
 
-                <h3>3. Messa di voce on a sustained A4</h3>
-                <p><strong>What it sounds like:</strong> Start soft, swell to full, return to soft on a single pitch. Use [a].</p>
-                <p><strong>What it is for:</strong> Teaches you to maintain resonance balance across dynamic changes. This is the skill that makes "Dove sono" work: the line swells and recedes, and the voice needs to stay balanced through all of it.</p>
-                <p><strong>What to listen for:</strong> Consistent warmth through the swell. The brightness will increase naturally as you get louder. That is fine. What you do not want is the warmth disappearing when you get loud. If the sound gets brittle at forte, back off the volume and focus on keeping the space open.</p>
-
-                <h3>4. Octave slide on [a] with rib monitoring</h3>
-                <p><strong>What it sounds like:</strong> Slide from a comfortable pitch up an octave on "ah." Hands on ribs.</p>
-                <p><strong>What it is for:</strong> Connects breath support to the passaggio crossing. Your pattern has been to let the ribs collapse right at the transition point, which starves the upper notes of air.</p>
-                <p><strong>What to listen for:</strong> Evenness. The slide should feel like one gesture, not two notes with a bump in the middle. If you feel a bump, the ribs probably dropped. Check with your hands.</p>
+                <h3>3. Octave slide on [i] to [a]</h3>
+                <p><strong>What it sounds like:</strong> Start on a comfortable pitch on "ee," slide up an octave while opening to "ah."</p>
+                <p><strong>What it's for:</strong> Practices the registration shift with a vowel change that supports it. The [i] keeps things narrow at the bottom, the [a] opens up space at the top.</p>
+                <p><strong>What to listen for:</strong> No grab at the top. If you feel a squeeze, you are closing down instead of opening up. Think of the "ah" as arriving at a wide, warm place.</p>
 
                 <h2>Repertoire Work</h2>
 
-                <h3>Dove sono i bei momenti</h3>
-                <p><strong>Your target sound:</strong> Warm and round on the sustained lines, with brightness arriving naturally at the climaxes. Not the other way around.</p>
+                <h3>Somewhere Over the Rainbow</h3>
+                <p><strong>Your target sound:</strong> Warm and open on the octave leap. The brightness comes from the vowel, not from pressing.</p>
                 <ul>
-                    <li>Practice the recitative section first, speaking the Italian in rhythm. Feel the character's questions before singing them.</li>
-                    <li>On the ascending phrase at "che il mio cor," use the [i]-to-[e] modification from exercise 2. The vowel change should be invisible to a listener.</li>
-                    <li>Run the aria once per practice session for continuity. Mark the moments where you feel warmth and brightness coexisting. Those are your anchors.</li>
+                    <li>Practice the octave leap ("Some-where") with the rib expansion from exercise 2. Keep the tank full through the leap.</li>
+                    <li>Speak the text of the bridge in rhythm before singing it. Notice where the character's energy peaks. It is not the highest note.</li>
+                    <li>Run the full song once per practice session for continuity. Trust what is working.</li>
                 </ul>
 
-                <h3>Ain't It a Pretty Night</h3>
-                <p><strong>Current phase:</strong> Characterization Integration</p>
+                <h3>Come to My Garden</h3>
+                <p><strong>Current phase:</strong> Melody + Text + Rhythm</p>
                 <ul>
-                    <li>Focus on the D4 transition phrase this week. The buzziness you are hearing is resonance engaging. Let it be there.</li>
-                    <li>Speak Susannah's text as a monologue before singing. She is dreaming out loud. The vocal quality should reflect wonder, not effort.</li>
-                    <li>Work the final page slowly, connecting the breath support from exercise 4 to the high phrase.</li>
+                    <li>Focus on measures 16-24 this week. The registration shift at "and I will show you" is the same coordination as the Rainbow leap.</li>
+                    <li>Speak the text with character intention first. Who is Lily speaking to? What does she want?</li>
+                </ul>
+
+                <h2>Areas for Growth</h2>
+                <p>These are the functional edges we are actively building. They are not problems. They are the next level.</p>
+                <ul>
+                    <li><strong>Rib expansion through phrases:</strong> Your breath management is improving. The next step is maintaining expansion through longer phrases without thinking about it. The exercises above build this.</li>
+                    <li><strong>Registration shifts without grabbing:</strong> You can do this when you are thinking about it. The goal is for it to become automatic, especially under performance conditions.</li>
+                    <li><strong>Character intention on first attempts:</strong> You tend to sing the notes first and add character second. We are working on bringing the character from the very first note.</li>
                 </ul>
 
                 <h2>Practice Structure</h2>
-                <p>Pre-recital hearing is April 18. Three weeks of focused work.</p>
+                <p>You have a jury in three weeks. Practice smart, not long.</p>
                 <ul>
-                    <li><strong>Warm up:</strong> 10 minutes. Descending [u]-[o] scales, then the [i] arpeggio.</li>
-                    <li><strong>Exercises:</strong> Messa di voce + octave slides, 10 minutes. Focus on consistency, not power.</li>
-                    <li><strong>Rep work:</strong> 25-30 minutes. Alternate between "Dove sono" and "Ain't It a Pretty Night." Spend at least one session this week on your other recital pieces.</li>
-                    <li><strong>Cool down:</strong> Descending lip trills, gentle humming on [m].</li>
-                    <li><strong>Stop when fatigue shows up.</strong> If the brightness disappears and everything sounds dull no matter what you do, you are tired. Rest.</li>
+                    <li><strong>Warm up:</strong> 10 minutes. Lip trills, then sustained [u] with rib check.</li>
+                    <li><strong>Exercises:</strong> Octave slides, 5 minutes. Focus on ease, not volume.</li>
+                    <li><strong>Rep work:</strong> 20-30 minutes. Alternate between Rainbow and Garden. Do not run each piece more than twice in a row. Mix it up.</li>
+                    <li><strong>Cool down:</strong> Lip trills descending, gentle humming.</li>
+                    <li><strong>Stop when fatigue shows up.</strong> If the sound starts thinning or you feel tension creeping in, that is your signal.</li>
                 </ul>
 
                 <p class="plan-signoff">Prof. G</p>
@@ -269,111 +229,37 @@
     <!-- LESSON DEBRIEF VIEW -->
     <div id="view-debrief" style="display: none;">
         <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
-        <h2>Lesson Debriefs</h2>
+        <h2>Lesson Debrief</h2>
         <div class="dash-detail-wrap">
+            <div class="practice-plan-letter">
+                <p class="plan-date">Tuesday, April 1, 2026 &middot; 60 min</p>
 
-            <!-- Lesson 1: March 25 -->
-            <div class="lesson-debrief-entry">
-                <div class="practice-plan-letter">
-                    <p class="plan-date">Tuesday, March 25, 2026 &middot; 60 min</p>
+                <h3>What We Worked On</h3>
+                <ul>
+                    <li>Somewhere Over the Rainbow — octave leap and bridge section</li>
+                    <li>Come to My Garden — measures 16-24, registration shift at "and I will show you"</li>
+                    <li>Breath management: rib expansion exercises, sustained vowel work</li>
+                </ul>
 
-                    <h3>What We Worked On</h3>
-                    <ul>
-                        <li><strong>Dove sono i bei momenti</strong> (Mozart): Ascending line at "che il mio cor," passaggio balancing, recitative phrasing</li>
-                        <li><strong>Ain't It a Pretty Night</strong> (Floyd): D4 chest-to-mix transition, final page high phrase</li>
-                    </ul>
-                    <p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p>
-                    <ul>
-                        <li>Descending five-note [u] to [o]: establishing warmth as baseline resonance</li>
-                        <li>Ascending arpeggio on [i] with modification above E5: building brightness through the passaggio without pressing</li>
-                        <li>Messa di voce on A4: maintaining resonance balance across dynamic changes</li>
-                        <li>Octave slide on [a] with rib monitoring: connecting breath support to passaggio crossing</li>
-                    </ul>
-                    <p style="margin-top: 0.5rem;"><strong>Listening targets:</strong> warmth on sustained lines, brightness arriving naturally at climaxes, buzziness at D4 as a sign of resonance engagement</p>
+                <h3>Observations</h3>
+                <p><strong>Intention + Learning:</strong> Alex came in with a clear goal: the octave leap in Rainbow has been inconsistent in practice. Strong self-awareness about what is and is not working. Asked good questions about why the leap feels different on tired days versus fresh days.</p>
+                <p><strong>Expression:</strong> Character work in Garden is emerging. The text-first approach is connecting. Alex had a moment of genuine discovery when speaking Lily's text and realizing the emotional arc peaks before the melodic peak.</p>
+                <p><strong>Function:</strong> Rib expansion was collapsing mid-phrase, which was starving the registration shift of air support. Once we addressed the breath management, the leap in Rainbow cleaned up significantly. The same coordination transferred to Garden without additional instruction.</p>
 
-                    <h3>What Shifted</h3>
-                    <p>The passaggio crossing in "Dove sono" landed three times cleanly when you let the [i] vowel narrow toward [e] on the ascent. Your reaction was, "Oh, I do not have to push it up there." Exactly. The resonance does the work when you give it the right vowel shape.</p>
-                    <p>In "Ain't It a Pretty Night," the D4 transition smoothed out when you stopped trying to eliminate the buzziness and instead let it be part of the sound. That was a significant perceptual shift: hearing resonance engagement as a feature, not a problem.</p>
+                <h3>Warmth + Brightness</h3>
+                <p>Warmth is strong and consistent in the lower range. Brightness on ascending phrases was coming from pressing rather than from vowel shaping. The [i] to [a] slide exercise helped Alex hear the difference between pressed brightness and resonant brightness.</p>
 
-                    <h3>Where You Are</h3>
-                    <p>Passaggio balancing is in the associative phase: you can find it when you think about the vowel modification, and it is starting to happen on its own in familiar passages. The breath support coordination is further along. You maintain rib expansion through most phrases without prompting now. The next threshold is doing both at once under performance conditions, which is what the hearing will test.</p>
+                <h3>Breakthroughs</h3>
+                <p>The octave leap in Rainbow landed three times in a row with full rib expansion. Alex's reaction: "Oh, it is just... there." That is the feeling we are after. The registration shift in Garden at "and I will show you" also landed cleanly for the first time when approached with the same breath strategy.</p>
 
-                    <h3>What's Next</h3>
-                    <p>Continue the [i]-to-[e] modification work in "Dove sono," especially on the ascending phrases in the B section. Start running the full recitative + aria as a unit to build stamina and dramatic continuity. In "Ain't It a Pretty Night," let the buzziness at D4 settle in. Do not try to fix it. It is correct.</p>
+                <h3>Areas for Growth</h3>
+                <p>Rib expansion is still in the associative phase: Alex can do it when thinking about it but it is not yet automatic. The grab at the top of ascending phrases is a habit that is loosening but not gone. Character intention tends to arrive after the first few notes rather than from the start.</p>
+                <p>Motor learning phase for breath management: late associative, approaching autonomous for comfortable range. Still cognitive for passages above the passaggio.</p>
 
-                    <p class="plan-signoff">Prof. G</p>
-                </div>
-            </div>
+                <h3>What We Are Working Toward</h3>
+                <p>Automatic rib expansion through phrases. Registration shifts that feel like nothing happened. Character intention from the first note. These are the edges, and we are close.</p>
 
-            <!-- Lesson 2: March 18 -->
-            <div class="lesson-debrief-entry">
-                <div class="practice-plan-letter">
-                    <p class="plan-date">Tuesday, March 18, 2026 &middot; 60 min</p>
-
-                    <h3>What We Worked On</h3>
-                    <ul>
-                        <li><strong>Dove sono i bei momenti</strong> (Mozart): Recitative section, text stress and Italian diction</li>
-                        <li><strong>Someone to Watch Over Me</strong> (Gershwin): Vocal color shifts, microphone technique for studio class performance</li>
-                        <li><strong>Widmung</strong> (Schumann): Opening phrase legato, German diction on [y] vowel</li>
-                    </ul>
-                    <p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p>
-                    <ul>
-                        <li>Sustained [u] with slow jaw release: finding warmth without losing focus</li>
-                        <li>Staccato five-note patterns on [a]: clarity of onset without pressing</li>
-                    </ul>
-                    <p style="margin-top: 0.5rem;"><strong>Listening targets:</strong> warmth in the German [y] vowel, brightness on Gershwin phrase peaks without forcing, buzziness as resonance cue on staccato onsets</p>
-
-                    <h3>What Shifted</h3>
-                    <p>The recitative in "Dove sono" came alive when you started speaking the Italian as a real question rather than a musical phrase. The vocal quality changed immediately: more warmth, more presence, less mechanical. That connection between intention and sound is exactly what we are building toward for the recital.</p>
-                    <p>On "Someone to Watch Over Me," you found a vocal color shift in the bridge that was genuinely different from the verse. Softer, more intimate, with a quality that suits the microphone. That was new.</p>
-
-                    <h3>Where You Are</h3>
-                    <p>Italian diction is solid and moving toward automatic. The German [y] vowel still needs conscious attention, especially when it sits above the staff. The character connection in the recitative is in the cognitive phase: you can find it, but it takes deliberate focus. With repetition this week, it should start to feel more natural.</p>
-
-                    <h3>What's Next</h3>
-                    <p>Memorize the recitative section of "Dove sono" this week so the text can live in your body, not on the page. Continue the vocal color exploration in "Someone to Watch Over Me" for studio class on Friday. For "Widmung," focus on the [y] vowel in context: speak the text slowly, then sing, keeping the vowel rounded and warm.</p>
-
-                    <p class="plan-signoff">Prof. G</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PERFORMANCE FEEDBACK VIEW -->
-    <div id="view-feedback" style="display: none;">
-        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
-        <h2>Performance Feedback</h2>
-        <p class="text-muted" style="margin-bottom: 1.5rem;">Notes from dress rehearsals, hearings, juries, and other performance events.</p>
-        <div class="dash-detail-wrap">
-
-            <!-- Dress Rehearsal -->
-            <div class="feedback-event">
-                <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">Dress Rehearsal</h3>
-                <p class="text-muted" style="font-size: 13px; margin-bottom: 1rem;">Friday, March 14, 2026</p>
-
-                <p><strong>Dove sono i bei momenti:</strong> The recitative section was compelling and well paced. The aria's ascending line at "che il mio cor" is almost there. The vowel modification is happening, but it arrives a beat late, so there is a brief moment of pressed brightness before the warmth settles in. Start the modification earlier. Think of it as preparation, not reaction. The sustained phrases in the B section had beautiful warmth and the breath support was consistent throughout.</p>
-
-                <p><strong>Ain't It a Pretty Night:</strong> Wonderful character presence from the opening. The D4 transition was smooth in the first verse and slightly bumpy in the second, likely fatigue. The final high phrase had good brightness but could use more warmth underneath. Think of the vowel space from exercise 1 (the [u] to [o] descent) while you are up there. The storytelling was the strongest part of this performance.</p>
-
-                <p><strong>Someone to Watch Over Me:</strong> The vocal color shift in the bridge worked beautifully. You found the intimate quality we have been looking for. Watch the tendency to scoop into the verse melody on the repeat. The pitch center is solid. Trust the onset without sliding into it. The microphone technique was much improved from last week.</p>
-
-                <p><strong>Widmung:</strong> Strong opening phrase with good legato. The German [y] vowel is still slightly bright on the upper notes. Round it a bit more. The middle section's tempo felt rushed. This is a common response to the harmonic shifts. Breathe through the modulation. The final return to the opening theme was the best singing of the set: warm, focused, and emotionally connected.</p>
-            </div>
-
-            <!-- Pre-Recital Hearing -->
-            <div class="feedback-event">
-                <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">Pre-Recital Hearing</h3>
-                <p class="text-muted" style="font-size: 13px; margin-bottom: 1rem;">Friday, March 14, 2026 &middot; Approved with notes</p>
-
-                <div class="panelist-comment">
-                    <p>Dr. Sarah Mitchell <span class="text-muted" style="font-weight: 400;">(Voice Faculty)</span></p>
-                    <p>Maya shows strong technical growth this semester, particularly in the passaggio management that has been a focus area. The Mozart recitative demonstrated real musical intelligence and text connection. I would like to hear more dynamic contrast in the Floyd, especially in the final section where the vocal line climbs. The foundation is solid and the program order works well. She is ready for the recital with continued attention to the notes from the dress rehearsal.</p>
-                </div>
-
-                <div class="panelist-comment">
-                    <p>Prof. James Harmon <span class="text-muted" style="font-weight: 400;">(Vocal Pedagogy)</span></p>
-                    <p>Excellent programming that shows range and versatility. The Gershwin was a highlight: mature vocal color choices and genuine stylistic understanding. The Schumann needs a bit more time to settle into the body. The German diction is good but the vowel production above the staff is still effortful in places. I would recommend spending practice time on the transitions between pieces, especially the shift from Mozart to Floyd, which are dramatically very different. Overall, a strong showing. The technical and expressive elements are coming together.</p>
-                </div>
+                <p class="plan-signoff">Prof. G</p>
             </div>
         </div>
     </div>
@@ -390,7 +276,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Dove sono i bei momenti</strong><br><span class="text-muted text-small">W.A. Mozart, Le nozze di Figaro</span></td>
+                        <td><strong>Somewhere Over the Rainbow</strong><br><span class="text-muted text-small">Harold Arlen</span></td>
                         <td><select class="rep-select" onchange="demoPhaseChange(this)">
                             <option>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
@@ -405,52 +291,16 @@
                             <option>Performance Ready</option>
                             <option>Shelved</option>
                         </select></td>
-                        <td>Apr 18</td>
+                        <td>Apr 25</td>
                     </tr>
                     <tr>
-                        <td><strong>Ain't It a Pretty Night</strong><br><span class="text-muted text-small">Carlisle Floyd, Susannah</span></td>
+                        <td><strong>Come to My Garden</strong><br><span class="text-muted text-small">Lucy Simon</span></td>
                         <td><select class="rep-select">
                             <option>Translation + Characterization</option>
                             <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option selected>Characterization Integration</option>
-                            <option>Memorization</option>
-                            <option>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option selected>In Progress</option>
-                            <option>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 18</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Someone to Watch Over Me</strong><br><span class="text-muted text-small">George Gershwin</span></td>
-                        <td><select class="rep-select">
-                            <option>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
+                            <option selected>Melody + Text + Rhythm</option>
                             <option>Characterization Integration</option>
                             <option>Memorization</option>
-                            <option selected>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option>In Progress</option>
-                            <option selected>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 4</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Widmung</strong><br><span class="text-muted text-small">Robert Schumann</span></td>
-                        <td><select class="rep-select">
-                            <option>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option selected>Characterization Integration</option>
-                            <option>Memorization</option>
                             <option>Performance Ready</option>
                         </select></td>
                         <td><select class="rep-select">
@@ -459,7 +309,7 @@
                             <option>Performance Ready</option>
                             <option>Shelved</option>
                         </select></td>
-                        <td>Apr 18</td>
+                        <td>Apr 25</td>
                     </tr>
                     <tr>
                         <td><strong>Caro mio ben</strong><br><span class="text-muted text-small">Tommaso Giordani</span></td>
@@ -477,10 +327,46 @@
                             <option>Performance Ready</option>
                             <option>Shelved</option>
                         </select></td>
-                        <td>Apr 18</td>
+                        <td>Apr 25</td>
                     </tr>
                     <tr>
-                        <td><strong>Natural Woman</strong><br><span class="text-muted text-small">Carole King</span></td>
+                        <td><strong>I Feel the Earth Move</strong><br><span class="text-muted text-small">Carole King</span></td>
+                        <td><select class="rep-select">
+                            <option>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option selected>Performance Ready</option>
+                        </select></td>
+                        <td><select class="rep-select">
+                            <option>Assigned</option>
+                            <option>In Progress</option>
+                            <option selected>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 11</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Widmung</strong><br><span class="text-muted text-small">Robert Schumann</span></td>
+                        <td><select class="rep-select">
+                            <option selected>Translation + Characterization</option>
+                            <option>Text + Rhythm</option>
+                            <option>Melody + Text + Rhythm</option>
+                            <option>Characterization Integration</option>
+                            <option>Memorization</option>
+                            <option>Performance Ready</option>
+                        </select></td>
+                        <td><select class="rep-select">
+                            <option selected>Assigned</option>
+                            <option>In Progress</option>
+                            <option>Performance Ready</option>
+                            <option>Shelved</option>
+                        </select></td>
+                        <td>Apr 25</td>
+                    </tr>
+                    <tr>
+                        <td><strong>She Used to Be Mine</strong><br><span class="text-muted text-small">Sara Bareilles</span></td>
                         <td><select class="rep-select">
                             <option>Translation + Characterization</option>
                             <option selected>Text + Rhythm</option>
@@ -490,8 +376,8 @@
                             <option>Performance Ready</option>
                         </select></td>
                         <td><select class="rep-select">
-                            <option selected>Assigned</option>
-                            <option>In Progress</option>
+                            <option>Assigned</option>
+                            <option selected>In Progress</option>
                             <option>Performance Ready</option>
                             <option>Shelved</option>
                         </select></td>
@@ -676,10 +562,11 @@
     }
 
     function demoSubmit() {
-        alert('This is a demo. In the real portal, your submission would be saved and appear in your dashboard.');
+        alert('This is a demo. In the real portal, your reflection would be saved and appear in your dashboard.');
     }
 
     function demoPhaseChange(el) {
+        // Visual feedback that the change "saved"
         el.style.borderColor = 'var(--success-color)';
         setTimeout(() => { el.style.borderColor = ''; }, 1000);
     }
@@ -688,7 +575,6 @@
     document.getElementById('nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); showView('dashboard'); });
     document.getElementById('nav-plan').addEventListener('click', (e) => { e.preventDefault(); showView('plan'); });
     document.getElementById('nav-debrief').addEventListener('click', (e) => { e.preventDefault(); showView('debrief'); });
-    document.getElementById('nav-feedback').addEventListener('click', (e) => { e.preventDefault(); showView('feedback'); });
     document.getElementById('nav-repertoire').addEventListener('click', (e) => { e.preventDefault(); showView('repertoire'); });
     document.getElementById('nav-reflection').addEventListener('click', (e) => { e.preventDefault(); showView('reflection'); });
 

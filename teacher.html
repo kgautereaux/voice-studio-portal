@@ -1734,7 +1734,179 @@ async function renderPulse() {
     });
     html += '</tbody></table></div>';
 
-    // 5. JURY STATUS
+    // 5. LESSON COVERAGE (last 6 weeks)
+    html += '<div class="section-label">Lesson Coverage (Last 6 Weeks)</div>';
+
+    // Get 6 weeks of lesson logs per student
+    const sixWeeksAgo = new Date(now);
+    sixWeeksAgo.setDate(now.getDate() - 42);
+    const sixWeeksStr = sixWeeksAgo.toLocaleDateString('en-CA');
+
+    let coverageLogs, coverageEvents, practicePlans;
+    try {
+        [coverageLogs, coverageEvents, practicePlans] = await Promise.all([
+            sb.from('lesson_logs').select('student_id, date, approved, has_transcript').gte('date', sixWeeksStr).order('date', { ascending: false }),
+            sb.from('performance_events').select('id, student_id, event_date, event_type, status, title').eq('event_type', 'lesson').gte('event_date', sixWeeksStr).order('event_date', { ascending: false }),
+            sb.from('practice_plans').select('lesson_log_id, status').gte('date_generated', sixWeeksStr)
+        ]);
+    } catch (err) {
+        coverageLogs = { data: [] };
+        coverageEvents = { data: [] };
+        practicePlans = { data: [] };
+    }
+
+    const cLogs = coverageLogs.data || [];
+    const cEvents = coverageEvents.data || [];
+    const cPlans = practicePlans.data || [];
+
+    // Build plan lookup by lesson_log_id
+    const planByLogId = {};
+    cPlans.forEach(p => { if (p.lesson_log_id) planByLogId[p.lesson_log_id] = p; });
+
+    // Group logs by student
+    const logsByStudent = {};
+    cLogs.forEach(l => {
+        if (!logsByStudent[l.student_id]) logsByStudent[l.student_id] = [];
+        logsByStudent[l.student_id].push(l);
+    });
+
+    // Group events by student
+    const eventsByStudent = {};
+    cEvents.forEach(e => {
+        if (!eventsByStudent[e.student_id]) eventsByStudent[e.student_id] = [];
+        eventsByStudent[e.student_id].push(e);
+    });
+
+    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+    html += '<th>Student</th><th>Date</th><th>Source</th><th>Log</th><th>Approved</th><th>Plan</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    students.forEach(s => {
+        const sLogs = logsByStudent[s.id] || [];
+        const sEvents = (eventsByStudent[s.id] || []).filter(e => e.status !== 'canceled');
+
+        // Merge: calendar events + lesson logs (deduplicate by date)
+        const dateMap = {};
+        sEvents.forEach(e => {
+            dateMap[e.event_date] = { source: 'calendar', event: e, log: null };
+        });
+        sLogs.forEach(l => {
+            if (dateMap[l.date]) {
+                dateMap[l.date].log = l;
+            } else {
+                dateMap[l.date] = { source: 'log_only', event: null, log: l };
+            }
+        });
+
+        const dates = Object.keys(dateMap).sort().reverse();
+
+        if (dates.length === 0) {
+            html += '<tr><td><strong>' + escapeHtml(s.name) + '</strong></td>';
+            html += '<td colspan="5" class="text-muted">No lessons in last 6 weeks</td>';
+            html += '<td></td></tr>';
+            return;
+        }
+
+        dates.forEach((d, i) => {
+            const entry = dateMap[d];
+            const log = entry.log;
+            const evt = entry.event;
+
+            html += '<tr>';
+            html += '<td>' + (i === 0 ? '<strong>' + escapeHtml(s.name) + '</strong>' : '') + '</td>';
+            html += '<td>' + escapeHtml(formatShortDate(d)) + '</td>';
+
+            // Source
+            if (entry.source === 'calendar' && !log) {
+                html += '<td><span class="status-dot amber"></span>Calendar</td>';
+            } else if (entry.source === 'log_only') {
+                html += '<td><span class="status-dot green"></span>Logged</td>';
+            } else {
+                html += '<td><span class="status-dot green"></span>Both</td>';
+            }
+
+            // Log exists
+            html += '<td>' + (log ? '<span class="status-dot green"></span>Yes' : '<span class="status-dot red"></span>No') + '</td>';
+
+            // Approved
+            if (log) {
+                html += '<td>' + (log.approved ? '<span class="status-dot green"></span>Yes' : '<span class="status-dot amber"></span>Draft') + '</td>';
+            } else {
+                html += '<td></td>';
+            }
+
+            // Practice plan
+            if (log) {
+                const plan = planByLogId[log.id];
+                html += '<td>' + (plan ? '<span class="status-dot green"></span>Yes' : '<span class="status-dot amber"></span>No') + '</td>';
+            } else {
+                html += '<td></td>';
+            }
+
+            // Cancel action for calendar-only entries
+            if (entry.source === 'calendar' && !log && evt) {
+                html += '<td><button class="btn-cancel-lesson" data-event-id="' + evt.id + '" style="font-size:10px; text-transform:uppercase; letter-spacing:0.05em; padding:0.2rem 0.5rem; border-radius:3px; background:none; border:1px solid var(--border-color); color:var(--text-muted); cursor:pointer; font-family:inherit;">Cancel</button></td>';
+            } else {
+                html += '<td></td>';
+            }
+
+            html += '</tr>';
+        });
+    });
+    html += '</tbody></table></div>';
+
+    // Cancel lesson button handler
+    container.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-cancel-lesson')) {
+            const eventId = e.target.dataset.eventId;
+            if (confirm('Mark this lesson as canceled?')) {
+                await sb.from('performance_events').update({ status: 'canceled' }).eq('id', eventId);
+                renderPulse();
+            }
+        }
+    });
+
+    // 6. STUDIO CLASS COVERAGE
+    html += '<div class="section-label">Studio Class Coverage</div>';
+
+    let studioClassLogs;
+    try {
+        studioClassLogs = await sb.from('studio_class_logs').select('session_date, duration_minutes, students_present, has_transcript, session_overview').order('session_date', { ascending: false }).limit(10);
+    } catch (err) {
+        studioClassLogs = { data: [] };
+    }
+
+    const scLogs = studioClassLogs.data || [];
+    if (scLogs.length === 0) {
+        html += '<p class="loading-text">No studio class sessions logged yet.</p>';
+    } else {
+        // Get feedback counts per date
+        let feedbackCounts = {};
+        try {
+            const { data: fbData } = await sb.from('studio_class_feedback').select('studio_class_date');
+            (fbData || []).forEach(f => {
+                feedbackCounts[f.studio_class_date] = (feedbackCounts[f.studio_class_date] || 0) + 1;
+            });
+        } catch (err) {}
+
+        html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+        html += '<th>Date</th><th>Duration</th><th>Students</th><th>Transcript</th><th>Feedback</th>';
+        html += '</tr></thead><tbody>';
+        scLogs.forEach(sc => {
+            const presentCount = (sc.students_present || []).length;
+            const fbCount = feedbackCounts[sc.session_date] || 0;
+            html += '<tr>';
+            html += '<td>' + escapeHtml(formatShortDate(sc.session_date)) + '</td>';
+            html += '<td>' + (sc.duration_minutes || '') + ' min</td>';
+            html += '<td>' + presentCount + ' present</td>';
+            html += '<td>' + (sc.has_transcript ? '<span class="status-dot green"></span>Yes' : '<span class="status-dot amber"></span>No') + '</td>';
+            html += '<td>' + fbCount + ' / ' + presentCount + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+    }
+
+    // 7. JURY STATUS
     const { data: allJuryPlans } = await sb.from('jury_plans').select('*');
     const juryPlanMap = {};
     (allJuryPlans || []).forEach(jp => { juryPlanMap[jp.student_id] = jp; });
@@ -2528,6 +2700,43 @@ async function renderEvents() {
 
     let html = '';
 
+    // STUDIO CLASS SESSIONS (recent)
+    let scLogsRes;
+    try {
+        scLogsRes = await sb.from('studio_class_logs').select('*').order('session_date', { ascending: false }).limit(8);
+    } catch (err) {
+        scLogsRes = { data: [] };
+    }
+    const scSessions = scLogsRes.data || [];
+
+    if (scSessions.length > 0) {
+        html += '<div class="section-label">Studio Class Sessions</div>';
+        scSessions.forEach(sc => {
+            const presentList = (sc.students_present || []).join(', ');
+            html += '<div class="event-card" style="cursor: pointer;" onclick="toggleStudioClassDetail(this, \'' + sc.session_date + '\')">';
+            html += '<div class="event-date-col">' + escapeHtml(formatShortDate(sc.session_date)) + '</div>';
+            html += '<div>';
+            html += '<span class="event-type-badge">Studio Class</span>';
+            html += '<strong>' + (sc.students_present || []).length + ' students</strong>';
+            html += ' : ' + escapeHtml(presentList);
+            if (sc.duration_minutes) html += '<span style="color: var(--text-muted); font-size: 13px;"> (' + sc.duration_minutes + ' min)</span>';
+            if (sc.session_overview) {
+                const snippet = sc.session_overview.length > 140 ? sc.session_overview.substring(0, 140) + '...' : sc.session_overview;
+                html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.25rem;">' + escapeHtml(snippet) + '</p>';
+            }
+            html += '</div>';
+            html += '</div>';
+            // Hidden detail panel
+            html += '<div class="sc-detail" data-date="' + sc.session_date + '" style="display:none; padding: 1rem 1.5rem; background: var(--bg-warm); border-radius: var(--radius); margin-bottom: 0.75rem;">';
+            html += '<p class="loading-text">Loading session details...</p>';
+            html += '</div>';
+        });
+        html += '<div style="margin-bottom: 1.5rem;"></div>';
+    }
+
+    // UPCOMING EVENTS
+    html += '<div class="section-label">Upcoming Events</div>';
+
     // Group events by week
     if (events.length === 0) {
         html += '<div class="empty-state"><h2>No upcoming events</h2><p>No performances or juries scheduled in the next 60 days.</p></div>';
@@ -2563,6 +2772,53 @@ async function renderEvents() {
     }
 
     container.innerHTML = html;
+}
+
+async function toggleStudioClassDetail(card, sessionDate) {
+    const detail = card.nextElementSibling;
+    if (!detail || !detail.classList.contains('sc-detail')) return;
+
+    if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+
+        // Load feedback for this session
+        try {
+            const [{ data: feedbackData }, { data: logData }] = await Promise.all([
+                sb.from('studio_class_feedback').select('*, students(name)').eq('studio_class_date', sessionDate),
+                sb.from('studio_class_logs').select('cross_student_themes').eq('session_date', sessionDate)
+            ]);
+
+            let detailHtml = '';
+
+            // Per-student sections
+            (feedbackData || []).forEach(fb => {
+                const name = fb.students ? fb.students.name : 'Unknown';
+                detailHtml += '<div style="margin-bottom: 1rem;">';
+                detailHtml += '<strong>' + escapeHtml(name) + '</strong>';
+                if (fb.repertoire_performed) detailHtml += ' : ' + escapeHtml(fb.repertoire_performed);
+                if (fb.kayla_feedback) {
+                    const preview = fb.kayla_feedback.length > 300 ? fb.kayla_feedback.substring(0, 300) + '...' : fb.kayla_feedback;
+                    detailHtml += '<p style="font-size: 13px; color: var(--text-color); margin-top: 0.25rem; white-space: pre-line;">' + escapeHtml(preview) + '</p>';
+                }
+                detailHtml += '</div>';
+            });
+
+            // Cross-student themes
+            if (logData && logData[0] && logData[0].cross_student_themes) {
+                detailHtml += '<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">';
+                detailHtml += '<strong style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Cross-Student Themes</strong>';
+                const themes = logData[0].cross_student_themes.length > 500 ? logData[0].cross_student_themes.substring(0, 500) + '...' : logData[0].cross_student_themes;
+                detailHtml += '<p style="font-size: 13px; margin-top: 0.25rem; white-space: pre-line;">' + escapeHtml(themes) + '</p>';
+                detailHtml += '</div>';
+            }
+
+            detail.innerHTML = detailHtml || '<p class="text-muted">No feedback recorded for this session.</p>';
+        } catch (err) {
+            detail.innerHTML = '<p class="text-muted">Error loading session details.</p>';
+        }
+    } else {
+        detail.style.display = 'none';
+    }
 }
 
 // ============================================================
@@ -2941,8 +3197,12 @@ function svShowDetail(type) {
         } else {
             data.studioFeedback.forEach(f => {
                 html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<p><strong>' + escapeHtml(formatDate(f.studio_class_date)) + '</strong></p>';
+                html += '<p><strong>' + escapeHtml(formatDate(f.studio_class_date)) + '</strong>';
+                if (f.repertoire_performed) html += ' : ' + escapeHtml(f.repertoire_performed);
+                html += '</p>';
+                if (f.performance_observations) html += '<p style="font-size: 13px; margin-top: 0.25rem;"><strong>Performance:</strong> ' + escapeHtml(f.performance_observations) + '</p>';
                 if (f.kayla_feedback) html += '<div class="brief-content">' + markdownToHtml(f.kayla_feedback) + '</div>';
+                if (f.connections_to_technical_work) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Teaching point:</strong> ' + escapeHtml(f.connections_to_technical_work) + '</p>';
                 if (f.peer_feedback) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Peer feedback:</strong> ' + escapeHtml(typeof f.peer_feedback === 'string' ? f.peer_feedback : JSON.stringify(f.peer_feedback)) + '</p>';
                 html += '</div>';
             });

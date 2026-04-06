@@ -231,7 +231,7 @@
             <li><a href="#" data-nav="reflect">Reflection</a></li>
             <li><a href="#" data-nav="progress">Analytics</a></li>
         </ul>
-        <div class="nav-user" id="nav-actions">
+        <div class="nav-user" id="nav-authenticated">
             <button id="btn-settings" style="margin-right: 0.75rem;">Settings</button>
             <button id="btn-logout">Sign Out</button>
         </div>
@@ -301,7 +301,7 @@
                 <div class="dash-card-summary" id="dash-reflection-summary">Loading...</div>
             </div>
             <div class="dash-card" data-detail="detail-repertoire">
-                <div class="dash-card-label">Repertoire & Jury</div>
+                <div class="dash-card-label">Repertoire</div>
                 <div class="dash-card-value" id="dash-rep-count">--</div>
                 <div class="dash-card-summary" id="dash-rep-summary">Loading...</div>
             </div>
@@ -315,11 +315,6 @@
                 <div class="dash-card-value" id="dash-wins-value">--</div>
                 <div class="dash-card-summary" id="dash-wins-summary">Loading...</div>
             </div>
-            <div class="dash-card" data-detail="detail-feedback">
-                <div class="dash-card-label">Performance Feedback</div>
-                <div class="dash-card-value" id="dash-feedback-value">--</div>
-                <div class="dash-card-summary" id="dash-feedback-summary">Loading...</div>
-            </div>
             <div class="dash-card" data-detail="detail-studio">
                 <div class="dash-card-label">Studio Class</div>
                 <div class="dash-card-value" id="dash-studio-date">--</div>
@@ -332,7 +327,7 @@
         <div class="detail-panel" id="detail-lesson" style="display:none;">
             <div class="dash-detail-wrap">
                 <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-                <h2>Lesson Debriefs</h2>
+                <h2>Lesson Debrief</h2>
                 <div id="lesson-debrief-content"><p class="text-muted">Loading...</p></div>
             </div>
         </div>
@@ -350,8 +345,40 @@
         <div class="detail-panel" id="detail-repertoire" style="display:none;">
             <div class="dash-detail-wrap">
                 <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-                <h2>Repertoire & Jury Plan</h2>
+                <h2>Active Repertoire</h2>
                 <div id="repertoire-content"><p class="text-muted">Loading...</p></div>
+
+                <h3 style="margin-top: 2rem;">Add a Piece</h3>
+                <form id="add-rep-form" class="dash-add-rep">
+                    <div class="form-group">
+                        <label for="rep-title">Title</label>
+                        <input type="text" id="rep-title" required placeholder="Song or aria title">
+                    </div>
+                    <div class="dash-rep-grid">
+                        <div class="form-group">
+                            <label for="rep-composer">Composer</label>
+                            <input type="text" id="rep-composer" placeholder="Composer name">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-style">Style</label>
+                            <select id="rep-style">
+                                <option value="">Select...</option>
+                                <option value="classical">Classical</option>
+                                <option value="MT">Musical Theater</option>
+                                <option value="pop-rock">Pop/Rock</option>
+                                <option value="jazz">Jazz</option>
+                                <option value="folk">Folk</option>
+                                <option value="art song">Art Song</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="rep-sheet-music">Sheet Music Link <span class="hint">Google Drive, Dropbox, or any shareable URL (optional)</span></label>
+                        <input type="url" id="rep-sheet-music" placeholder="https://drive.google.com/...">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
+                </form>
             </div>
         </div>
 
@@ -361,15 +388,6 @@
                 <h2>Vocal Progress</h2>
                 <p class="text-muted" style="margin-bottom: 1.5rem;">Breakthroughs, wins, and milestones from your lessons and studio work.</p>
                 <div id="wins-content"><p class="text-muted">Loading...</p></div>
-            </div>
-        </div>
-
-        <div class="detail-panel" id="detail-feedback" style="display:none;">
-            <div class="dash-detail-wrap">
-                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
-                <h2>Performance Feedback</h2>
-                <p class="text-muted" style="margin-bottom: 1.5rem;">Notes from dress rehearsals, hearings, juries, and other performance events.</p>
-                <div id="feedback-content"><p class="text-muted">Loading...</p></div>
             </div>
         </div>
 
@@ -383,7 +401,6 @@
                 <div id="studio-class-plan"><p class="text-muted">Loading...</p></div>
             </div>
         </div>
-
 
     </main>
 </div>

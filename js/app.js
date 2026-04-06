@@ -17,24 +17,6 @@ let sb = null;
 let currentUser = null;
 let studentData = null;
 
-const JURY_REQUIREMENTS = {
-    'MFA_MT_Vocal_Pedagogy': ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song', 'Wildcard'],
-    'MM_Vocal_Pedagogy': ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4', 'Wildcard'],
-    'BFA_MT_Sophomore': ['32-bar cut', 'Legit selection', 'Additional selection 1', 'Additional selection 2', 'Wildcard']
-};
-
-function programKeyFromDegree(degree) {
-    if (!degree) return null;
-    const d = degree.toLowerCase();
-    if (d.includes('mfa') && d.includes('mt')) return 'MFA_MT_Vocal_Pedagogy';
-    if (d.includes('mm') && d.includes('ped')) return 'MM_Vocal_Pedagogy';
-    if (d.includes('bfa') && d.includes('mt') && d.includes('soph')) return 'BFA_MT_Sophomore';
-    if (d.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
-    if (d.includes('mm')) return 'MM_Vocal_Pedagogy';
-    if (d.includes('bfa')) return 'BFA_MT_Sophomore';
-    return null;
-}
-
 // ============================================================
 // INITIALIZATION
 // ============================================================
@@ -50,9 +32,6 @@ async function initApp() {
     const { data: { session } } = await sb.auth.getSession();
     console.log('[VS] session:', session ? session.user.email : 'none');
 
-    // Set up navigation first so form handlers are always bound
-    setupNavigation();
-
     if (session) {
         currentUser = session.user;
         const hasConsent = await checkConsent();
@@ -65,11 +44,7 @@ async function initApp() {
                 return;
             }
         } else {
-            try {
-                await loadStudentData();
-            } catch (err) {
-                console.error('[VS] loadStudentData error:', err);
-            }
+            await loadStudentData();
             if (window.location.pathname.includes('consent.html')) {
                 window.location.href = 'dashboard.html';
                 return;
@@ -93,11 +68,7 @@ async function initApp() {
             if (!hasConsent) {
                 window.location.href = 'consent.html';
             } else {
-                try {
-                    await loadStudentData();
-                } catch (err) {
-                    console.error('[VS] loadStudentData error:', err);
-                }
+                await loadStudentData();
                 showDashboard();
             }
         } else if (event === 'SIGNED_OUT') {
@@ -106,6 +77,9 @@ async function initApp() {
             showLogin();
         }
     });
+
+    // Set up navigation
+    setupNavigation();
 }
 
 // ============================================================
@@ -245,25 +219,15 @@ async function loadStudentData() {
 
     studentData.studioFeedback = studioFeedback || [];
 
-    // Load lesson logs (student-visible fields: four-section debrief)
+    // Load lesson logs (student-visible fields)
     const { data: lessonLogs } = await sb
         .from('lesson_logs')
-        .select('id, date, duration_minutes, repertoire_worked, exercises, breakthroughs, pivots, motor_learning_phase, next_steps, plan_for_next_lesson')
+        .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, breakthroughs, next_steps, plan_for_next_lesson, exercise_categories_addressed')
         .eq('student_id', currentUser.id)
-        .eq('approved', true)
         .order('date', { ascending: false })
         .limit(10);
 
     studentData.lessonLogs = lessonLogs || [];
-
-    // Load jury/hearing feedback
-    const { data: juryFeedback } = await sb
-        .from('jury_feedback')
-        .select('*')
-        .eq('student_id', currentUser.id)
-        .order('date', { ascending: false });
-
-    studentData.juryFeedback = juryFeedback || [];
 
     // Load upcoming events
     const { data: events } = await sb
@@ -281,28 +245,6 @@ async function loadStudentData() {
         .order('studio_class_date');
 
     studentData.studioPlans = studioPlans || [];
-
-    // Load jury plan
-    const { data: juryPlans } = await sb
-        .from('jury_plans')
-        .select('*')
-        .eq('student_id', currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-    studentData.juryPlan = (juryPlans || [])[0] || null;
-
-    if (studentData.juryPlan) {
-        const { data: jurySelections } = await sb
-            .from('jury_selections')
-            .select('*')
-            .eq('jury_plan_id', studentData.juryPlan.id)
-            .order('requirement_slot');
-
-        studentData.jurySelections = jurySelections || [];
-    } else {
-        studentData.jurySelections = [];
-    }
 }
 
 // ============================================================
@@ -313,14 +255,12 @@ function showLogin() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-login').classList.add('active');
     document.getElementById('nav-authenticated').style.display = 'none';
-    document.getElementById('nav-actions').style.display = 'none';
 }
 
 function showDashboard() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-dashboard').classList.add('active');
     document.getElementById('nav-authenticated').style.display = 'flex';
-    document.getElementById('nav-actions').style.display = 'flex';
 
     renderDashboard();
 }
@@ -451,7 +391,7 @@ function renderUpcomingEvents() {
 
 function renderDashCards() {
     const events = studentData.events || [];
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = new Date().toISOString().split('T')[0];
     const nextLesson = events.find(e =>
         e.date >= todayStr && e.title && e.title.includes('Voice Lesson')
     );
@@ -527,27 +467,14 @@ function renderDashCards() {
             'Submit before ' + nextLessonLabel;
     }
 
-    // REPERTOIRE & JURY
+    // REPERTOIRE
     const rep = studentData.repertoire || [];
-    const jurySels = studentData.jurySelections || [];
-    const juryPlanCard = studentData.juryPlan;
-    const activeSels = jurySels.filter(s => s.status !== 'dropped');
-    const pkCard = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
-    const jurySlotsCard = (pkCard && JURY_REQUIREMENTS[pkCard]) ? JURY_REQUIREMENTS[pkCard] : [];
-
     document.getElementById('dash-rep-count').textContent =
         rep.length > 0 ? rep.length + ' pieces' : '--';
-    if (rep.length > 0 || juryPlanCard) {
-        const parts = [];
-        if (rep.length > 0) {
-            const nearest = rep.filter(r => r.timeline).sort((a, b) => a.timeline.localeCompare(b.timeline))[0];
-            if (nearest) parts.push('Next: ' + new Date(nearest.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        }
-        if (juryPlanCard && jurySlotsCard.length > 0) {
-            const filledCount = activeSels.filter(s => s.status === 'accepted' || s.status === 'confirmed' || s.status === 'approved').length;
-            parts.push('Jury: ' + filledCount + '/' + jurySlotsCard.length);
-        }
-        document.getElementById('dash-rep-summary').textContent = parts.join(' · ') || 'No repertoire tracked yet';
+    if (rep.length > 0) {
+        const nearest = rep.filter(r => r.timeline).sort((a, b) => a.timeline.localeCompare(b.timeline))[0];
+        document.getElementById('dash-rep-summary').textContent =
+            nearest ? 'Next: ' + new Date(nearest.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
     } else {
         document.getElementById('dash-rep-summary').textContent = 'No repertoire tracked yet';
     }
@@ -606,30 +533,9 @@ function renderDashCards() {
         document.getElementById('dash-wins-summary').textContent = 'Wins and breakthroughs will appear here';
     }
 
-    // PERFORMANCE FEEDBACK — show most recent event with notes
-    const perfEvents = (studentData.events || []).filter(e => e.notes && e.notes.length > 20 && e.status === 'completed');
-    perfEvents.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    const juryFb = studentData.juryFeedback || [];
-    const totalFeedback = perfEvents.length + (juryFb.length > 0 ? 1 : 0);
-
-    if (totalFeedback > 0) {
-        const latest = perfEvents.length > 0 ? perfEvents[0] : null;
-        const latestJury = juryFb.length > 0 ? juryFb[0] : null;
-        let displayDate = latest ? latest.date : (latestJury ? latestJury.date : '');
-        let displayTitle = latest ? latest.title : (latestJury ? latestJury.event_type.replace(/_/g, ' ') : '');
-        const d = new Date(displayDate + 'T12:00:00');
-        document.getElementById('dash-feedback-value').textContent =
-            d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        document.getElementById('dash-feedback-summary').textContent =
-            displayTitle + (juryFb.length > 0 ? ' · ' + juryFb.length + ' panel comment' + (juryFb.length > 1 ? 's' : '') : '');
-    } else {
-        document.getElementById('dash-feedback-value').textContent = '--';
-        document.getElementById('dash-feedback-summary').textContent = 'Feedback from performances will appear here';
-    }
-
     // STUDIO CLASS — show next upcoming studio class
     const studioPlans = studentData.studioPlans || [];
-    const today = new Date().toLocaleDateString('en-CA');
+    const today = new Date().toISOString().split('T')[0];
     const nextStudio = studioPlans.find(p => p.studio_class_date >= today);
     if (nextStudio) {
         const d = new Date(nextStudio.studio_class_date + 'T12:00:00');
@@ -641,7 +547,6 @@ function renderDashCards() {
         document.getElementById('dash-studio-date').textContent = '--';
         document.getElementById('dash-studio-summary').textContent = 'No upcoming studio class';
     }
-
 }
 
 function setupCardNavigation() {
@@ -690,86 +595,9 @@ function setupCardNavigation() {
 function renderDetailPanel(panelId) {
     if (panelId === 'detail-lesson') renderLessonDebrief();
     else if (panelId === 'detail-plan') { renderPracticePlan(); renderPastPlans(); }
-    else if (panelId === 'detail-repertoire') { renderRepertoire(); }
+    else if (panelId === 'detail-repertoire') { renderRepertoire(); setupRepForm(); }
     else if (panelId === 'detail-wins') renderWins();
-    else if (panelId === 'detail-feedback') renderPerformanceFeedback();
     else if (panelId === 'detail-studio') { renderStudioFeedback(); renderStudioClassPlan(); }
-}
-
-function renderPerformanceFeedback() {
-    const container = document.getElementById('feedback-content');
-    if (!container || !studentData) return;
-
-    const events = (studentData.events || []).filter(e => e.notes && e.notes.length > 20);
-    const juryFb = studentData.juryFeedback || [];
-
-    if (events.length === 0 && juryFb.length === 0) {
-        container.innerHTML = '<p class="text-muted">No performance feedback yet. Notes from dress rehearsals, hearings, and juries will appear here.</p>';
-        return;
-    }
-
-    let html = '';
-
-    // Performance event notes (dress rehearsals, etc.)
-    events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    events.forEach(e => {
-        const d = new Date(e.date + 'T12:00:00');
-        const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
-        html += '<h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">' + escapeHtml(e.title || 'Performance') + '</h3>';
-        html += '<p class="text-muted" style="font-size: 13px; margin-bottom: 1rem;">' + dateStr + '</p>';
-        // Render notes as paragraphs, splitting on double newlines
-        const paragraphs = e.notes.split(/\n\n+/).filter(p => p.trim());
-        paragraphs.forEach(p => {
-            p = p.trim();
-            if (p.startsWith('**') || p.includes('**:')) {
-                // Bold section header (like "California: ...")
-                html += '<p style="margin-bottom: 0.5rem;">' + inlineFormat(escapeHtml(p)) + '</p>';
-            } else {
-                html += '<p style="margin-bottom: 0.5rem;">' + escapeHtml(p) + '</p>';
-            }
-        });
-        html += '</div>';
-    });
-
-    // Jury/hearing panel feedback
-    if (juryFb.length > 0) {
-        // Group by date + event_type
-        const grouped = {};
-        juryFb.forEach(j => {
-            const key = j.date + '|' + (j.event_type || 'jury');
-            if (!grouped[key]) grouped[key] = { date: j.date, event_type: j.event_type, outcome: j.outcome, comments: [] };
-            grouped[key].comments.push(j);
-        });
-
-        Object.values(grouped).sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(g => {
-            const d = new Date(g.date + 'T12:00:00');
-            const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-            const typeLabel = (g.event_type || 'jury').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
-            html += '<h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">' + escapeHtml(typeLabel) + '</h3>';
-            html += '<p class="text-muted" style="font-size: 13px; margin-bottom: 1rem;">' + dateStr;
-            if (g.outcome) html += ' · ' + escapeHtml(g.outcome);
-            html += '</p>';
-
-            g.comments.forEach(c => {
-                html += '<div style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color);">';
-                html += '<p style="font-weight: 500; font-size: 14px; margin-bottom: 0.25rem;">' + escapeHtml(c.panelist_name);
-                if (c.panelist_role) html += ' <span class="text-muted" style="font-weight: 400;">(' + escapeHtml(c.panelist_role) + ')</span>';
-                html += '</p>';
-                html += '<p style="font-size: 14px;">' + escapeHtml(c.comments) + '</p>';
-                html += '</div>';
-            });
-            html += '</div>';
-        });
-    }
-
-    container.innerHTML = html;
-}
-
-function inlineFormat(text) {
-    // Handle **bold** patterns
-    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 function renderWins() {
@@ -863,51 +691,47 @@ function renderLessonDebrief() {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
 
+        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+
         html += `<div class="lesson-debrief-entry">
             <div class="practice-plan-letter">
                 <p class="plan-date">${dateStr}${l.duration_minutes ? ' · ' + l.duration_minutes + ' min' : ''}</p>`;
 
-        // SECTION 1: What We Worked On (repertoire + exercises with purpose and listening targets)
-        const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
-        const exercises = typeof l.exercises === 'string' ? JSON.parse(l.exercises || '[]') : (l.exercises || []);
-
-        html += '<h3>What We Worked On</h3>';
         if (rep.length > 0) {
-            html += '<ul>';
-            for (const r of rep) {
-                const title = typeof r === 'string' ? r.split(' — ')[0].split(' -- ')[0] : (r.title || r);
-                html += `<li>${escapeHtml(typeof title === 'string' ? title : JSON.stringify(title))}</li>`;
-            }
-            html += '</ul>';
-        }
-        if (exercises.length > 0) {
-            html += '<p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p><ul>';
-            for (const ex of exercises) {
-                let desc = escapeHtml(ex.name || 'Unnamed');
-                if (ex.functional_purpose) desc += ': ' + escapeHtml(ex.functional_purpose);
-                else if (ex.pattern) desc += ': ' + escapeHtml(ex.pattern);
-                html += `<li>${desc}</li>`;
-            }
+            html += '<h3>What We Worked On</h3><ul>';
+            for (const r of rep) html += `<li>${escapeHtml(r)}</li>`;
             html += '</ul>';
         }
 
-        // SECTION 2: What Shifted (breakthroughs framed as wins)
-        const shifted = l.breakthroughs || l.pivots;
-        if (shifted) {
-            html += `<h3>What Shifted</h3>`;
-            html += markdownToHtml(shifted);
+        if (l.head_observations || l.heart_observations || l.hand_observations) {
+            html += '<h3>Observations</h3>';
+            if (l.head_observations) html += `<p><strong>Intention + Learning:</strong> ${escapeHtml(l.head_observations)}</p>`;
+            if (l.heart_observations) html += `<p><strong>Expression:</strong> ${escapeHtml(l.heart_observations)}</p>`;
+            if (l.hand_observations) html += `<p><strong>Function:</strong> ${escapeHtml(l.hand_observations)}</p>`;
         }
 
-        // SECTION 3: Where You Are (motor learning in plain language)
-        if (l.motor_learning_phase) {
-            html += `<h3>Where You Are</h3><p>${escapeHtml(l.motor_learning_phase)}</p>`;
+        if (l.warmth_brightness_notes) {
+            html += `<h3>Warmth + Brightness</h3><p>${escapeHtml(l.warmth_brightness_notes)}</p>`;
         }
 
-        // SECTION 4: What's Next
-        const nextSteps = l.plan_for_next_lesson || l.next_steps;
-        if (nextSteps) {
-            html += `<h3>What's Next</h3>`;
-            html += markdownToHtml(nextSteps);
+        if (l.breakthroughs) {
+            html += `<h3>Breakthroughs</h3><p>${escapeHtml(l.breakthroughs)}</p>`;
+        }
+
+        // Areas for growth: drawn from hand observations, motor learning phase, ease assessment
+        const growthParts = [];
+        if (l.hand_observations) growthParts.push(l.hand_observations);
+        if (l.motor_learning_phase) growthParts.push(l.motor_learning_phase);
+        if (l.ease_assessment) growthParts.push(l.ease_assessment);
+        if (growthParts.length > 0) {
+            html += '<h3>Areas for Growth</h3>';
+            for (const g of growthParts) {
+                html += `<p>${escapeHtml(g)}</p>`;
+            }
+        }
+
+        if (l.plan_for_next_lesson) {
+            html += `<h3>What We Are Working Toward</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
         }
 
         html += `<p class="plan-signoff">Prof. G</p></div></div>`;
@@ -1115,52 +939,17 @@ function renderRepertoire() {
     const rep = studentData.repertoire || [];
     const prevRep = studentData.previousRepertoire || [];
 
-    // Jury plan data
-    const juryPlan = studentData.juryPlan;
-    const jurySels = studentData.jurySelections || [];
-    const pk = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
-    const jurySlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
-    const activeJurySels = jurySels.filter(s => s.status !== 'dropped');
-
-    // Map: title (lowercase) → jury selection
-    const juryByTitle = {};
-    activeJurySels.forEach(s => { if (s.title) juryByTitle[s.title.toLowerCase()] = s; });
-
-    let html = '';
-
-    // Jury plan summary
-    if (juryPlan) {
-        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const filledCount = activeJurySels.filter(s => s.status === 'accepted' || s.status === 'confirmed' || s.status === 'approved').length;
-        const proposedCount = activeJurySels.filter(s => s.status === 'proposed').length;
-        html += '<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--bg-warm, #f9f7f4); border-radius: 6px;">';
-        html += '<strong>Jury:</strong> ' + escapeHtml(statusLabel);
-        html += ' · ' + filledCount + '/' + jurySlots.length + ' slots filled';
-        if (proposedCount > 0) html += ' · ' + proposedCount + ' pending';
-        if (juryPlan.jury_date) {
-            const jd = new Date(juryPlan.jury_date + 'T12:00:00');
-            html += ' · ' + jd.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-        }
-        if (juryPlan.status === 'exempt') html += ' · ' + escapeHtml(juryPlan.exemption_reason || 'Exempt');
-        html += '</div>';
-    }
-
-    if (rep.length === 0 && prevRep.length === 0 && activeJurySels.length === 0) {
-        html += '<p class="text-muted">No repertoire tracked yet.</p>';
-        container.innerHTML = html;
+    if (rep.length === 0 && prevRep.length === 0) {
+        container.innerHTML = '<p class="text-muted">No repertoire tracked yet.</p>';
         return;
     }
 
-    // Active repertoire table with jury column
-    if (rep.length > 0 || activeJurySels.length > 0) {
-        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Sheet Music</th><th>Jury Slot</th></tr></thead><tbody>';
+    let html = '';
 
-        const juryTitlesShown = new Set();
-
+    // Active repertoire
+    if (rep.length > 0) {
+        html += '<table><thead><tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Sheet Music</th><th>Due</th></tr></thead><tbody>';
         for (const r of rep) {
-            const jurySel = juryByTitle[(r.title || '').toLowerCase()];
-            if (jurySel) juryTitlesShown.add(jurySel.id);
-
             const timeline = r.timeline
                 ? new Date(r.timeline + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : '';
@@ -1191,57 +980,17 @@ function renderRepertoire() {
                 sheetMusic = `<button class="btn btn-secondary btn-small rep-add-link" data-rep-id="${r.id}" style="font-size: 11px;">+ Add Link</button>`;
             }
 
-            // Jury slot column
-            let juryCell = '';
-            if (jurySel) {
-                juryCell = `<span style="font-size: 11px;">${escapeHtml(jurySel.requirement_slot || '')}</span> `;
-                if (jurySel.status === 'approved' || jurySel.status === 'accepted' || jurySel.status === 'confirmed') {
-                    juryCell += '<span class="tag" style="font-size: 10px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-                } else if (jurySel.status === 'proposed' && jurySel.proposed_by === 'teacher') {
-                    juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
-                    juryCell += ` <button class="btn btn-primary btn-small btn-jury-accept" data-sel-id="${jurySel.id}" style="font-size: 10px; padding: 0.15rem 0.4rem;">Accept</button>`;
-                } else if (jurySel.status === 'proposed' && jurySel.proposed_by === 'student') {
-                    juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Awaiting Prof. G</span>';
-                }
-            }
-
             html += `<tr>
                 <td><strong>${escapeHtml(r.title)}</strong>${r.composer ? '<br><span class="text-muted text-small">' + escapeHtml(r.composer) + '</span>' : ''}</td>
                 <td>${phaseSelect}</td>
                 <td>${statusSelect}</td>
                 <td>${sheetMusic}</td>
-                <td>${juryCell}</td>
+                <td>${timeline}</td>
             </tr>`;
         }
-
-        // Jury selections not yet in repertoire
-        activeJurySels.filter(s => !juryTitlesShown.has(s.id)).forEach(sel => {
-            let juryCell = `<span style="font-size: 11px;">${escapeHtml(sel.requirement_slot || '')}</span> `;
-            if (sel.status === 'proposed' && sel.proposed_by === 'teacher') {
-                juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
-                juryCell += ` <button class="btn btn-primary btn-small btn-jury-accept" data-sel-id="${sel.id}" style="font-size: 10px; padding: 0.15rem 0.4rem;">Accept</button>`;
-            } else if (sel.status === 'proposed' && sel.proposed_by === 'student') {
-                juryCell += '<span class="tag" style="font-size: 10px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Awaiting Prof. G</span>';
-            }
-            html += `<tr style="color: var(--text-muted); font-style: italic;">
-                <td><strong>${escapeHtml(sel.title || '')}</strong>${sel.composer ? '<br><span class="text-small">' + escapeHtml(sel.composer) + '</span>' : ''}</td>
-                <td></td><td></td><td></td>
-                <td>${juryCell}</td>
-            </tr>`;
-        });
-
-        // Unfilled jury slots
-        if (juryPlan && juryPlan.status !== 'exempt') {
-            const filledSlots = new Set(activeJurySels.map(s => s.requirement_slot));
-            jurySlots.filter(slot => !filledSlots.has(slot)).forEach(slot => {
-                html += `<tr style="color: var(--text-muted);">
-                    <td colspan="4"></td>
-                    <td><span style="font-size: 11px;">${escapeHtml(slot)}</span> <span style="font-size: 10px; font-style: italic;">unfilled</span></td>
-                </tr>`;
-            });
-        }
-
         html += '</tbody></table>';
+    } else {
+        html += '<p class="text-muted">No active repertoire.</p>';
     }
 
     // Previous repertoire
@@ -1257,45 +1006,6 @@ function renderRepertoire() {
             </tr>`;
         }
         html += '</tbody></table>';
-    }
-
-    // Unified "Add a Piece" form with optional jury slot
-    html += '<h3 style="margin-top: 2rem;">Add a Piece</h3>';
-    html += '<form id="add-rep-form" class="dash-add-rep">';
-    html += '<div class="form-group"><label for="rep-title">Title</label>';
-    html += '<input type="text" id="rep-title" required placeholder="Song or aria title"></div>';
-    html += '<div class="dash-rep-grid">';
-    html += '<div class="form-group"><label for="rep-composer">Composer</label>';
-    html += '<input type="text" id="rep-composer" placeholder="Composer name"></div>';
-    html += '<div class="form-group"><label for="rep-style">Style</label>';
-    html += '<select id="rep-style"><option value="">Select...</option>';
-    html += '<option value="classical">Classical</option><option value="MT">Musical Theater</option>';
-    html += '<option value="pop-rock">Pop/Rock</option><option value="jazz">Jazz</option>';
-    html += '<option value="folk">Folk</option><option value="art song">Art Song</option>';
-    html += '<option value="other">Other</option></select></div>';
-    html += '</div>';
-    // Jury slot dropdown (only if jury plan exists and not exempt)
-    if (juryPlan && juryPlan.status !== 'exempt') {
-        html += '<div class="form-group"><label for="rep-jury-slot">Jury Slot <span class="hint">(optional: assign to a jury requirement)</span></label>';
-        html += '<select id="rep-jury-slot"><option value="">Not for jury</option>';
-        jurySlots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
-        html += '</select></div>';
-    }
-    html += '<div class="form-group"><label for="rep-sheet-music">Sheet Music Link <span class="hint">(optional)</span></label>';
-    html += '<input type="url" id="rep-sheet-music" placeholder="https://drive.google.com/..."></div>';
-    html += '<button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>';
-    html += '</form>';
-
-    // Dropped jury selections
-    const droppedSels = jurySels.filter(s => s.status === 'dropped');
-    if (droppedSels.length > 0) {
-        html += '<h3 style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">Dropped Jury Selections</h3>';
-        droppedSels.forEach(sel => {
-            html += '<p style="text-decoration: line-through; color: var(--text-muted); font-size: 13px;">';
-            html += escapeHtml(sel.requirement_slot) + ': ' + escapeHtml(sel.title || '');
-            if (sel.composer) html += ' (' + escapeHtml(sel.composer) + ')';
-            html += '</p>';
-        });
     }
 
     container.innerHTML = html;
@@ -1314,6 +1024,7 @@ function renderRepertoire() {
             const repId = select.dataset.repId;
             const newStatus = select.value;
             await updateRepertoireField(repId, 'status', newStatus);
+            // If shelved, reload to shift it to previous section
             if (newStatus === 'shelved') {
                 await loadStudentData();
                 renderRepertoire();
@@ -1337,97 +1048,6 @@ function renderRepertoire() {
             }
         });
     });
-
-    // Jury accept buttons
-    container.querySelectorAll('.btn-jury-accept').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const selId = btn.dataset.selId;
-            btn.disabled = true;
-            btn.textContent = 'Accepting...';
-            const { error } = await sb.from('jury_selections').update({ status: 'accepted' }).eq('id', selId);
-            if (error) {
-                alert('Error accepting piece: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = 'Accept';
-                return;
-            }
-            await loadStudentData();
-            renderRepertoire();
-        });
-    });
-
-    // Unified add-piece form (repertoire + optional jury selection)
-    const addForm = document.getElementById('add-rep-form');
-    if (addForm && !addForm.dataset.bound) {
-        addForm.dataset.bound = 'true';
-        addForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUser) return;
-
-            const title = document.getElementById('rep-title').value.trim();
-            const composer = document.getElementById('rep-composer').value.trim();
-            const style = document.getElementById('rep-style').value;
-            const sheetMusic = document.getElementById('rep-sheet-music')?.value.trim();
-            const jurySlotEl = document.getElementById('rep-jury-slot');
-            const jurySlotVal = jurySlotEl ? jurySlotEl.value : '';
-
-            if (!title) return;
-
-            const btn = addForm.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.textContent = 'Adding...';
-
-            try {
-                // Add to repertoire
-                const record = {
-                    student_id: currentUser.id,
-                    title: title,
-                    composer: composer || null,
-                    style: style || null,
-                    status: 'in_progress',
-                    assignment_type: 'short_term',
-                };
-                if (sheetMusic) record.sheet_music_url = sheetMusic;
-                if (jurySlotVal) {
-                    record.jury_slot = jurySlotVal;
-                    record.jury_status = 'proposed';
-                    record.proposed_by = 'student';
-                }
-
-                const { error: repError } = await sb.from('repertoire').insert(record);
-                if (repError) {
-                    alert('Error adding piece: ' + repError.message);
-                    btn.disabled = false;
-                    btn.textContent = 'Add to Repertoire';
-                    return;
-                }
-
-                // If jury slot selected and jury plan exists, also create jury_selection
-                if (jurySlotVal && studentData.juryPlan) {
-                    const { error: juryError } = await sb.from('jury_selections').insert({
-                        jury_plan_id: studentData.juryPlan.id,
-                        requirement_slot: jurySlotVal,
-                        title: title,
-                        composer: composer || null,
-                        proposed_by: 'student',
-                        status: 'proposed',
-                    });
-                    if (juryError) {
-                        console.error('[VS] Jury selection insert error:', juryError);
-                    }
-                }
-
-                addForm.reset();
-                await loadStudentData();
-                renderRepertoire();
-            } catch (err) {
-                console.error('[VS] Add piece error:', err);
-                alert('Something went wrong. Please try again.');
-            }
-            btn.disabled = false;
-            btn.textContent = 'Add to Repertoire';
-        });
-    }
 }
 
 async function updateRepertoireField(repId, field, value) {
@@ -1627,107 +1247,87 @@ function renderProgressChart(sv) {
 async function handleReflectionSubmit(event) {
     event.preventDefault();
 
-    if (!currentUser) {
-        alert('You must be logged in to submit a reflection. Please refresh and log in again.');
-        return;
-    }
+    if (!currentUser) return;
 
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
-    try {
-        // Collect vocal load entries
-        const vocalLoad = [];
-        document.querySelectorAll('.vocal-load-entry').forEach(entry => {
-            const activity = entry.querySelector('[name="vl-activity"]')?.value;
-            const duration = entry.querySelector('[name="vl-duration"]')?.value;
-            const intensity = entry.querySelector('[name="vl-intensity"]')?.value;
-            const fatigue = entry.querySelector('[name="vl-fatigue"]')?.value;
-            if (activity) {
-                vocalLoad.push({
-                    activity,
-                    duration_minutes: parseInt(duration) || null,
-                    intensity,
-                    fatigue_noticed: fatigue === 'yes',
-                });
-            }
-        });
-
-        // Collect repertoire progress
-        const repProgress = [];
-        document.querySelectorAll('.rep-progress-entry').forEach(entry => {
-            const title = entry.querySelector('[name="rep-title"]')?.value;
-            const phase = entry.querySelector('[name="rep-phase"]')?.value;
-            const notes = entry.querySelector('[name="rep-notes"]')?.value;
-            if (title) {
-                repProgress.push({ title, current_phase: phase, notes });
-            }
-        });
-
-        const reflection = {
-            student_id: currentUser.id,
-            practice_focus: form.querySelector('#practice-focus')?.value || null,
-            self_observations: form.querySelector('#self-observations')?.value || null,
-            fatigue_notes: form.querySelector('#fatigue-notes')?.value || null,
-            vocal_load: vocalLoad,
-            voice_feeling: parseInt(form.querySelector('#voice-feeling')?.value) || null,
-            artistic_confidence: parseInt(form.querySelector('#artistic-confidence')?.value) || null,
-            engagement: parseInt(form.querySelector('#engagement')?.value) || null,
-            repertoire_progress: repProgress,
-            questions: form.querySelector('#questions')?.value || null,
-            wins: form.querySelector('#wins')?.value || null,
-        };
-
-        console.log('[VS] Submitting reflection for', currentUser.id);
-
-        const { data, error } = await sb
-            .from('reflections')
-            .insert(reflection)
-            .select();
-
-        if (error) {
-            console.error('[VS] Reflection insert error:', error);
-            alert('Error submitting reflection: ' + error.message);
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Reflection';
-            return;
+    // Collect vocal load entries
+    const vocalLoad = [];
+    document.querySelectorAll('.vocal-load-entry').forEach(entry => {
+        const activity = entry.querySelector('[name="vl-activity"]')?.value;
+        const duration = entry.querySelector('[name="vl-duration"]')?.value;
+        const intensity = entry.querySelector('[name="vl-intensity"]')?.value;
+        const fatigue = entry.querySelector('[name="vl-fatigue"]')?.value;
+        if (activity) {
+            vocalLoad.push({
+                activity,
+                duration_minutes: parseInt(duration) || null,
+                intensity,
+                fatigue_noticed: fatigue === 'yes',
+            });
         }
+    });
 
-        console.log('[VS] Reflection submitted:', data);
+    // Collect repertoire progress
+    const repProgress = [];
+    document.querySelectorAll('.rep-progress-entry').forEach(entry => {
+        const title = entry.querySelector('[name="rep-title"]')?.value;
+        const phase = entry.querySelector('[name="rep-phase"]')?.value;
+        const notes = entry.querySelector('[name="rep-notes"]')?.value;
+        if (title) {
+            repProgress.push({ title, current_phase: phase, notes });
+        }
+    });
 
-        // Success
-        form.reset();
-        document.querySelectorAll('#reflection-form input[type="range"]').forEach(input => {
-            const display = document.getElementById(input.id + '-value');
-            if (display) display.textContent = '5';
-            input.value = 5;
-        });
+    const reflection = {
+        student_id: currentUser.id,
+        practice_focus: form.querySelector('#practice-focus')?.value || null,
+        self_observations: form.querySelector('#self-observations')?.value || null,
+        fatigue_notes: form.querySelector('#fatigue-notes')?.value || null,
+        vocal_load: vocalLoad,
+        voice_feeling: parseInt(form.querySelector('#voice-feeling')?.value) || null,
+        artistic_confidence: parseInt(form.querySelector('#artistic-confidence')?.value) || null,
+        engagement: parseInt(form.querySelector('#engagement')?.value) || null,
+        repertoire_progress: repProgress,
+        questions: form.querySelector('#questions')?.value || null,
+        wins: form.querySelector('#wins')?.value || null,
+    };
 
+    const { data, error } = await sb
+        .from('reflections')
+        .insert(reflection);
+
+    if (error) {
+        alert('Error submitting reflection: ' + error.message);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Reflection';
-
-        // Show confirmation
-        const msg = document.createElement('div');
-        msg.className = 'card';
-        msg.style.borderLeftColor = 'var(--success-color)';
-        msg.innerHTML = '<p><strong>Reflection submitted.</strong> Your input will be part of your next pre-lesson brief.</p>';
-        form.parentNode.insertBefore(msg, form);
-        setTimeout(() => msg.remove(), 5000);
-
-        // Reload data
-        try {
-            await loadStudentData();
-        } catch (err) {
-            console.error('[VS] Reload after reflection failed:', err);
-        }
-    } catch (err) {
-        console.error('[VS] Reflection submission error:', err);
-        alert('Something went wrong submitting your reflection. Please try again, or let Prof. G know.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Reflection';
+        return;
     }
+
+    // Success
+    form.reset();
+    document.querySelectorAll('input[type="range"]').forEach(input => {
+        const display = document.getElementById(input.id + '-value');
+        if (display) display.textContent = '5';
+        input.value = 5;
+    });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Reflection';
+
+    // Show confirmation
+    const msg = document.createElement('div');
+    msg.className = 'card';
+    msg.style.borderLeftColor = 'var(--success-color)';
+    msg.innerHTML = '<p><strong>Reflection submitted.</strong> Your input will be part of your next pre-lesson brief.</p>';
+    form.parentNode.insertBefore(msg, form);
+    setTimeout(() => msg.remove(), 5000);
+
+    // Reload data
+    await loadStudentData();
 }
 
 function addVocalLoadEntry() {
@@ -1896,7 +1496,7 @@ function renderStudioClassPlan() {
     if (!container || !studentData) return;
 
     const plans = studentData.studioPlans || [];
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = new Date().toISOString().split('T')[0];
     const nextPlan = plans.find(p => p.studio_class_date >= todayStr);
 
     if (!nextPlan) {
@@ -2055,173 +1655,6 @@ async function submitStudioRep(plan, myEntry) {
 // ============================================================
 // UTILITIES
 // ============================================================
-
-// ============================================================
-// JURY PLAN (Student Portal)
-// ============================================================
-
-function renderJuryPlan() {
-    const container = document.getElementById('jury-plan-content');
-    if (!container || !studentData) return;
-
-    const juryPlan = studentData.juryPlan;
-    const sels = studentData.jurySelections || [];
-    const pk = studentData.student.program_key || programKeyFromDegree(studentData.student.degree_program);
-    const slots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
-
-    if (!juryPlan) {
-        container.innerHTML = '<p class="text-muted">No jury plan has been created yet. Contact Prof. G if you have questions about your jury requirements.</p>';
-        return;
-    }
-
-    const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-    let html = '<p style="font-size: 14px; margin-bottom: 1rem;">';
-    html += '<strong>Status:</strong> ' + escapeHtml(statusLabel);
-    if (juryPlan.jury_date) {
-        const jd = new Date(juryPlan.jury_date + 'T12:00:00');
-        html += ' · <strong>Jury Date:</strong> ' + jd.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    }
-    if (juryPlan.status === 'exempt' && juryPlan.exemption_reason) {
-        html += ' · ' + escapeHtml(juryPlan.exemption_reason);
-    }
-    html += '</p>';
-
-    if (juryPlan.status === 'exempt') {
-        container.innerHTML = html;
-        return;
-    }
-
-    // Requirements table
-    const activeSelections = sels.filter(s => s.status !== 'dropped');
-    const droppedSelections = sels.filter(s => s.status === 'dropped');
-
-    html += '<table><thead><tr><th>Requirement</th><th>Piece</th><th>Composer</th><th>Status</th></tr></thead><tbody>';
-
-    slots.forEach(slot => {
-        const matching = activeSelections.filter(s => s.requirement_slot === slot);
-        if (matching.length === 0) {
-            html += '<tr><td>' + escapeHtml(slot) + '</td><td colspan="3" class="text-muted">No selection yet</td></tr>';
-        } else {
-            matching.forEach(sel => {
-                html += '<tr>';
-                html += '<td>' + escapeHtml(slot) + '</td>';
-                html += '<td><strong>' + escapeHtml(sel.title || '') + '</strong></td>';
-                html += '<td>' + escapeHtml(sel.composer || '') + '</td>';
-                html += '<td>';
-                if (sel.status === 'approved') {
-                    html += '<span class="tag" style="background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-                } else if (sel.status === 'proposed' && sel.proposed_by === 'teacher') {
-                    html += '<span class="tag" style="background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed by Prof. G</span>';
-                    html += ' <button class="btn btn-primary btn-small btn-jury-accept" data-sel-id="' + sel.id + '" style="font-size: 11px; padding: 0.2rem 0.5rem; margin-left: 0.35rem;">Accept</button>';
-                } else if (sel.status === 'proposed' && sel.proposed_by === 'student') {
-                    html += '<span class="tag" style="background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Awaiting Prof. G</span>';
-                }
-                html += '</td></tr>';
-            });
-        }
-    });
-
-    html += '</tbody></table>';
-
-    // Dropped pieces
-    if (droppedSelections.length > 0) {
-        html += '<h3 style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">Dropped</h3>';
-        droppedSelections.forEach(sel => {
-            html += '<p style="text-decoration: line-through; color: var(--text-muted); font-size: 13px;">';
-            html += escapeHtml(sel.requirement_slot) + ': ' + escapeHtml(sel.title || '');
-            if (sel.composer) html += ' (' + escapeHtml(sel.composer) + ')';
-            html += '</p>';
-        });
-    }
-
-    // Propose a piece form
-    html += '<h3 style="margin-top: 2rem;">Propose a Piece</h3>';
-    html += '<form id="jury-student-propose-form" class="dash-add-rep">';
-    html += '<div class="form-group"><label for="jury-s-slot">Requirement Slot</label>';
-    html += '<select id="jury-s-slot">';
-    slots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
-    html += '</select></div>';
-    html += '<div class="dash-rep-grid">';
-    html += '<div class="form-group"><label for="jury-s-title">Title</label><input type="text" id="jury-s-title" required placeholder="Song or aria title"></div>';
-    html += '<div class="form-group"><label for="jury-s-composer">Composer</label><input type="text" id="jury-s-composer" placeholder="Composer name"></div>';
-    html += '</div>';
-    html += '<div class="form-group"><label for="jury-s-notes">Notes <span class="hint">(optional)</span></label><input type="text" id="jury-s-notes" placeholder="Why this piece, or other context"></div>';
-    html += '<button type="submit" class="btn btn-primary btn-small">Propose to Prof. G</button>';
-    html += '</form>';
-
-    container.innerHTML = html;
-
-    // Bind form submit
-    const form = document.getElementById('jury-student-propose-form');
-    if (form && !form.dataset.bound) {
-        form.dataset.bound = 'true';
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUser || !studentData.juryPlan) return;
-
-            const title = document.getElementById('jury-s-title').value.trim();
-            const composer = document.getElementById('jury-s-composer').value.trim();
-            const slot = document.getElementById('jury-s-slot').value;
-            const notes = document.getElementById('jury-s-notes').value.trim();
-
-            if (!title) return;
-
-            const btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.textContent = 'Submitting...';
-
-            const { error } = await sb.from('jury_selections').insert({
-                jury_plan_id: studentData.juryPlan.id,
-                requirement_slot: slot,
-                title: title,
-                composer: composer || null,
-                proposed_by: 'student',
-                status: 'proposed',
-                notes: notes || null
-            });
-
-            if (error) {
-                alert('Error proposing piece: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = 'Propose to Prof. G';
-                return;
-            }
-
-            form.reset();
-            btn.disabled = false;
-            btn.textContent = 'Propose to Prof. G';
-
-            // Reload data and re-render
-            await loadStudentData();
-            renderJuryPlan();
-        });
-    }
-
-    // Bind accept buttons
-    container.querySelectorAll('.btn-jury-accept').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const selId = btn.dataset.selId;
-            btn.disabled = true;
-            btn.textContent = 'Accepting...';
-
-            const { error } = await sb.from('jury_selections')
-                .update({ status: 'approved' })
-                .eq('id', selId);
-
-            if (error) {
-                alert('Error: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = 'Accept';
-                return;
-            }
-
-            // Reload and re-render
-            await loadStudentData();
-            renderJuryPlan();
-        });
-    });
-}
 
 function escapeHtml(str) {
     if (!str) return '';

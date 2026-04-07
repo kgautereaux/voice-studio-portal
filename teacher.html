@@ -1432,16 +1432,17 @@ async function renderToday() {
     if (drafts.length > 0) {
         const studentNames = {};
         students.forEach(s => { studentNames[s.id] = s.name; });
-        const draftsByStudent = {};
+        html += '<div style="background: rgba(156, 92, 92, 0.08); border: 1px solid rgba(156, 92, 92, 0.2); border-left: 3px solid #8b4040; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1.25rem;">';
+        html += '<div style="font-size: 14px; margin-bottom: 0.5rem;"><strong style="color: #8b4040;">' + drafts.length + ' lesson log' + (drafts.length > 1 ? 's' : '') + ' awaiting review</strong></div>';
         drafts.forEach(d => {
             const name = studentNames[d.student_id] || 'Unknown';
-            if (!draftsByStudent[name]) draftsByStudent[name] = 0;
-            draftsByStudent[name]++;
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; border-top: 1px solid rgba(156, 92, 92, 0.1);">';
+            html += '<span style="font-size: 13px;">' + escapeHtml(name) + ' : ' + escapeHtml(formatShortDate(d.date)) + '</span>';
+            html += '<div style="display: flex; gap: 0.35rem;">';
+            html += '<button class="btn-review-log" data-lesson-id="' + d.id + '" data-student-id="' + d.student_id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: 3px; background: none; border: 1px solid rgba(156, 92, 92, 0.3); color: #8b4040; cursor: pointer; font-family: inherit;">Review</button>';
+            html += '<button class="btn-approve" data-lesson-id="' + d.id + '" data-student-id="' + d.student_id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
+            html += '</div></div>';
         });
-        const summary = Object.entries(draftsByStudent).map(([name, count]) => name + ' (' + count + ')').join(', ');
-        html += '<div style="background: rgba(156, 92, 92, 0.08); border: 1px solid rgba(156, 92, 92, 0.2); border-left: 3px solid #8b4040; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">';
-        html += '<div style="font-size: 14px;"><strong style="color: #8b4040;">' + drafts.length + ' lesson log' + (drafts.length > 1 ? 's' : '') + ' awaiting review</strong><br><span style="font-size: 13px; color: var(--text-muted);">' + summary + '</span></div>';
-        html += '<button onclick="switchPage(\'students\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Review</button>';
         html += '</div>';
     }
 

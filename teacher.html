@@ -1002,6 +1002,13 @@
     <div class="sv-body" id="sv-body"></div>
 </div>
 
+<!-- Log Review Overlay -->
+<div id="log-review-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
+    <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 700px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div id="log-review-body"></div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1682,7 +1689,10 @@ async function renderPulse() {
             html += '<td>' + (st ? escapeHtml(st.name) : 'Unknown') + '</td>';
             html += '<td>' + escapeHtml(formatShortDate(l.date)) + '</td>';
             html += '<td><span class="draft-badge">Draft</span></td>';
-            html += '<td><button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + l.student_id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button></td>';
+            html += '<td style="display: flex; gap: 0.35rem;">';
+            html += '<button class="btn-review-log" data-lesson-id="' + l.id + '" data-student-id="' + l.student_id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">Review</button>';
+            html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + l.student_id + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
+            html += '</td>';
             html += '</tr>';
         });
         html += '</tbody></table></div>';
@@ -3213,6 +3223,161 @@ function svShowDetail(type) {
     area.innerHTML = html;
     area.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// ============================================================
+// LESSON LOG REVIEW / EDIT
+// ============================================================
+
+const LOG_EDITABLE_FIELDS = [
+    { key: 'head_observations', label: 'Head (intention + motor learning)' },
+    { key: 'heart_observations', label: 'Heart (expression)' },
+    { key: 'hand_observations', label: 'Hand (function)' },
+    { key: 'motor_learning_phase', label: 'Motor Learning Phase' },
+    { key: 'warmth_brightness_notes', label: 'Warmth/Brightness/Buzziness' },
+    { key: 'ease_assessment', label: 'Ease Assessment' },
+    { key: 'breakthroughs', label: 'Breakthroughs' },
+    { key: 'pivots', label: 'Pivots' },
+    { key: 'next_steps', label: 'Next Steps' },
+];
+
+document.addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('btn-review-log')) return;
+
+    const lessonId = e.target.dataset.lessonId;
+    const studentId = e.target.dataset.studentId;
+
+    // Fetch full lesson log
+    const { data: lesson } = await sb.from('lesson_logs').select('*').eq('id', lessonId).single();
+    if (!lesson) { showToast('Could not load lesson log.'); return; }
+
+    const students = await getStudents();
+    const student = students.find(s => s.id === studentId);
+    const studentName = student ? student.name : 'Student';
+
+    // Parse JSON fields
+    let repWorked = lesson.repertoire_worked;
+    if (typeof repWorked === 'string') try { repWorked = JSON.parse(repWorked); } catch(e) {}
+    let exercises = lesson.exercises;
+    if (typeof exercises === 'string') try { exercises = JSON.parse(exercises); } catch(e) {}
+    let categories = lesson.exercise_categories_addressed || [];
+
+    // Build overlay
+    let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">';
+    html += '<div><h2 style="margin:0;">' + escapeHtml(studentName) + ' : ' + escapeHtml(formatDate(lesson.date)) + '</h2>';
+    html += '<span class="draft-badge" style="margin-top: 0.25rem; display: inline-block;">' + (lesson.approved ? 'Approved' : 'Draft') + '</span>';
+    if (lesson.duration_minutes) html += '<span style="color: var(--text-muted); font-size: 13px; margin-left: 0.75rem;">' + lesson.duration_minutes + ' min</span>';
+    html += '</div>';
+    html += '<button onclick="closeLogReview()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
+    html += '</div>';
+
+    // Repertoire worked (read-only display)
+    html += '<div class="section-label">Repertoire Worked</div>';
+    if (Array.isArray(repWorked)) {
+        repWorked.forEach((r, i) => {
+            const text = typeof r === 'string' ? r : (r.title || r.name || JSON.stringify(r));
+            html += '<p style="font-size: 14px; margin: 0.25rem 0;">' + (i+1) + '. ' + escapeHtml(text) + '</p>';
+        });
+    } else if (repWorked) {
+        html += '<p style="font-size: 14px;">' + escapeHtml(String(repWorked)) + '</p>';
+    }
+
+    // Exercises (read-only summary)
+    html += '<div class="section-label" style="margin-top: 1rem;">Exercises</div>';
+    if (Array.isArray(exercises) && exercises.length > 0) {
+        exercises.forEach((ex, i) => {
+            const name = ex.name || ex.Name || ('Exercise ' + (i+1));
+            const purpose = ex.functional_purpose || ex.purpose || '';
+            html += '<p style="font-size: 14px; margin: 0.25rem 0;"><strong>' + escapeHtml(name) + '</strong>';
+            if (purpose) html += ' : ' + escapeHtml(purpose.substring(0, 100));
+            html += '</p>';
+        });
+    } else {
+        html += '<p style="font-size: 13px; color: var(--text-muted);">No structured exercises parsed.</p>';
+    }
+
+    // Exercise categories (editable checkboxes)
+    html += '<div class="section-label" style="margin-top: 1rem;">Exercise Categories</div>';
+    html += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">';
+    ALL_CATEGORIES.forEach(c => {
+        const checked = categories.includes(c) ? 'checked' : '';
+        html += '<label style="font-size: 13px; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">';
+        html += '<input type="checkbox" class="log-cat-checkbox" value="' + c + '" ' + checked + '>';
+        html += escapeHtml(CATEGORY_LABELS[c]) + '</label>';
+    });
+    html += '</div>';
+
+    // Editable text fields
+    LOG_EDITABLE_FIELDS.forEach(f => {
+        const val = lesson[f.key] || '';
+        html += '<div class="section-label" style="margin-top: 1rem;">' + escapeHtml(f.label) + '</div>';
+        html += '<textarea class="log-edit-field" data-field="' + f.key + '" style="width: 100%; min-height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;">' + escapeHtml(val) + '</textarea>';
+    });
+
+    // Action buttons
+    html += '<div style="display: flex; gap: 0.5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">';
+    html += '<button id="log-save-btn" data-lesson-id="' + lessonId + '" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 1rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Save Changes</button>';
+    html += '<button id="log-save-approve-btn" data-lesson-id="' + lessonId + '" data-student-id="' + studentId + '" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 1rem; border-radius: 3px; background: #5a8a5a; color: #fff; border: none; cursor: pointer; font-family: inherit;">Save + Approve</button>';
+    html += '<button onclick="closeLogReview()" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 1rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">Cancel</button>';
+    html += '</div>';
+
+    // Show overlay
+    const overlay = document.getElementById('log-review-overlay');
+    document.getElementById('log-review-body').innerHTML = html;
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+});
+
+function closeLogReview() {
+    document.getElementById('log-review-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+async function saveLogEdits(lessonId, andApprove) {
+    const body = document.getElementById('log-review-body');
+    const updates = {};
+
+    // Gather text fields
+    body.querySelectorAll('.log-edit-field').forEach(ta => {
+        updates[ta.dataset.field] = ta.value;
+    });
+
+    // Gather categories
+    const cats = [];
+    body.querySelectorAll('.log-cat-checkbox:checked').forEach(cb => {
+        cats.push(cb.value);
+    });
+    updates.exercise_categories_addressed = cats;
+
+    if (andApprove) updates.approved = true;
+
+    try {
+        await sb.from('lesson_logs').update(updates).eq('id', lessonId);
+        closeLogReview();
+        showToast(andApprove ? 'Saved and approved.' : 'Changes saved.');
+
+        // Refresh current view
+        const activeNav = document.querySelector('.nav-item.active');
+        if (activeNav) activeNav.click();
+    } catch (err) {
+        showToast('Error saving: ' + (err.message || 'Unknown error'));
+    }
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'log-save-btn') {
+        saveLogEdits(e.target.dataset.lessonId, false);
+    }
+    if (e.target.id === 'log-save-approve-btn') {
+        saveLogEdits(e.target.dataset.lessonId, true);
+    }
+});
+
+// Close log review with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('log-review-overlay').style.display === 'block') {
+        closeLogReview();
+    }
+});
 
 // Close student view with Escape key
 document.addEventListener('keydown', (e) => {

@@ -497,18 +497,140 @@
         .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 14px; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; }
         .toast.success { background: #5a8a5a; color: #fff; }
-        /* Pulse */
-        .pulse-card { border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem 1.5rem; background: #fff; margin-bottom: 0.75rem; transition: box-shadow var(--transition); }
-        .pulse-card:hover { box-shadow: var(--shadow-card); }
-        .pulse-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .pulse-name { font-weight: 500; color: var(--primary-color); }
-        .pulse-status { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .pulse-status.submitted { color: #5a8a5a; }
-        .pulse-status.missing { color: #9c5c5c; }
+        /* Studio cards */
+        .studio-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+            background: #fff;
+            transition: box-shadow var(--transition);
+        }
+        .studio-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .studio-card.status-action {
+            border-left: 3px solid var(--primary-color);
+        }
+        .studio-card.status-warn {
+            border-left: 3px solid #c49a3c;
+        }
+        .studio-card.status-wait {
+            border-left: 3px solid var(--border-color);
+        }
+        .studio-card.status-ok {
+            border-left: 3px solid #5a8a5a;
+        }
+        .studio-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+        }
+        .studio-card-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .studio-card-name {
+            font-size: 15px;
+            color: var(--primary-color);
+        }
+        .studio-card-status {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .studio-card-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .studio-card-chevron {
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+        }
+        .btn-studio-action {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.3rem 0.75rem;
+            border-radius: 3px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-studio-action:hover {
+            opacity: 0.85;
+        }
+        .studio-card-detail {
+            padding: 0 1.25rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .studio-detail-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 0.75rem 0 0.5rem;
+        }
+        .studio-section {
+            margin-top: 0.75rem;
+            padding-top: 0.5rem;
+        }
+
+        /* Workflow steps */
+        .studio-workflow {
+            margin-top: 0.5rem;
+        }
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0;
+            font-size: 13px;
+        }
+        .wf-icon {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .wf-done .wf-icon { color: #5a8a5a; }
+        .wf-active .wf-icon { color: var(--primary-color); font-weight: bold; }
+        .wf-pending .wf-icon { color: var(--text-muted); }
+        .wf-label {
+            font-weight: 500;
+            min-width: 90px;
+        }
+        .wf-done .wf-label { color: var(--text-color); }
+        .wf-active .wf-label { color: var(--primary-color); }
+        .wf-pending .wf-label { color: var(--text-muted); }
+        .wf-detail {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .workflow-action {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            background: none;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: auto;
+        }
+        .workflow-action:hover {
+            background: rgba(108, 73, 91, 0.06);
+        }
+
+        /* Pulse (kept for student view metrics) */
         .pulse-metric { display: inline-block; margin-right: 1.5rem; font-size: 14px; margin-bottom: 0.25rem; }
         .pulse-metric-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-right: 0.35rem; }
         .pulse-metric-value { font-weight: 500; color: var(--primary-color); }
-        .pulse-notes { margin-top: 0.5rem; font-size: 13px; color: var(--text-muted); font-style: italic; }
 
         /* View as Student button */
         .btn-view-student {
@@ -603,8 +725,7 @@
         <div class="teacher-nav">
             <span class="nav-brand">Voice Studio <span class="demo-badge">Demo</span></span>
             <div class="teacher-nav-links">
-                <button class="nav-item active" data-nav="today">Today</button>
-                <button class="nav-item" data-nav="pulse">Pulse</button>
+                <button class="nav-item active" data-nav="studio">Studio</button>
                 <button class="nav-item" data-nav="students">Students</button>
                 <button class="nav-item" data-nav="repertoire">Repertoire</button>
                 <button class="nav-item" data-nav="announcements">Announcements</button>
@@ -616,22 +737,13 @@
 
 <main class="container">
 
-<!-- TODAY -->
-<div id="page-today" class="page active">
+<!-- STUDIO -->
+<div id="page-studio" class="page active">
     <div class="teacher-header">
-        <h1 id="greeting">Good morning</h1>
-        <div class="teacher-date" id="today-date"></div>
+        <h1 id="studio-greeting">Studio</h1>
+        <div class="teacher-date" id="studio-date"></div>
     </div>
-    <div id="today-content"></div>
-</div>
-
-<!-- PULSE -->
-<div id="page-pulse" class="page">
-    <div class="teacher-header">
-        <h1>Studio Pulse</h1>
-        <div class="teacher-date">Health dashboard for the full studio</div>
-    </div>
-    <div id="pulse-content"></div>
+    <div id="studio-content"></div>
 </div>
 
 <!-- STUDENTS -->
@@ -684,6 +796,13 @@
     <div class="sv-body" id="sv-body"></div>
 </div>
 
+<!-- Artifact Viewer Modal (read-only: plans, reflections, forecasts) -->
+<div id="artifact-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
+    <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 600px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div id="artifact-modal-body"></div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -693,183 +812,94 @@
 // ============================================================
 
 const STUDENTS = [
-    { id: 1, name: 'Alex Rivera', voice_type: 'Tenor', degree_program: 'MFA Musical Theater Vocal Ped, Year 1', lesson_day: 'monday', status: 'active' },
-    { id: 2, name: 'Maya Chen', voice_type: 'Soprano', degree_program: 'MM Vocal Pedagogy, Year 2', lesson_day: 'monday', status: 'active' },
-    { id: 3, name: 'Jordan Ellis', voice_type: 'Mezzo/Belter', degree_program: 'BFA Musical Theater, Year 2', lesson_day: 'wednesday', status: 'active' },
-    { id: 4, name: 'Sam Okafor', voice_type: 'Baritone', degree_program: 'MM Vocal Pedagogy, Year 1', lesson_day: 'monday', status: 'active' },
-    { id: 5, name: 'Riley Park', voice_type: 'Soprano', degree_program: 'MFA Musical Theater Vocal Ped, Year 2', lesson_day: 'thursday', status: 'active' }
+    { id: 1, name: 'Alex Rivera', voice_type: 'Soprano', degree_program: 'MM Vocal Pedagogy', lesson_day: 'monday', status: 'active' },
+    { id: 2, name: 'Jordan Chen', voice_type: 'Tenor', degree_program: 'MFA MT Vocal Pedagogy', lesson_day: 'monday', status: 'active' },
+    { id: 3, name: 'Sam Okafor', voice_type: 'Mezzo', degree_program: 'BFA Musical Theater', lesson_day: 'wednesday', status: 'active' },
+    { id: 4, name: 'Taylor Kim', voice_type: 'Baritone', degree_program: 'MM Vocal Pedagogy', lesson_day: 'monday', status: 'active' },
+    { id: 5, name: 'Morgan Wells', voice_type: 'Soprano', degree_program: 'MFA', lesson_day: 'thursday', status: 'active' }
 ];
 
-const BRIEFS = {
-    1: {
-        student_id: 1,
-        flags: ['Fatigue: gig this weekend'],
-        content: `## WARM-UP (10 min)
+const BRIEFS = {};
 
-- Blowfish with tongue movement: target forward resonance without fold squeeze. Carry-forward from last lesson where this clicked in the upper range.
-- Chest voice anchoring on descending 5-note patterns: overdue category, last addressed 3 weeks ago.
-- Gentle range extension via lip trills to B4.
-
-## REPERTOIRE BLOCK 1: "Being Alive" (Sondheim)
-
-- Focus on the build from "someone to hold you too close" through the climax. Last lesson identified a tendency to arrive at the top without sufficient engagement energy in the approach.
-- Apply the "fall forward into momentum" cue from last session. Speech-first on the low bridge section.
-
-## REPERTOIRE BLOCK 2: "Comfort and Joy" (original)
-
-- Character work with pianist. This piece needs more dynamic contrast: the quiet moments are as important as the belt.
-- Explore the messa di voce on the final sustained note.
-
----
-
-**Watch for**: Alex reported mild fatigue from a gig this weekend. Monitor ease and shorten if needed.`
-    },
-    2: {
-        student_id: 2,
-        flags: ['Allergies noted'],
-        content: `**Health note**: Submitted reflection noting voice feeling 7/10 and mild allergies. Proceed normally but monitor.
-
-## WARM-UP (8 min)
-
-- Mama made marmalade descending: speech access, forward placement.
-- Sustained vowel with piano leaning: breath engagement, rib expansion.
-
-## REPERTOIRE: Ravel "Chanson des cueilleuses de lentisques"
-
-- Jury panel feedback (Dr. Chen, 3/15): "Beautiful French, but find more colors in the middle voice. The piano sections need as much intention as the forte."
-- Work on dynamic shaping in the A section. Connect the panel feedback to our ongoing work on loft in the lower range.
-- Parachute deployment before the climactic phrase, same technique that worked in the Debussy last week.
-
-## REPERTOIRE: "Stars and the Moon" (Jason Robert Brown)
-
-- Run the cut for upcoming audition. Focus on speech-forward delivery in the listing sections.`
-    },
-    4: {
-        student_id: 4,
-        flags: [],
-        content: `## WARM-UP (10 min)
-
-- Lip trills on descending arpeggios, starting in the passaggio and working down. Focus on even airflow.
-- Tongue-out phonation on [a]: laryngeal freedom, reducing tongue root tension.
-- "Buh-buh-buh" staccato ascending: light chest onset, clean release.
-
-## REPERTOIRE: "If Ever I Would Leave You" (Lerner & Loewe)
-
-- Last lesson: good legato in the verse, but the high F on "leave you" was pressed. Try approaching from above with a "pour" gesture.
-- Map the breath plan for the long phrase in the bridge. Sam tends to tank up rather than pace. Work with the rib-swing cue.
-
-## REPERTOIRE: Schumann "Ich grolle nicht"
-
-- New piece, first coaching. Read through for text and general sound. Identify moments of declamatory weight vs. lyric flow.
-- Check German diction on the "Herz" and "Schmerz" vowels.
-
----
-
-**Note**: Sam's reflection flagged a heavy rehearsal week. Keep the pacing moderate and check in about fatigue as the lesson progresses.`
-    }
-};
-
+// Reflections: Sam (3) and Taylor (4) have reflections since latest lesson
 const REFLECTIONS = {
-    1: { student_id: 1, voice_feeling: 8, engagement: 9, notes: '', date_submitted: '2026-03-24' },
-    2: { student_id: 2, voice_feeling: 7, engagement: 8, notes: 'Mild allergies, slight congestion. Voice feels clear once I warm up.', date_submitted: '2026-03-24' },
-    4: { student_id: 4, voice_feeling: 6, engagement: 7, notes: 'Heavy rehearsal week. Did a 3-hour tech run yesterday. Voice is a bit tired but not hoarse.', date_submitted: '2026-03-24' },
-    5: { student_id: 5, voice_feeling: 9, engagement: 9, notes: 'Feeling great. Had a really productive practice session this morning.', date_submitted: '2026-03-24' }
+    3: { student_id: 3, voice_feeling: 8, engagement: 9, notes: 'Feeling solid this week. The belt exercises are clicking.', date_submitted: '2026-04-05' },
+    4: { student_id: 4, voice_feeling: 7, engagement: 7, notes: 'Have not had a chance to practice much this week. Looking forward to getting back.', date_submitted: '2026-03-16' }
 };
 
-// Lesson logs with full content and approval status
+// Lesson logs: designed to create specific pipeline states per student
+// Alex Rivera (1): latest log NOT approved (needs review, Apr 4), has transcript
+// Jordan Chen (2): latest log approved, has plan, NO reflection (overdue)
+// Sam Okafor (3): latest log approved, has plan, has reflection (all caught up)
+// Taylor Kim (4): last lesson Mar 20 (>14 days ago, no recent lessons)
+// Morgan Wells (5): latest log approved, NO plan (plan pending)
 const LESSON_LOGS = {
     1: [
         {
-            id: 'l1a', student_id: 1, date: '2026-03-17', approved: true,
-            repertoire_worked: ['Being Alive (Sondheim)', 'Comfort and Joy (Original)'],
+            id: 'l1a', student_id: 1, date: '2026-04-04', approved: false, has_transcript: true,
+            repertoire_worked: ['Dove sono (Mozart)', 'Come to My Garden (Simon)'],
             exercises: [
-                { name: 'Blowfish with tongue movement', pattern: 'Ascending 5ths, C3-G4', functional_purpose: 'Forward resonance without fold squeeze', category: 'speech_access' },
-                { name: 'Lip trill glides', pattern: 'Octave glides, Bb2-Bb3', functional_purpose: 'Even registration through passaggio', category: 'mix_registration' }
+                { name: 'Straw phonation', pattern: 'Ascending 5ths, C4-A5', functional_purpose: 'Even airflow, reduced strain in upper register', category: 'breath' },
+                { name: 'Descending "mee" scales', pattern: 'Starting at F5', functional_purpose: 'Head voice connection through the passaggio', category: 'head_voice' }
             ],
-            head_observations: 'Alex came in with clear intention for the Sondheim. Good self-awareness about the gig fatigue.',
-            hand_observations: 'Blowfish exercise unlocked something in the upper range. The tongue movement cue keeps the resonance forward without pressing.',
-            heart_observations: 'Emotional connection to "Being Alive" is growing. The vulnerability in the bridge felt genuine today.',
-            warmth_brightness_notes: 'Warmth: solid in chest, thins above E4. Brightness: good speech access today. Buzziness: present on the blowfish, dropped on sustained passages.',
-            breakthroughs: 'The "fall forward into momentum" cue connected for the Sondheim build. Alex found the energy without pushing.',
-            next_steps: 'Continue blowfish warm-up. Apply momentum cue to the Comfort and Joy climax. Dynamic contrast work next session.',
-            exercise_categories_addressed: ['body','breath','speech_access','chest_voice','range_extension']
+            head_observations: 'Alex is thinking carefully about the Mozart recit. Good instincts about dramatic pacing.',
+            hand_observations: 'Straw phonation connected the breath to the upper passaggio. The "mee" scales are bridging well.',
+            heart_observations: 'Emotional depth in the Mozart is growing. The recit felt lived-in today.',
+            warmth_brightness_notes: 'Warmth: lovely in the middle. Brightness: needs more in the upper passaggio. Buzziness: present on straw work.',
+            breakthroughs: 'Found a legato line through the passaggio that felt easy. First time the Mozart aria flowed without a reset at the top.',
+            next_steps: 'Continue straw warm-up. Apply legato approach to Simon piece. Dynamic contrast in the garden imagery.',
+            exercise_categories_addressed: ['body','breath','head_voice','mix_registration','dynamics']
         },
         {
-            id: 'l1b', student_id: 1, date: '2026-03-10', approved: true,
-            repertoire_worked: ['Being Alive (Sondheim)'],
+            id: 'l1b', student_id: 1, date: '2026-03-28', approved: true, has_transcript: true,
+            repertoire_worked: ['Dove sono (Mozart)'],
             exercises: [
-                { name: 'Descending 5-note scales on "mah"', pattern: 'G4 down', functional_purpose: 'Chest voice anchoring', category: 'chest_voice' }
+                { name: 'Lip trills on arpeggios', pattern: 'Ascending, Bb3-F5', functional_purpose: 'Registration smoothing', category: 'mix_registration' }
             ],
-            head_observations: 'Focused session. Alex is thinking well about the architecture of the Sondheim.',
-            hand_observations: 'Breath pacing still needs attention on the long phrases. The rib-swing cue helped.',
-            warmth_brightness_notes: 'Warmth: improved from last week. Brightness: needs more speech access in the bridge.',
-            breakthroughs: 'First time the climax felt supported all the way through without a reset.',
-            next_steps: 'Chest voice anchoring exercise. Carry the forward resonance from the blowfish into the repertoire.',
+            head_observations: 'Focused session on the recit. Alex came prepared with text translation questions.',
+            hand_observations: 'Breath pacing improved on the long phrases. Still a slight grab before the high A.',
+            warmth_brightness_notes: 'Warmth: strong. Brightness: well-balanced. Buzziness: needs more on sustained tones.',
+            breakthroughs: 'The recit phrasing felt natural for the first time.',
+            next_steps: 'Work on the transition from recit to aria. Release before the high A.',
             exercise_categories_addressed: ['breath','speech_access','mix_registration','sustain']
-        },
-        {
-            id: 'l1c', student_id: 1, date: '2026-03-03', approved: false,
-            repertoire_worked: ['She Used to Be Mine (Sara Bareilles)'],
-            exercises: [
-                { name: 'Hum to open vowel', pattern: 'Ascending by half steps', functional_purpose: 'Head voice connection', category: 'head_voice' }
-            ],
-            head_observations: 'Working on audition cut. Good instincts about where to start and end.',
-            hand_observations: 'Mix registration needs attention at the top of the belt. Tending to push rather than allow.',
-            warmth_brightness_notes: 'Warmth: strong. Brightness: slightly muffled on high phrases. Buzziness: inconsistent.',
-            breakthroughs: 'Found a great speech quality in the verses. The listing sections feel natural.',
-            next_steps: 'Work on the transition from speech quality into the belt. Less push, more release.',
-            exercise_categories_addressed: ['body','breath','head_voice','mix_registration']
         }
     ],
     2: [
         {
-            id: 'l2a', student_id: 2, date: '2026-03-17', approved: false,
-            repertoire_worked: ['Chanson des cueilleuses de lentisques (Ravel)', 'Stars and the Moon (JRB)'],
+            id: 'l2a', student_id: 2, date: '2026-04-02', approved: true, has_transcript: true,
+            repertoire_worked: ['Corner of the Sky (Schwartz)', 'Giants in the Sky (Sondheim)'],
             exercises: [
-                { name: 'Mama made marmalade', pattern: 'Descending from A4', functional_purpose: 'Speech access, forward placement', category: 'speech_access' },
-                { name: 'Sustained vowel with piano leaning', pattern: '[a] on Bb3, 8 counts', functional_purpose: 'Breath engagement, rib expansion', category: 'breath' }
+                { name: 'Belt anchoring on "hey"', pattern: 'Ascending, C3-G4', functional_purpose: 'Chest voice connection into belt', category: 'chest_voice' },
+                { name: 'Sirens through the passaggio', pattern: 'Full range', functional_purpose: 'Registration continuity', category: 'mix_registration' }
             ],
-            head_observations: 'Maya is thinking carefully about the jury feedback. Processing Dr. Chen\'s notes about middle voice colors.',
-            hand_observations: 'Dynamic control improving. The parachute technique is becoming more reliable.',
-            heart_observations: 'Beautiful musicianship in the Ravel. The quiet moments are starting to carry real intention.',
-            warmth_brightness_notes: 'Warmth: lovely in the middle range. Brightness: excellent top, needs more in piano passages. Buzziness: strong overall.',
-            breakthroughs: 'The piano dynamic in the Ravel A section held its core. First time the quiet singing had as much presence as the forte.',
-            next_steps: 'Continue parachute technique work. Apply dynamic shaping to the JRB cut. Audition prep next session.',
-            exercise_categories_addressed: ['breath','speech_access','head_voice','dynamics']
+            head_observations: 'Jordan is making good choices about where to belt and where to mix.',
+            hand_observations: 'The passaggio work is paying off. Mix on the high G is reliable now.',
+            heart_observations: 'Great storytelling instincts on Giants. The wonder is genuine.',
+            warmth_brightness_notes: 'Warmth: solid in chest. Brightness: excellent belt quality. Buzziness: consistent throughout.',
+            breakthroughs: 'Found the mix on "the roof, the house, and the world" without pushing. Clean, ringing, connected.',
+            next_steps: 'Run both pieces back to back for program arc. Polish the Corner of the Sky final build.',
+            exercise_categories_addressed: ['body','breath','chest_voice','mix_registration','speech_access','dynamics']
         },
         {
-            id: 'l2b', student_id: 2, date: '2026-03-10', approved: true,
-            repertoire_worked: ['Nuit d\'etoiles (Debussy)'],
-            exercises: [
-                { name: 'Parachute deployment drill', pattern: 'Descending from F5', functional_purpose: 'Release into soft high singing', category: 'dynamics' }
-            ],
-            head_observations: 'Good preparation. Maya came with specific questions about the Debussy phrasing.',
-            hand_observations: 'Parachute technique clicked today. The high pianissimo was effortless.',
-            warmth_brightness_notes: 'Warmth: excellent. Brightness: well balanced. Buzziness: present throughout.',
-            breakthroughs: 'Parachute technique working reliably now. This is a real tool in her kit.',
-            next_steps: 'Transfer parachute skill to the Ravel. Dynamic contrast work across the program.',
-            exercise_categories_addressed: ['breath','speech_access','sustain','dynamics','middle_range']
-        },
-        {
-            id: 'l2c', student_id: 2, date: '2026-03-03', approved: true,
-            repertoire_worked: ['Chanson des cueilleuses de lentisques (Ravel)'],
+            id: 'l2b', student_id: 2, date: '2026-03-26', approved: true, has_transcript: true,
+            repertoire_worked: ['Corner of the Sky (Schwartz)'],
             exercises: [],
-            head_observations: 'First session on the Ravel. Reading through, establishing the shape.',
-            hand_observations: 'French diction is strong. Breath support solid in the opening.',
-            warmth_brightness_notes: 'Warmth: needs development in the middle voice. Brightness: secure top.',
-            breakthroughs: 'Good first read. The musicality is there from the start.',
-            next_steps: 'Work on middle voice colors per the jury feedback.',
-            exercise_categories_addressed: ['body','breath','head_voice','sustain']
+            head_observations: 'First session on this piece. Good energy, strong preparation.',
+            hand_observations: 'Natural belt in the right spots. Working on dynamic range in the verses.',
+            warmth_brightness_notes: 'Warmth: present. Brightness: strong. Buzziness: needs more in quiet moments.',
+            breakthroughs: 'The verses have a natural speech quality. Good starting point.',
+            next_steps: 'Build dynamic contrast. Add Giants in the Sky next session.',
+            exercise_categories_addressed: ['breath','speech_access','chest_voice']
         }
     ],
     3: [
         {
-            id: 'l3a', student_id: 3, date: '2026-03-19', approved: true,
+            id: 'l3a', student_id: 3, date: '2026-04-03', approved: true, has_transcript: true,
             repertoire_worked: ['I\'m Not Afraid of Anything (JRB)', 'Pulled (O\'Keefe)'],
             exercises: [
                 { name: 'Belt anchoring on "hey"', pattern: 'Ascending, C4-G4', functional_purpose: 'Chest voice connection into belt', category: 'chest_voice' }
             ],
-            head_observations: 'Jordan is thinking about the vulnerability in the JRB verses. Good instinct.',
+            head_observations: 'Sam is thinking about the vulnerability in the JRB verses. Good instinct.',
             hand_observations: 'Belt on the climax is strong and connected. Verses need more dynamic range.',
             warmth_brightness_notes: 'Warmth: good chest quality. Brightness: strong belt ring. Buzziness: present in the belt, drops in quiet singing.',
             breakthroughs: 'Found vulnerability in the verses without losing vocal connection. A breakthrough moment.',
@@ -877,7 +907,7 @@ const LESSON_LOGS = {
             exercise_categories_addressed: ['body','breath','chest_voice','mix_registration','speech_access']
         },
         {
-            id: 'l3b', student_id: 3, date: '2026-03-12', approved: true,
+            id: 'l3b', student_id: 3, date: '2026-03-27', approved: true, has_transcript: true,
             repertoire_worked: ['Pulled (O\'Keefe)'],
             exercises: [],
             head_observations: 'Character voice session. Exploring the comedy.',
@@ -890,48 +920,37 @@ const LESSON_LOGS = {
     ],
     4: [
         {
-            id: 'l4a', student_id: 4, date: '2026-03-17', approved: false,
+            id: 'l4a', student_id: 4, date: '2026-03-14', approved: true, has_transcript: true,
             repertoire_worked: ['If Ever I Would Leave You (Lerner & Loewe)'],
             exercises: [
                 { name: 'Lip trills on descending arpeggios', pattern: 'Starting in passaggio', functional_purpose: 'Even airflow through passaggio', category: 'breath' },
                 { name: 'Tongue-out phonation', pattern: '[a] sustained', functional_purpose: 'Laryngeal freedom, reduce tongue root tension', category: 'body' }
             ],
-            head_observations: 'Sam is being thoughtful about the high F approach. Willing to try new strategies.',
+            head_observations: 'Taylor is being thoughtful about the high F approach. Willing to try new strategies.',
             hand_observations: 'Legato in the verse is strong. The high F is still slightly pressed but improving.',
             heart_observations: 'Starting to find the emotional arc of the piece. The tenderness is emerging.',
             warmth_brightness_notes: 'Warmth: solid in the verse. Brightness: needs more ring above D4. Buzziness: dropped on the high F.',
-            breakthroughs: 'The "pour" gesture on the high F produced the best quality we have heard so far. Not yet consistent, but the pathway is clear.',
+            breakthroughs: 'The "pour" gesture on the high F produced the best quality we have heard so far.',
             next_steps: 'Breath plan for the bridge. Apply "pour" gesture consistently. New piece: Ich grolle nicht.',
             exercise_categories_addressed: ['breath','speech_access','sustain','head_voice']
-        },
-        {
-            id: 'l4b', student_id: 4, date: '2026-03-10', approved: true,
-            repertoire_worked: ['The Impossible Dream (Leigh)'],
-            exercises: [],
-            head_observations: 'Jury piece run-through. Sam is feeling confident about this one.',
-            hand_observations: 'Strong overall. The final build is well paced.',
-            warmth_brightness_notes: 'Warmth: excellent low range. Brightness: good ring on the climax.',
-            breakthroughs: 'The final build felt inevitable rather than forced. Good pacing.',
-            next_steps: 'Refine the final build. Start work on the Lerner & Loewe.',
-            exercise_categories_addressed: ['body','breath','range_extension','mix_registration']
         }
     ],
     5: [
         {
-            id: 'l5a', student_id: 5, date: '2026-03-20', approved: true,
+            id: 'l5a', student_id: 5, date: '2026-04-03', approved: true, has_transcript: true,
             repertoire_worked: ['Gimme Gimme (Tesori)', 'Alto\'s Lament (Goldrich)'],
             exercises: [
                 { name: 'Siren glides', pattern: 'Full range', functional_purpose: 'Registration smoothing', category: 'mix_registration' }
             ],
-            head_observations: 'Riley is in great shape for the recital. Confident and prepared.',
+            head_observations: 'Morgan is in great shape for the recital. Confident and prepared.',
             hand_observations: 'Belt is clean and connected on Gimme Gimme. Great character work on Alto\'s Lament.',
             warmth_brightness_notes: 'Warmth: strong throughout. Brightness: excellent belt ring. Buzziness: consistent.',
-            breakthroughs: 'The comedic timing on Alto\'s Lament is landing. Riley found the character without losing the vocal technique.',
+            breakthroughs: 'The comedic timing on Alto\'s Lament is landing. Morgan found the character without losing the vocal technique.',
             next_steps: 'Final recital prep. Run-through of the full set with staging.',
             exercise_categories_addressed: ['body','breath','speech_access','mix_registration','head_voice','dynamics']
         },
         {
-            id: 'l5b', student_id: 5, date: '2026-03-13', approved: true,
+            id: 'l5b', student_id: 5, date: '2026-03-27', approved: true, has_transcript: true,
             repertoire_worked: ['The Wizard and I (Schwartz)'],
             exercises: [],
             head_observations: 'Building the long arc. This piece is a journey.',
@@ -953,67 +972,59 @@ const CATEGORY_LABELS = {
 };
 
 const REPERTOIRE = [
-    { student_id: 1, title: 'Being Alive', composer: 'Stephen Sondheim', style: 'MT', phase: 'polishing', notes: 'Working the build. Speech-first on bridge.' },
-    { student_id: 1, title: 'Comfort and Joy', composer: 'Original', style: 'Pop/Original', phase: 'coaching', notes: 'Needs dynamic contrast.' },
-    { student_id: 1, title: 'She Used to Be Mine', composer: 'Sara Bareilles', style: 'MT', phase: 'learned', notes: 'Audition cut ready.' },
-    { student_id: 2, title: 'Chanson des cueilleuses de lentisques', composer: 'Maurice Ravel', style: 'Art Song', phase: 'polishing', notes: 'Jury feedback: more colors in middle voice.' },
-    { student_id: 2, title: 'Stars and the Moon', composer: 'Jason Robert Brown', style: 'MT', phase: 'coaching', notes: 'Audition cut. Speech-forward delivery.' },
-    { student_id: 2, title: 'Nuit d\'etoiles', composer: 'Claude Debussy', style: 'Art Song', phase: 'performance-ready', notes: 'Parachute technique working well.' },
-    { student_id: 3, title: 'I\'m Not Afraid of Anything', composer: 'Jason Robert Brown', style: 'MT', phase: 'polishing', notes: 'Belt on the climax is strong. Working on vulnerability in the verses.' },
+    { student_id: 1, title: 'Dove sono', composer: 'W. A. Mozart', style: 'Art Song', phase: 'polishing', notes: 'Legato through the passaggio. Recit pacing.' },
+    { student_id: 1, title: 'Come to My Garden', composer: 'Lucy Simon', style: 'MT', phase: 'coaching', notes: 'Dynamic contrast in the garden imagery.' },
+    { student_id: 2, title: 'Corner of the Sky', composer: 'Stephen Schwartz', style: 'MT', phase: 'polishing', notes: 'Final build. Belt without pushing.' },
+    { student_id: 2, title: 'Giants in the Sky', composer: 'Stephen Sondheim', style: 'MT', phase: 'coaching', notes: 'Mix on the high G. Storytelling.' },
+    { student_id: 3, title: 'I\'m Not Afraid of Anything', composer: 'Jason Robert Brown', style: 'MT', phase: 'polishing', notes: 'Belt on the climax. Vulnerability in the verses.' },
     { student_id: 3, title: 'Pulled', composer: 'Laurence O\'Keefe', style: 'MT', phase: 'coaching', notes: 'Comedy timing, character voice choices.' },
-    { student_id: 3, title: 'At Last', composer: 'Harry Warren', style: 'Pop/Jazz', phase: 'learned', notes: 'Lounge setting arrangement. Breath pacing on long phrases.' },
     { student_id: 4, title: 'If Ever I Would Leave You', composer: 'Lerner & Loewe', style: 'MT', phase: 'coaching', notes: 'Legato good. Working on high F approach.' },
-    { student_id: 4, title: 'Ich grolle nicht', composer: 'Robert Schumann', style: 'Art Song', phase: 'learning', notes: 'New piece. First coaching this week.' },
-    { student_id: 4, title: 'The Impossible Dream', composer: 'Mitch Leigh', style: 'MT', phase: 'polishing', notes: 'Jury piece. Strong overall, refining the final build.' },
+    { student_id: 4, title: 'Ich grolle nicht', composer: 'Robert Schumann', style: 'Art Song', phase: 'learning', notes: 'New piece. First coaching.' },
     { student_id: 5, title: 'Gimme Gimme', composer: 'Jeanine Tesori', style: 'MT', phase: 'performance-ready', notes: 'Recital piece. Belt is clean and connected.' },
     { student_id: 5, title: 'Alto\'s Lament', composer: 'Zina Goldrich', style: 'MT/Comedy', phase: 'polishing', notes: 'Character work and comedic timing.' },
-    { student_id: 5, title: 'The Wizard and I', composer: 'Stephen Schwartz', style: 'MT', phase: 'coaching', notes: 'Building the long arc. Passaggio navigation on the final phrase.' }
+    { student_id: 5, title: 'The Wizard and I', composer: 'Stephen Schwartz', style: 'MT', phase: 'coaching', notes: 'Passaggio navigation on the final phrase.' }
 ];
 
 const ANNOUNCEMENTS = [
-    { id: 1, title: 'NATS New England Regional: Registration Deadline April 5', type: 'competition', pinned: true, date: '2026-03-20', body: 'If you plan to compete at NATS New England Regional, registration closes April 5. Please confirm your selections and category with Prof. G before registering. Accompanist assignments will be finalized by April 1.' },
-    { id: 2, title: 'Studio Recital: April 18, Houston Hall, 7 PM', type: 'event', pinned: false, date: '2026-03-22', body: 'Our spring studio recital is confirmed for April 18 at 7 PM in Houston Hall. Program order will be posted by April 10. Please submit your program notes (title, composer, brief context) by April 8.' },
-    { id: 3, title: 'Jury repertoire lists due to Prof. G by April 1', type: 'deadline', pinned: false, date: '2026-03-18', body: 'Submit your jury repertoire list with all titles, composers, and any cuts you plan to make. Include the original language for art songs and the show for MT selections. Email or submit through the portal.' }
+    { id: 1, title: 'Studio Recital: April 18, Houston Hall, 7 PM', type: 'event', pinned: true, date: '2026-04-02', body: 'Our spring studio recital is confirmed for April 18 at 7 PM in Houston Hall. Program order will be posted by April 10. Please submit your program notes (title, composer, brief context) by April 8.' },
+    { id: 2, title: 'NATS New England Regional: April 12', type: 'competition', pinned: false, date: '2026-04-01', body: 'Registration is closed. Accompanist assignments are finalized. Please confirm your program order with Prof. G by April 8.' },
+    { id: 3, title: 'Jury scheduling posted', type: 'deadline', pinned: false, date: '2026-03-28', body: 'Jury schedule for April 20-21 is posted. Check your assigned time slot. Bring two copies of each score for the panel. Arrive 15 minutes early.' }
 ];
 
 const EVENTS = [
-    { id: 1, student_id: 2, student_name: 'Maya Chen', title: 'Pre-Recital Hearing', type: 'hearing', date: '2026-04-08' },
-    { id: 2, student_id: 1, student_name: 'Alex Rivera', title: 'NATS Regional', type: 'competition', date: '2026-04-12' },
+    { id: 1, student_id: 1, student_name: 'Alex Rivera', title: 'Pre-Recital Hearing', type: 'hearing', date: '2026-04-08' },
+    { id: 2, student_id: 2, student_name: 'Jordan Chen', title: 'NATS Regional', type: 'competition', date: '2026-04-12' },
     { id: 3, student_id: null, student_name: null, title: 'Studio Recital', type: 'recital', date: '2026-04-18' },
-    { id: 4, student_id: 3, student_name: 'Jordan Ellis', title: 'Jury', type: 'jury', date: '2026-04-20' },
-    { id: 5, student_id: 4, student_name: 'Sam Okafor', title: 'Jury', type: 'jury', date: '2026-04-20' },
-    { id: 6, student_id: 5, student_name: 'Riley Park', title: 'Jury', type: 'jury', date: '2026-04-20' },
+    { id: 4, student_id: 3, student_name: 'Sam Okafor', title: 'Jury', type: 'jury', date: '2026-04-20' },
+    { id: 5, student_id: 4, student_name: 'Taylor Kim', title: 'Jury', type: 'jury', date: '2026-04-20' },
+    { id: 6, student_id: 5, student_name: 'Morgan Wells', title: 'Jury', type: 'jury', date: '2026-04-20' },
     { id: 7, student_id: 1, student_name: 'Alex Rivera', title: 'Jury', type: 'jury', date: '2026-04-21' },
-    { id: 8, student_id: 2, student_name: 'Maya Chen', title: 'Jury', type: 'jury', date: '2026-04-21' }
+    { id: 8, student_id: 2, student_name: 'Jordan Chen', title: 'Jury', type: 'jury', date: '2026-04-21' }
 ];
 
 const JURY_FEEDBACK = {
-    2: [
-        { panelist: 'Dr. Chen', date: '2026-03-15', event: 'Mid-semester hearing', comments: 'Beautiful French diction throughout. The high phrases are secure and well-supported. I would love to hear more timbral variety in the middle voice, especially in the piano passages. The quieter moments can carry as much intention as the forte sections. Lovely musicianship overall.' },
-        { panelist: 'Prof. Torres', date: '2026-03-15', event: 'Mid-semester hearing', comments: 'Strong progress since the fall jury. Breath management is notably improved. For the Ravel, consider the pacing of the opening phrase: let the audience come to you. The JRB cut was effective, good instinct for where to start and end. Watch for a slight tendency to push on the F5.' }
+    1: [
+        { panelist: 'Dr. Chen', date: '2026-03-15', event: 'Mid-semester hearing', comments: 'Lovely legato in the Mozart. The passaggio is smoothing out nicely. I would encourage more dynamic contrast in the piano passages. The quiet singing can be just as compelling as the forte.' },
+        { panelist: 'Prof. Torres', date: '2026-03-15', event: 'Mid-semester hearing', comments: 'Strong progress since the fall jury. Breath management is notably improved. The recit pacing felt natural. Watch for a slight tendency to rush the approach to the high A.' }
     ]
 };
 
 // Performance event notes (dress rehearsal, hearing notes)
-const PERFORMANCE_NOTES = {
-    2: [
-        {
-            event: 'Pre-Recital Hearing (Dress Rehearsal)',
-            date: '2026-04-01',
-            notes: 'Ravel "Chanson des cueilleuses de lentisques": The French is polished and the opening phrase sets the atmosphere beautifully. Middle voice colors are starting to show. Piano dynamic in the A section held its core. One moment of breathiness at the climactic phrase, likely nerves. Practice the parachute approach into that phrase.\n\nDebussy "Nuit d\'etoiles": Exquisite. The pianissimo high singing is the strongest I have heard it. Pacing is confident, emotional arc is clear. Performance-ready.\n\nJRB "Stars and the Moon": Speech quality in the listing sections is natural and compelling. The cut works well. Consider slowing the transition into the final section. Overall, strong hearing. Maya is ready for this recital.'
-        }
-    ]
-};
+const PERFORMANCE_NOTES = {};
 
-// Practice plan sample
+// Practice plans: Jordan (2), Sam (3), and Taylor (4) have plans. Morgan (5) does not (plan pending).
 const PRACTICE_PLANS = {
-    1: {
-        date_generated: '2026-03-17',
-        content: `## Practice Plan: Week of March 17\n\n### Warm-Up (10 min)\n- **Blowfish with tongue movement**: 5 minutes, C3 to G4. Keep resonance forward, folds free. Listen for buzziness.\n- **Descending 5-note patterns on "mah"**: Start G4, work to C3. Chest voice anchor without pressing.\n\n### Repertoire Practice\n**"Being Alive" (Sondheim)**: Work the build 3 times. Use "fall forward into momentum" cue.\n**"Comfort and Joy"**: Messa di voce on final sustained note. Mark and exaggerate dynamics.\n\n### What to Listen For\n- **Warmth**: Present throughout, not just chest. If it thins above E4, add more space.\n- **Brightness**: Keep speech access. Come back to "mama made marmalade" if too dark.\n- **Buzziness**: Present on sustained passages, not just the blowfish.\n\n### Structure\n- 3 sessions, 30 min each. Start with blowfish. If fatigued, shorten to 20 min.\n\nProf. G`
-    },
     2: {
-        date_generated: '2026-03-17',
-        content: `## Practice Plan: Week of March 17\n\n### Warm-Up (8 min)\n- **Mama made marmalade**: Descending from A4. Forward placement, speech quality.\n- **Sustained vowel with piano leaning**: [a] on Bb3, 8 counts. Rib expansion, even airflow.\n\n### Repertoire Practice\n**Ravel**: Work A section at piano 3 times. Treat quiet singing as the most important part.\n**JRB "Stars and the Moon"**: Run audition cut twice. Speech-forward delivery.\n\n### What to Listen For\n- **Warmth**: Present in middle voice. Listen for loft in the lower range.\n- **Brightness**: Bring more into piano passages.\n- **Buzziness**: Consistent throughout. If it drops quietly, more breath energy without volume.\n\nProf. G`
+        date_generated: '2026-04-02',
+        content: `## Practice Plan: Week of April 2\n\n### Warm-Up (10 min)\n- **Belt anchoring on "hey"**: Ascending from C3 to G4. Keep the chest connection, let the sound ring.\n- **Sirens through the passaggio**: Full range, slow and even. No breaks.\n\n### Repertoire Practice\n**"Corner of the Sky"**: Run the final build 3 times. Find the crescendo without pushing.\n**"Giants in the Sky"**: Focus on the mix section. Use the siren approach into the high G.\n\n### What to Listen For\n- **Belt quality**: Should ring, not push. If it feels heavy, come back to the sirens.\n- **Mix**: Consistent through the passaggio. No flip or crack.\n- **Storytelling**: Keep the text alive even while working technique.\n\n### Structure\n- 3 sessions, 30 min each. Start with belt anchoring.\n\nProf. G`
+    },
+    3: {
+        date_generated: '2026-04-03',
+        content: `## Practice Plan: Week of April 3\n\n### Warm-Up (8 min)\n- **Belt anchoring on "hey"**: Ascending from C4 to G4. Focus on chest voice connection.\n- **Breath pacing on sustained tones**: [a] on Bb3, 8 counts.\n\n### Repertoire Practice\n**"I'm Not Afraid of Anything"**: Work the verses at a whisper, then bring to full voice. Keep the vulnerability.\n**"Pulled"**: Comedy timing work. Exaggerate the character, then pull back.\n\n### What to Listen For\n- **Dynamic contrast**: The quiet moments should be as intentional as the belt.\n- **Character voice**: Present and fun without losing support.\n\nProf. G`
+    },
+    4: {
+        date_generated: '2026-03-14',
+        content: `## Practice Plan: Week of March 14\n\n### Warm-Up (10 min)\n- **Lip trills on descending arpeggios**: Starting in the passaggio and working down. Even airflow.\n- **Tongue-out phonation on [a]**: Laryngeal freedom.\n\n### Repertoire Practice\n**"If Ever I Would Leave You"**: Map the breath plan for the bridge. Use the "pour" gesture on the high F.\n\nProf. G`
     }
 };
 
@@ -1021,7 +1032,7 @@ const PRACTICE_PLANS = {
 // UTILITIES
 // ============================================================
 
-let currentPage = 'today';
+let currentPage = 'studio';
 let svCurrentDetail = null;
 
 function getGreeting() {
@@ -1031,7 +1042,7 @@ function getGreeting() {
     return 'Good evening';
 }
 
-function todayStr() { return '2026-03-24'; }
+function todayStr() { return '2026-04-06'; }
 
 function formatDate(d) {
     if (!d) return '';
@@ -1138,7 +1149,7 @@ function inlineFormat(text) {
 // PAGE SWITCHING
 // ============================================================
 
-const PAGE_IDS = ['today', 'pulse', 'students', 'repertoire', 'announcements', 'events'];
+const PAGE_IDS = ['studio', 'students', 'repertoire', 'announcements', 'events'];
 
 function navigateTo(page) {
     currentPage = page;
@@ -1148,7 +1159,7 @@ function navigateTo(page) {
     document.querySelectorAll('.nav-item').forEach(el => {
         el.classList.toggle('active', el.dataset.nav === page);
     });
-    const loaders = { today: renderToday, pulse: renderPulse, students: renderStudents, repertoire: renderRepertoire, announcements: renderAnnouncements, events: renderEvents };
+    const loaders = { studio: renderStudio, students: renderStudents, repertoire: renderRepertoire, announcements: renderAnnouncements, events: renderEvents };
     if (loaders[page]) loaders[page]();
 }
 
@@ -1157,177 +1168,273 @@ document.querySelectorAll('.nav-item').forEach(el => {
 });
 
 // ============================================================
-// TODAY VIEW
+// STUDIO VIEW (prioritized action list)
 // ============================================================
 
-function renderToday() {
+function renderStudio() {
+    const container = document.getElementById('studio-content');
     const today = todayStr();
-    document.getElementById('greeting').textContent = getGreeting();
-    document.getElementById('today-date').textContent = formatDate(today);
-    const container = document.getElementById('today-content');
-    const withBrief = STUDENTS.filter(s => BRIEFS[s.id]);
-    const withoutBrief = STUDENTS.filter(s => !BRIEFS[s.id]);
 
-    let html = '';
+    // Greeting
+    document.getElementById('studio-greeting').textContent = getGreeting();
+    document.getElementById('studio-date').textContent = formatDate(today);
 
-    // Draft notification banner
-    const drafts = getAllDrafts();
-    if (drafts.length > 0) {
-        const draftsByStudent = {};
-        drafts.forEach(d => {
-            const s = STUDENTS.find(st => st.id === d.student_id);
-            const name = s ? s.name : 'Unknown';
-            if (!draftsByStudent[name]) draftsByStudent[name] = 0;
-            draftsByStudent[name]++;
-        });
-        const summary = Object.entries(draftsByStudent).map(([name, count]) => name + ' (' + count + ')').join(', ');
-        html += '<div style="background: rgba(156, 92, 92, 0.08); border: 1px solid rgba(156, 92, 92, 0.2); border-left: 3px solid #8b4040; border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">';
-        html += '<div style="font-size: 14px;"><strong style="color: #8b4040;">' + drafts.length + ' lesson log' + (drafts.length > 1 ? 's' : '') + ' awaiting review</strong><br><span style="font-size: 13px; color: var(--text-muted);">' + summary + '</span></div>';
-        html += '<button onclick="navigateTo(\'pulse\')" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.85rem; border-radius: var(--radius); background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Review</button>';
-        html += '</div>';
-    }
+    // Build per-student pipeline status
+    function computeStatus(student) {
+        const logs = LESSON_LOGS[student.id] || [];
+        const latestLog = logs[0] || null;
+        const plan = PRACTICE_PLANS[student.id] || null;
+        const reflection = REFLECTIONS[student.id] || null;
 
-    if (withBrief.length > 0) {
-        html += '<div class="section-label">' + withBrief.length + ' Lesson' + (withBrief.length > 1 ? 's' : '') + ' Today</div>';
-        withBrief.forEach(s => {
-            const brief = BRIEFS[s.id];
-            const reflection = REFLECTIONS[s.id];
-            const logs = LESSON_LOGS[s.id] || [];
-            html += renderTodayCard(s, brief, reflection, logs, true);
-        });
-    }
+        const hasPlanForLatestLog = latestLog ? !!plan : false;
+        const hasReflectionSinceLesson = latestLog && reflection
+            ? reflection.date_submitted >= latestLog.date
+            : false;
 
-    if (withoutBrief.length > 0) {
-        html += '<div style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--bg-warm); border-radius: var(--radius); font-size: 13px; color: var(--text-muted);">';
-        html += '<strong>No lessons today:</strong> ' + withoutBrief.map(s => escapeHtml(s.name)).join(', ');
-        html += '</div>';
-    }
+        // Determine the most urgent status
+        let urgency = 10;
+        let message = 'All caught up';
+        let action = null;
+        let actionType = null;
+        let actionId = null;
+        let statusClass = 'status-ok';
 
-    container.innerHTML = html;
-    addExpandHandlers(container);
-    container.querySelectorAll('.card.has-brief').forEach(el => el.classList.add('expanded'));
-}
-
-function renderTodayCard(student, brief, reflection, lessons, hasBrief) {
-    const flags = brief ? (brief.flags || []) : [];
-    const lastLesson = lessons.length > 0 ? lessons[0] : null;
-    let flagsHtml = '';
-    if (flags.length > 0) {
-        flagsHtml = '<div class="flag-tags">' + flags.map(f => '<span class="flag-tag">' + escapeHtml(f) + '</span>').join('') + '</div>';
-    }
-    let metaText = escapeHtml((student.voice_type || '') + (student.degree_program ? ', ' + student.degree_program : ''));
-    let bodyHtml = '';
-    if (brief) {
-        bodyHtml += '<div class="brief-content">' + markdownToHtml(brief.content) + '</div>';
-    }
-    // Category coverage for last 3 lessons
-    if (lessons.length > 0) {
-        const coveredSet = new Set();
-        lessons.slice(0, 3).forEach(l => (l.exercise_categories_addressed || []).forEach(c => coveredSet.add(c)));
-        bodyHtml += '<div class="detail-section"><h4>Category Coverage (Last 3 Lessons)</h4><div>';
-        ALL_CATEGORIES.forEach(cat => {
-            bodyHtml += '<span class="category-check ' + (coveredSet.has(cat) ? 'covered' : 'uncovered') + '">' + escapeHtml(CATEGORY_LABELS[cat]) + '</span>';
-        });
-        bodyHtml += '</div></div>';
-    }
-    if (reflection) {
-        bodyHtml += '<div class="detail-section"><h4>Pre-lesson Reflection</h4>';
-        bodyHtml += '<div><span class="pulse-metric"><span class="pulse-metric-label">Voice:</span> <span class="pulse-metric-value">' + reflection.voice_feeling + '/10</span></span>';
-        bodyHtml += '<span class="pulse-metric"><span class="pulse-metric-label">Engagement:</span> <span class="pulse-metric-value">' + reflection.engagement + '/10</span></span></div>';
-        if (reflection.notes) {
-            bodyHtml += '<p style="font-size:13px;color:var(--text-muted);margin-top:0.35rem;font-style:italic">' + escapeHtml(reflection.notes) + '</p>';
+        if (!latestLog || daysBetween(latestLog.date, today) > 21) {
+            urgency = 6;
+            message = 'No recent lessons';
+            if (latestLog) message += ' (last ' + formatShortDate(latestLog.date) + ')';
+            statusClass = 'status-warn';
         }
-        bodyHtml += '</div>';
-    }
-    if (lastLesson) {
-        const days = daysBetween(lastLesson.date, todayStr());
-        const daysClass = days > 14 ? ' class="days-warning"' : '';
-        bodyHtml += '<div class="detail-section"><h4>Last Lesson</h4><p' + daysClass + ' style="font-size:14px">' + days + ' days ago (' + formatShortDate(lastLesson.date) + ')</p></div>';
-    }
-    return '<div class="card' + (hasBrief ? ' has-brief' : '') + '">' +
-        '<div class="card-header">' +
-            '<div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">' +
-                '<span class="card-name">' + escapeHtml(student.name) + '</span>' +
-                '<span class="card-meta">' + metaText + '</span>' +
-                flagsHtml +
-            '</div>' +
-            '<span class="card-chevron">\u25BC</span>' +
-        '</div>' +
-        '<div class="card-body">' + bodyHtml + '</div>' +
-    '</div>';
-}
 
-// ============================================================
-// PULSE VIEW
-// ============================================================
+        if (latestLog && !latestLog.approved) {
+            urgency = 1;
+            message = 'Log needs review (' + formatShortDate(latestLog.date) + ')';
+            action = 'Review';
+            actionType = 'review-log';
+            actionId = latestLog.id;
+            statusClass = 'status-action';
+        } else if (latestLog && latestLog.approved && !hasPlanForLatestLog) {
+            urgency = 3;
+            message = 'Practice plan pending';
+            statusClass = 'status-wait';
+        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && !hasReflectionSinceLesson) {
+            urgency = 4;
+            message = 'Reflection overdue';
+            statusClass = 'status-warn';
+        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && hasReflectionSinceLesson) {
+            // Full pipeline complete, but check if the lesson is old
+            if (daysBetween(latestLog.date, today) > 21) {
+                urgency = 6;
+                message = 'No recent lessons (last ' + formatShortDate(latestLog.date) + ')';
+                statusClass = 'status-warn';
+            } else {
+                urgency = 10;
+                message = 'All caught up';
+                statusClass = 'status-ok';
+            }
+        }
 
-function renderPulse() {
-    const container = document.getElementById('pulse-content');
+        return {
+            urgency, message, action, actionType, actionId, statusClass,
+            latestLog, latestPlan: plan, latestReflection: reflection,
+            logs: logs.slice(0, 3),
+            hasPlanForLatestLog, hasReflectionSinceLesson
+        };
+    }
+
+    // Compute and sort by urgency
+    const studentStatuses = STUDENTS.map(s => ({
+        student: s,
+        status: computeStatus(s)
+    })).sort((a, b) => a.status.urgency - b.status.urgency);
+
+    // Render cards
     let html = '';
 
-    // 1. Reflection status table
-    html += '<div class="section-label">Reflection Status (This Week)</div>';
-    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-    html += '<th>Student</th><th>Submitted</th><th>Voice Feeling</th><th>Engagement</th>';
-    html += '</tr></thead><tbody>';
-    STUDENTS.forEach(s => {
-        const r = REFLECTIONS[s.id];
-        let statusDot, statusText;
-        if (r) { statusDot = 'green'; statusText = formatShortDate(r.date_submitted); }
-        else { statusDot = 'amber'; statusText = 'Due'; }
-        html += '<tr>';
-        html += '<td><strong>' + escapeHtml(s.name) + '</strong></td>';
-        html += '<td><span class="status-dot ' + statusDot + '"></span>' + statusText + '</td>';
-        html += '<td>' + (r ? r.voice_feeling + '/10' : '') + '</td>';
-        html += '<td>' + (r ? r.engagement + '/10' : '') + '</td>';
-        html += '</tr>';
-    });
-    html += '</tbody></table></div>';
+    studentStatuses.forEach(({ student, status }) => {
+        const s = student;
+        const st = status;
+        const cardId = 'studio-card-' + s.id;
+        const detailId = 'studio-detail-' + s.id;
 
-    // 2. Lesson Log Queue (Drafts) with Approve buttons
-    const drafts = getAllDrafts();
-    html += '<div class="section-label">Lesson Log Queue (Drafts)</div>';
-    if (drafts.length === 0) {
-        html += '<p style="font-size:14px;color:var(--text-muted);padding:0.5rem 0;">No draft lesson logs waiting for review.</p>';
-    } else {
-        html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-        html += '<th>Student</th><th>Date</th><th>Status</th><th></th>';
-        html += '</tr></thead><tbody>';
-        drafts.forEach(l => {
-            const s = STUDENTS.find(st => st.id === l.student_id);
-            html += '<tr>';
-            html += '<td>' + (s ? escapeHtml(s.name) : 'Unknown') + '</td>';
-            html += '<td>' + escapeHtml(formatShortDate(l.date)) + '</td>';
-            html += '<td><span class="draft-badge">Draft</span></td>';
-            html += '<td><button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + l.student_id + '">Approve</button></td>';
-            html += '</tr>';
-        });
-        html += '</tbody></table></div>';
-    }
+        // Collapsed card
+        html += '<div class="studio-card ' + st.statusClass + '" id="' + cardId + '">';
+        html += '<div class="studio-card-header" data-student-id="' + s.id + '" data-detail-id="' + detailId + '">';
+        html += '<div class="studio-card-left">';
+        html += '<strong class="studio-card-name">' + escapeHtml(s.name) + '</strong>';
+        html += '<span class="studio-card-status">' + escapeHtml(st.message) + '</span>';
+        html += '</div>';
+        html += '<div class="studio-card-right">';
+        if (st.action) {
+            html += '<button class="btn-studio-action" data-action-type="' + st.actionType + '" data-action-id="' + st.actionId + '" data-student-id="' + s.id + '">' + escapeHtml(st.action) + '</button>';
+        }
+        html += '<span class="studio-card-chevron">&#9660;</span>';
+        html += '</div>';
+        html += '</div>';
 
-    // 3. Category heatmap
-    html += '<div class="section-label">Category Heatmap (Last 3 Lessons)</div>';
-    html += '<div class="table-scroll"><table class="data-table"><thead><tr><th>Student</th>';
-    ALL_CATEGORIES.forEach(cat => {
-        const abbrev = CATEGORY_LABELS[cat].length > 8 ? CATEGORY_LABELS[cat].substring(0, 7) + '.' : CATEGORY_LABELS[cat];
-        html += '<th style="text-align:center;font-size:11px;padding:0.4rem 0.3rem" title="' + escapeHtml(CATEGORY_LABELS[cat]) + '">' + escapeHtml(abbrev) + '</th>';
+        // Expanded detail (hidden by default)
+        html += '<div class="studio-card-detail" id="' + detailId + '" style="display: none;">';
+
+        // Student info line
+        html += '<div class="studio-detail-meta">';
+        html += escapeHtml((s.voice_type || '') + (s.voice_type && s.degree_program ? ', ' : '') + (s.degree_program || ''));
+        if (st.latestLog) html += '<span style="float: right;">Last lesson: ' + escapeHtml(formatShortDate(st.latestLog.date)) + '</span>';
+        html += '</div>';
+
+        // Workflow steps
+        html += '<div class="studio-workflow">';
+        html += '<div class="section-label">Workflow</div>';
+
+        // 1. Lesson
+        const hasLesson = !!st.latestLog;
+        html += renderWorkflowStep(hasLesson, 'Lesson', hasLesson ? formatShortDate(st.latestLog.date) : 'No recent lesson', null);
+
+        // 2. Transcript
+        const hasTranscript = st.latestLog && st.latestLog.has_transcript;
+        html += renderWorkflowStep(hasTranscript, 'Transcript', hasTranscript ? 'Generated' : (hasLesson ? 'Not yet generated' : ''), null);
+
+        // 3. Log
+        html += renderWorkflowStep(hasLesson, 'Lesson Log', hasLesson ? 'Generated' : '', null);
+
+        // 4. Approved
+        const isApproved = st.latestLog && st.latestLog.approved;
+        if (hasLesson && !isApproved) {
+            html += renderWorkflowStep(false, 'Approval', 'Needs review', { label: 'Review + Approve', type: 'review-log', id: st.latestLog.id }, true);
+        } else {
+            html += renderWorkflowStep(isApproved, 'Approval', isApproved ? 'Approved' : '', null);
+        }
+
+        // 5. Practice Plan
+        html += renderWorkflowStep(st.hasPlanForLatestLog, 'Practice Plan', st.hasPlanForLatestLog ? 'Sent to student' : (isApproved ? 'Pending generation' : 'Waiting on approval'), st.hasPlanForLatestLog ? { label: 'View', type: 'view-plan', id: s.id } : null);
+
+        // 6. Reflection
+        html += renderWorkflowStep(st.hasReflectionSinceLesson, 'Reflection', st.hasReflectionSinceLesson ? ('Submitted ' + formatShortDate(st.latestReflection.date_submitted)) : 'Not submitted', st.hasReflectionSinceLesson ? { label: 'View', type: 'view-reflection', id: s.id } : null);
+
+        html += '</div>';
+
+        // Recent lessons
+        if (st.logs.length > 0) {
+            html += '<div class="studio-section">';
+            html += '<div class="section-label">Recent Lessons</div>';
+            st.logs.forEach(l => {
+                const titles = (l.repertoire_worked || []).map(r => typeof r === 'string' ? r.split(' (')[0] : r).join(', ').substring(0, 60);
+                const catCount = (l.exercise_categories_addressed || []).length;
+                html += '<div style="font-size: 13px; margin-bottom: 0.25rem;">';
+                html += '<strong>' + escapeHtml(formatShortDate(l.date)) + '</strong>';
+                if (titles) html += ' ' + escapeHtml(titles);
+                html += '<span style="color: var(--text-muted); margin-left: 0.5rem;">' + catCount + ' categories</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        // View as Student
+        html += '<div style="margin-top: 0.75rem;">';
+        html += '<button onclick="viewAsStudent(' + s.id + ')" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">View as Student</button>';
+        html += '</div>';
+
+        html += '</div>'; // studio-card-detail
+        html += '</div>'; // studio-card
     });
-    html += '</tr></thead><tbody>';
-    STUDENTS.forEach(s => {
-        const logs = (LESSON_LOGS[s.id] || []).slice(0, 3);
-        const counts = {};
-        ALL_CATEGORIES.forEach(c => { counts[c] = 0; });
-        logs.forEach(l => (l.exercise_categories_addressed || []).forEach(c => { if (counts[c] !== undefined) counts[c]++; }));
-        html += '<tr><td style="white-space:nowrap"><strong>' + escapeHtml(s.name) + '</strong></td>';
-        ALL_CATEGORIES.forEach(cat => {
-            html += '<td class="heat-cell heat-' + counts[cat] + '">' + counts[cat] + '</td>';
-        });
-        html += '</tr>';
-    });
-    html += '</tbody></table></div>';
 
     container.innerHTML = html;
+
+    // Expand/collapse handlers
+    container.querySelectorAll('.studio-card-header').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-studio-action')) return;
+            const detailId = el.dataset.detailId;
+            const detail = document.getElementById(detailId);
+            const chevron = el.querySelector('.studio-card-chevron');
+            if (detail) {
+                const isOpen = detail.style.display !== 'none';
+                detail.style.display = isOpen ? 'none' : 'block';
+                if (chevron) chevron.innerHTML = isOpen ? '&#9660;' : '&#9650;';
+            }
+        });
+    });
+
+    // Action button handlers
+    container.querySelectorAll('.btn-studio-action').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleStudioAction(btn.dataset.actionType, btn.dataset.actionId, btn.dataset.studentId);
+        });
+    });
+
+    // Workflow step click handlers
+    container.querySelectorAll('.workflow-action').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleStudioAction(btn.dataset.type, btn.dataset.id, btn.dataset.studentId);
+        });
+    });
 }
+
+function renderWorkflowStep(done, label, detail, action, isActive) {
+    const icon = done ? '&#10003;' : (isActive ? '&#9658;' : '&middot;');
+    const cls = done ? 'wf-done' : (isActive ? 'wf-active' : 'wf-pending');
+    let html = '<div class="workflow-step ' + cls + '">';
+    html += '<span class="wf-icon">' + icon + '</span>';
+    html += '<span class="wf-label">' + escapeHtml(label) + '</span>';
+    if (detail) html += '<span class="wf-detail">' + escapeHtml(detail) + '</span>';
+    if (action) {
+        html += '<button class="workflow-action" data-type="' + action.type + '" data-id="' + action.id + '">' + escapeHtml(action.label) + '</button>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function handleStudioAction(type, id, studentId) {
+    if (type === 'review-log' || type === 'view-log') {
+        // In the demo, just show a toast
+        showToast('Log review would open here in the live portal.');
+    } else if (type === 'view-plan') {
+        const plan = PRACTICE_PLANS[id];
+        if (plan) {
+            showArtifactModal('Practice Plan', '<div class="brief-content">' + markdownToHtml(plan.content) + '</div>', plan.date_generated ? 'Generated ' + formatShortDate(plan.date_generated) : '');
+        } else {
+            showToast('No practice plan available.');
+        }
+    } else if (type === 'view-reflection') {
+        const ref = REFLECTIONS[id];
+        if (ref) {
+            let content = '';
+            content += '<p><strong>Voice Feeling:</strong> ' + ref.voice_feeling + '/10</p>';
+            content += '<p><strong>Engagement:</strong> ' + ref.engagement + '/10</p>';
+            if (ref.notes) content += '<p><strong>Notes:</strong> ' + escapeHtml(ref.notes) + '</p>';
+            showArtifactModal('Student Reflection', content, 'Submitted ' + formatShortDate(ref.date_submitted));
+        } else {
+            showToast('No reflection available.');
+        }
+    }
+}
+
+function showArtifactModal(title, htmlContent, subtitle) {
+    const modal = document.getElementById('artifact-modal');
+    const body = document.getElementById('artifact-modal-body');
+    let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">';
+    html += '<div><h2 style="margin: 0;">' + escapeHtml(title) + '</h2>';
+    if (subtitle) html += '<p style="font-size: 13px; color: var(--text-muted); margin: 0.25rem 0 0;">' + escapeHtml(subtitle) + '</p>';
+    html += '</div>';
+    html += '<button onclick="closeArtifactModal()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
+    html += '</div>';
+    html += '<div class="brief-content">' + htmlContent + '</div>';
+    body.innerHTML = html;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeArtifactModal() {
+    document.getElementById('artifact-modal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('artifact-modal').style.display === 'block') {
+        closeArtifactModal();
+    }
+});
 
 // ============================================================
 // STUDENTS VIEW
@@ -1968,7 +2075,7 @@ document.addEventListener('click', (e) => {
 // INIT
 // ============================================================
 
-renderToday();
+renderStudio();
 </script>
 
 </body>

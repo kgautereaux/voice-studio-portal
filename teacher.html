@@ -69,6 +69,136 @@
             color: var(--accent-color);
         }
 
+        /* Studio cards */
+        .studio-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+            background: #fff;
+            transition: box-shadow var(--transition);
+        }
+        .studio-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .studio-card.status-action {
+            border-left: 3px solid var(--primary-color);
+        }
+        .studio-card.status-warn {
+            border-left: 3px solid #c49a3c;
+        }
+        .studio-card.status-wait {
+            border-left: 3px solid var(--border-color);
+        }
+        .studio-card.status-ok {
+            border-left: 3px solid #5a8a5a;
+        }
+        .studio-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+        }
+        .studio-card-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .studio-card-name {
+            font-size: 15px;
+            color: var(--primary-color);
+        }
+        .studio-card-status {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .studio-card-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .studio-card-chevron {
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform var(--transition);
+        }
+        .btn-studio-action {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.3rem 0.75rem;
+            border-radius: 3px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-studio-action:hover {
+            opacity: 0.85;
+        }
+        .studio-card-detail {
+            padding: 0 1.25rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .studio-detail-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 0.75rem 0 0.5rem;
+        }
+        .studio-section {
+            margin-top: 0.75rem;
+            padding-top: 0.5rem;
+        }
+
+        /* Workflow steps */
+        .studio-workflow {
+            margin-top: 0.5rem;
+        }
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0;
+            font-size: 13px;
+        }
+        .wf-icon {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .wf-done .wf-icon { color: #5a8a5a; }
+        .wf-active .wf-icon { color: var(--primary-color); font-weight: bold; }
+        .wf-pending .wf-icon { color: var(--text-muted); }
+        .wf-label {
+            font-weight: 500;
+            min-width: 90px;
+        }
+        .wf-done .wf-label { color: var(--text-color); }
+        .wf-active .wf-label { color: var(--primary-color); }
+        .wf-pending .wf-label { color: var(--text-muted); }
+        .wf-detail {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .workflow-action {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            background: none;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: auto;
+        }
+        .workflow-action:hover {
+            background: rgba(108, 73, 91, 0.06);
+        }
+
         /* Header block */
         .teacher-header {
             padding: 1.5rem 0 1rem;
@@ -898,8 +1028,7 @@
         <div class="teacher-nav">
             <span class="nav-brand">Voice Studio</span>
             <div class="teacher-nav-links">
-                <button class="nav-item active" data-nav="today">Today</button>
-                <button class="nav-item" data-nav="pulse">Pulse</button>
+                <button class="nav-item active" data-nav="studio">Studio</button>
                 <button class="nav-item" data-nav="students">Students</button>
                 <button class="nav-item" data-nav="repertoire">Repertoire</button>
                 <button class="nav-item" data-nav="announcements">Announcements</button>
@@ -934,22 +1063,13 @@
     </div>
 </div>
 
-<!-- TODAY -->
-<div id="page-today" style="display: none;">
+<!-- STUDIO -->
+<div id="page-studio" style="display: none;">
     <div class="teacher-header">
-        <h1 id="greeting">Good morning</h1>
-        <div class="teacher-date" id="today-date"></div>
+        <h1 id="studio-greeting">Studio</h1>
+        <div class="teacher-date" id="studio-date"></div>
     </div>
-    <div id="today-content"></div>
-</div>
-
-<!-- PULSE -->
-<div id="page-pulse" style="display: none;">
-    <div class="teacher-header">
-        <h1>Studio Pulse</h1>
-        <div class="teacher-date">Health dashboard for the full studio</div>
-    </div>
-    <div id="pulse-content"></div>
+    <div id="studio-content"></div>
 </div>
 
 <!-- STUDENTS -->
@@ -1000,6 +1120,13 @@
         <button class="nav-signout" onclick="closeStudentView()">Back to Teacher View</button>
     </div>
     <div class="sv-body" id="sv-body"></div>
+</div>
+
+<!-- Artifact Viewer Modal (read-only: plans, reflections, forecasts) -->
+<div id="artifact-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
+    <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 600px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div id="artifact-modal-body"></div>
+    </div>
 </div>
 
 <!-- Log Review Overlay -->
@@ -1096,7 +1223,7 @@ async function initApp() {
             showLogin();
             return;
         }
-        navigateTo('today');
+        navigateTo('studio');
     } else {
         showLogin();
     }
@@ -1104,7 +1231,7 @@ async function initApp() {
     sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
             currentUser = session.user;
-            navigateTo('today');
+            navigateTo('studio');
         } else if (event === 'SIGNED_OUT') {
             currentUser = null;
             studentsCache = null;
@@ -1145,7 +1272,7 @@ async function signOut() {
 // PAGE SWITCHING
 // ============================================================
 
-const PAGE_IDS = ['today', 'pulse', 'students', 'repertoire', 'announcements', 'events'];
+const PAGE_IDS = ['studio', 'students', 'repertoire', 'announcements', 'events'];
 
 function showLogin() {
     document.getElementById('main-nav').style.display = 'none';
@@ -1169,8 +1296,7 @@ function navigateTo(page) {
 
     // Load data for the page
     const loaders = {
-        today: renderToday,
-        pulse: renderPulse,
+        studio: renderStudio,
         students: renderStudents,
         repertoire: renderRepertoire,
         announcements: renderAnnouncements,
@@ -1373,10 +1499,413 @@ function inlineFormat(text) {
 }
 
 // ============================================================
-// TODAY VIEW
+// STUDIO VIEW (prioritized action list)
 // ============================================================
 
-async function renderToday() {
+async function renderStudio() {
+    const container = document.getElementById('studio-content');
+    container.innerHTML = '<p class="loading-text">Loading studio...</p>';
+
+    // Greeting
+    document.getElementById('studio-greeting').textContent = getGreeting();
+    document.getElementById('studio-date').textContent = formatDate(todayStr());
+
+    const students = await getStudents();
+    const today = todayStr();
+
+    // Calculate Monday of this week
+    const now = new Date(today + 'T12:00:00');
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() + mondayOffset);
+    const weekStartStr = weekStart.toLocaleDateString('en-CA');
+
+    // Fetch all data in parallel
+    let allLogs, allPlans, allReflections, allBriefs, allStudioFb, allJuryPlans, allJurySelections;
+    try {
+        const results = await Promise.all([
+            sb.from('lesson_logs').select('id, student_id, date, approved, has_transcript, repertoire_worked, exercise_categories_addressed').order('date', { ascending: false }),
+            sb.from('practice_plans').select('id, student_id, lesson_log_id, status, content, date_generated').order('date_generated', { ascending: false }),
+            sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
+            sb.from('pre_lesson_briefs').select('id, student_id, date, full_brief, lesson_plan').order('date', { ascending: false }),
+            sb.from('studio_class_feedback').select('student_id, studio_class_date, repertoire_performed').order('studio_class_date', { ascending: false }),
+            sb.from('jury_plans').select('*'),
+            sb.from('jury_selections').select('*')
+        ]);
+        allLogs = results[0].data || [];
+        allPlans = results[1].data || [];
+        allReflections = results[2].data || [];
+        allBriefs = results[3].data || [];
+        allStudioFb = results[4].data || [];
+        allJuryPlans = results[5].data || [];
+        allJurySelections = results[6].data || [];
+    } catch (err) {
+        console.error('[Studio] fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading studio data.</p>';
+        return;
+    }
+
+    // Build per-student lookup maps
+    const logsByStudent = {};
+    allLogs.forEach(l => {
+        if (!logsByStudent[l.student_id]) logsByStudent[l.student_id] = [];
+        logsByStudent[l.student_id].push(l);
+    });
+
+    const plansByLogId = {};
+    allPlans.forEach(p => { if (p.lesson_log_id) plansByLogId[p.lesson_log_id] = p; });
+
+    const plansByStudent = {};
+    allPlans.forEach(p => {
+        if (!plansByStudent[p.student_id]) plansByStudent[p.student_id] = [];
+        plansByStudent[p.student_id].push(p);
+    });
+
+    const reflectionsByStudent = {};
+    allReflections.forEach(r => {
+        if (!reflectionsByStudent[r.student_id]) reflectionsByStudent[r.student_id] = [];
+        reflectionsByStudent[r.student_id].push(r);
+    });
+
+    const briefsByStudent = {};
+    allBriefs.forEach(b => {
+        if (!briefsByStudent[b.student_id]) briefsByStudent[b.student_id] = [];
+        briefsByStudent[b.student_id].push(b);
+    });
+
+    const studioFbByStudent = {};
+    allStudioFb.forEach(f => {
+        if (!studioFbByStudent[f.student_id]) studioFbByStudent[f.student_id] = [];
+        studioFbByStudent[f.student_id].push(f);
+    });
+
+    const juryPlanByStudent = {};
+    allJuryPlans.forEach(jp => { juryPlanByStudent[jp.student_id] = jp; });
+
+    const jurySelByPlan = {};
+    allJurySelections.forEach(s => {
+        if (!jurySelByPlan[s.jury_plan_id]) jurySelByPlan[s.jury_plan_id] = [];
+        jurySelByPlan[s.jury_plan_id].push(s);
+    });
+
+    // Compute pipeline status for each student
+    function computeStatus(student) {
+        const logs = logsByStudent[student.id] || [];
+        const latestLog = logs[0] || null;
+        const latestPlan = (plansByStudent[student.id] || [])[0] || null;
+        const latestReflection = (reflectionsByStudent[student.id] || [])[0] || null;
+        const latestBrief = (briefsByStudent[student.id] || [])[0] || null;
+        const latestStudioFb = (studioFbByStudent[student.id] || [])[0] || null;
+
+        const hasPlanForLatestLog = latestLog ? !!plansByLogId[latestLog.id] : false;
+        const hasReflectionSinceLesson = latestLog && latestReflection
+            ? latestReflection.date_submitted >= latestLog.date
+            : false;
+        const hasForecastSinceLesson = latestLog && latestBrief
+            ? latestBrief.date >= latestLog.date
+            : false;
+
+        // Determine the most urgent status
+        let urgency = 10; // lower = more urgent
+        let message = 'All caught up';
+        let action = null;
+        let actionType = null;
+        let actionId = null;
+        let statusClass = 'status-ok';
+
+        if (!latestLog || daysBetween(latestLog.date, today) > 21) {
+            urgency = 6;
+            message = 'No recent lessons';
+            statusClass = 'status-warn';
+        }
+
+        if (latestLog && !latestLog.approved) {
+            urgency = 1;
+            message = 'Log needs review (' + formatShortDate(latestLog.date) + ')';
+            action = 'Review';
+            actionType = 'review-log';
+            actionId = latestLog.id;
+            statusClass = 'status-action';
+        } else if (latestLog && latestLog.approved && !hasPlanForLatestLog) {
+            urgency = 3;
+            message = 'Practice plan pending';
+            statusClass = 'status-wait';
+        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && !hasReflectionSinceLesson) {
+            const dayNum = now.getDay();
+            if (dayNum >= 4) {
+                urgency = 4;
+                message = 'Reflection overdue';
+                statusClass = 'status-warn';
+            } else {
+                urgency = 7;
+                message = 'Awaiting reflection';
+                statusClass = 'status-wait';
+            }
+        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && hasReflectionSinceLesson) {
+            urgency = 10;
+            message = 'All caught up';
+            statusClass = 'status-ok';
+        }
+
+        return {
+            urgency, message, action, actionType, actionId, statusClass,
+            latestLog, latestPlan, latestReflection, latestBrief, latestStudioFb,
+            logs: logs.slice(0, 3),
+            hasPlanForLatestLog, hasReflectionSinceLesson, hasForecastSinceLesson
+        };
+    }
+
+    // Compute and sort
+    const studentStatuses = students.map(s => ({
+        student: s,
+        status: computeStatus(s)
+    })).sort((a, b) => a.status.urgency - b.status.urgency);
+
+    // Render
+    let html = '';
+
+    studentStatuses.forEach(({ student, status }) => {
+        const s = student;
+        const st = status;
+        const cardId = 'studio-card-' + s.id;
+        const detailId = 'studio-detail-' + s.id;
+
+        // Collapsed card
+        html += '<div class="studio-card ' + st.statusClass + '" id="' + cardId + '">';
+        html += '<div class="studio-card-header" data-student-id="' + s.id + '" data-detail-id="' + detailId + '">';
+        html += '<div class="studio-card-left">';
+        html += '<strong class="studio-card-name">' + escapeHtml(s.name) + '</strong>';
+        html += '<span class="studio-card-status">' + escapeHtml(st.message) + '</span>';
+        html += '</div>';
+        html += '<div class="studio-card-right">';
+        if (st.action) {
+            html += '<button class="btn-studio-action" data-action-type="' + st.actionType + '" data-action-id="' + st.actionId + '" data-student-id="' + s.id + '">' + escapeHtml(st.action) + '</button>';
+        }
+        html += '<span class="studio-card-chevron">&#9660;</span>';
+        html += '</div>';
+        html += '</div>';
+
+        // Expanded detail (hidden by default)
+        html += '<div class="studio-card-detail" id="' + detailId + '" style="display: none;">';
+
+        // Student info line
+        html += '<div class="studio-detail-meta">';
+        html += escapeHtml((s.voice_type || '') + (s.voice_type && s.degree_program ? ', ' : '') + (s.degree_program || ''));
+        if (st.latestLog) html += '<span style="float: right;">Last lesson: ' + escapeHtml(formatShortDate(st.latestLog.date)) + '</span>';
+        html += '</div>';
+
+        // Workflow steps
+        html += '<div class="studio-workflow">';
+        html += '<div class="section-label">Workflow</div>';
+
+        // 1. Lesson
+        const hasLesson = !!st.latestLog;
+        html += renderWorkflowStep(hasLesson, 'Lesson', hasLesson ? formatShortDate(st.latestLog.date) : 'No recent lesson', null);
+
+        // 2. Transcript
+        const hasTranscript = st.latestLog && st.latestLog.has_transcript;
+        html += renderWorkflowStep(hasTranscript, 'Transcript', hasTranscript ? 'Generated' : (hasLesson ? 'Not yet generated' : ''), null);
+
+        // 3. Log
+        html += renderWorkflowStep(hasLesson, 'Lesson Log', hasLesson ? 'Generated' : '', hasLesson ? { label: 'View', type: 'view-log', id: st.latestLog.id } : null);
+
+        // 4. Approved
+        const isApproved = st.latestLog && st.latestLog.approved;
+        if (hasLesson && !isApproved) {
+            html += renderWorkflowStep(false, 'Approval', 'Needs review', { label: 'Review + Approve', type: 'review-log', id: st.latestLog.id }, true);
+        } else {
+            html += renderWorkflowStep(isApproved, 'Approval', isApproved ? 'Approved' : '', null);
+        }
+
+        // 5. Practice Plan
+        html += renderWorkflowStep(st.hasPlanForLatestLog, 'Practice Plan', st.hasPlanForLatestLog ? 'Sent to student' : (isApproved ? 'Pending generation' : 'Waiting on approval'), st.hasPlanForLatestLog ? { label: 'View', type: 'view-plan', id: st.latestLog.id } : null);
+
+        // 6. Reflection
+        html += renderWorkflowStep(st.hasReflectionSinceLesson, 'Reflection', st.hasReflectionSinceLesson ? ('Submitted ' + formatShortDate(st.latestReflection.date_submitted)) : 'Not submitted', st.hasReflectionSinceLesson ? { label: 'View', type: 'view-reflection', id: st.latestReflection.id } : null);
+
+        // 7. Forecast
+        html += renderWorkflowStep(st.hasForecastSinceLesson, 'Forecast', st.hasForecastSinceLesson ? ('Generated ' + formatShortDate(st.latestBrief.date)) : 'Not yet generated', st.hasForecastSinceLesson ? { label: 'View', type: 'view-forecast', id: st.latestBrief.id } : null);
+
+        html += '</div>';
+
+        // Studio class
+        if (st.latestStudioFb) {
+            html += '<div class="studio-section">';
+            html += '<div class="section-label">Studio Class</div>';
+            html += '<p style="font-size: 13px;">' + escapeHtml(formatShortDate(st.latestStudioFb.studio_class_date));
+            if (st.latestStudioFb.repertoire_performed) html += ': ' + escapeHtml(st.latestStudioFb.repertoire_performed);
+            html += '</p></div>';
+        }
+
+        // Recent lessons
+        if (st.logs.length > 0) {
+            html += '<div class="studio-section">';
+            html += '<div class="section-label">Recent Lessons</div>';
+            st.logs.forEach(l => {
+                let repSummary = '';
+                try {
+                    const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+                    repSummary = rw.map(r => typeof r === 'string' ? r.split('**')[1] || r.substring(0, 40) : (r.title || '')).filter(Boolean).join(', ').substring(0, 60);
+                } catch(e) {}
+                const catCount = (l.exercise_categories_addressed || []).length;
+                html += '<div style="font-size: 13px; margin-bottom: 0.25rem;">';
+                html += '<strong>' + escapeHtml(formatShortDate(l.date)) + '</strong>';
+                if (repSummary) html += ' ' + escapeHtml(repSummary);
+                html += '<span style="color: var(--text-muted); margin-left: 0.5rem;">' + catCount + ' categories</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        // Jury status
+        const jp = juryPlanByStudent[s.id];
+        const pk = programKeyFromDegree(s.degree_program);
+        const reqSlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
+        if (reqSlots.length > 0) {
+            const sels = jp ? (jurySelByPlan[jp.id] || []) : [];
+            const approvedCount = sels.filter(sel => sel.status === 'accepted').length;
+            html += '<div class="studio-section">';
+            html += '<div class="section-label">Jury</div>';
+            html += '<p style="font-size: 13px;">' + approvedCount + ' / ' + reqSlots.length + ' slots filled</p>';
+            html += '</div>';
+        }
+
+        // View as Student
+        html += '<div style="margin-top: 0.75rem;">';
+        html += '<button onclick="viewAsStudent(\'' + s.id + '\')" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">View as Student</button>';
+        html += '</div>';
+
+        html += '</div>'; // studio-card-detail
+        html += '</div>'; // studio-card
+    });
+
+    container.innerHTML = html;
+
+    // Expand/collapse handlers
+    container.querySelectorAll('.studio-card-header').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-studio-action')) return;
+            const detailId = el.dataset.detailId;
+            const detail = document.getElementById(detailId);
+            const chevron = el.querySelector('.studio-card-chevron');
+            if (detail) {
+                const isOpen = detail.style.display !== 'none';
+                detail.style.display = isOpen ? 'none' : 'block';
+                if (chevron) chevron.innerHTML = isOpen ? '&#9660;' : '&#9650;';
+            }
+        });
+    });
+
+    // Action button handlers
+    container.querySelectorAll('.btn-studio-action').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleStudioAction(btn.dataset.actionType, btn.dataset.actionId, btn.dataset.studentId);
+        });
+    });
+
+    // Workflow step click handlers
+    container.querySelectorAll('.workflow-action').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleStudioAction(btn.dataset.type, btn.dataset.id, btn.dataset.studentId);
+        });
+    });
+}
+
+function renderWorkflowStep(done, label, detail, action, isActive) {
+    const icon = done ? '&#10003;' : (isActive ? '&#9658;' : '&middot;');
+    const cls = done ? 'wf-done' : (isActive ? 'wf-active' : 'wf-pending');
+    let html = '<div class="workflow-step ' + cls + '">';
+    html += '<span class="wf-icon">' + icon + '</span>';
+    html += '<span class="wf-label">' + escapeHtml(label) + '</span>';
+    if (detail) html += '<span class="wf-detail">' + escapeHtml(detail) + '</span>';
+    if (action) {
+        html += '<button class="workflow-action" data-type="' + action.type + '" data-id="' + action.id + '">' + escapeHtml(action.label) + '</button>';
+    }
+    html += '</div>';
+    return html;
+}
+
+async function handleStudioAction(type, id, studentId) {
+    if (type === 'review-log' || type === 'view-log') {
+        // Trigger the existing log review modal
+        const btn = document.createElement('button');
+        btn.classList.add('btn-review-log');
+        btn.dataset.lessonId = id;
+        btn.dataset.studentId = studentId || '';
+        btn.style.display = 'none';
+        document.body.appendChild(btn);
+        btn.click();
+        btn.remove();
+    } else if (type === 'view-plan') {
+        // Show practice plan in read-only modal
+        try {
+            const { data: plan } = await sb.from('practice_plans').select('content, date_generated').eq('lesson_log_id', id).single();
+            if (plan) {
+                showArtifactModal('Practice Plan', plan.content ? markdownToHtml(plan.content) : '<p class="text-muted">No content.</p>', plan.date_generated ? 'Generated ' + formatShortDate(plan.date_generated) : '');
+            }
+        } catch (err) { showToast('Could not load practice plan.'); }
+    } else if (type === 'view-reflection') {
+        try {
+            const { data: ref } = await sb.from('reflections').select('*').eq('id', id).single();
+            if (ref) {
+                let content = '';
+                if (ref.practice_summary) content += '<p><strong>Practice Summary</strong></p><p>' + escapeHtml(ref.practice_summary) + '</p>';
+                if (ref.self_observations) content += '<p><strong>Self-Observations</strong></p><p>' + escapeHtml(ref.self_observations) + '</p>';
+                if (ref.voice_feeling) content += '<p><strong>Voice Feeling:</strong> ' + ref.voice_feeling + '/10</p>';
+                if (ref.engagement) content += '<p><strong>Engagement:</strong> ' + ref.engagement + '/10</p>';
+                if (ref.artistic_confidence) content += '<p><strong>Artistic Confidence:</strong> ' + ref.artistic_confidence + '/10</p>';
+                if (ref.questions) content += '<p><strong>Questions</strong></p><p>' + escapeHtml(ref.questions) + '</p>';
+                if (ref.wins) content += '<p><strong>Wins</strong></p><p>' + escapeHtml(ref.wins) + '</p>';
+                showArtifactModal('Student Reflection', content, 'Submitted ' + formatShortDate(ref.date_submitted));
+            }
+        } catch (err) { showToast('Could not load reflection.'); }
+    } else if (type === 'view-forecast') {
+        try {
+            const { data: brief } = await sb.from('pre_lesson_briefs').select('full_brief, lesson_plan, date').eq('id', id).single();
+            if (brief) {
+                const content = brief.full_brief ? markdownToHtml(brief.full_brief) : (brief.lesson_plan ? markdownToHtml(brief.lesson_plan) : '<p class="text-muted">No content.</p>');
+                showArtifactModal('Lesson Forecast', content, 'Generated ' + formatShortDate(brief.date));
+            }
+        } catch (err) { showToast('Could not load forecast.'); }
+    }
+}
+
+function showArtifactModal(title, htmlContent, subtitle) {
+    const modal = document.getElementById('artifact-modal');
+    const body = document.getElementById('artifact-modal-body');
+    let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">';
+    html += '<div><h2 style="margin: 0;">' + escapeHtml(title) + '</h2>';
+    if (subtitle) html += '<p style="font-size: 13px; color: var(--text-muted); margin: 0.25rem 0 0;">' + escapeHtml(subtitle) + '</p>';
+    html += '</div>';
+    html += '<button onclick="closeArtifactModal()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
+    html += '</div>';
+    html += '<div class="brief-content">' + htmlContent + '</div>';
+    body.innerHTML = html;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeArtifactModal() {
+    document.getElementById('artifact-modal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('artifact-modal').style.display === 'block') {
+        closeArtifactModal();
+    }
+});
+
+// Keep old function name references for backward compatibility
+async function renderToday() { await renderStudio(); }
+async function renderPulse() { await renderStudio(); }
+
+// Old renderToday/renderPulse code removed. renderStudio replaces both.
+// The following dead code block is being skipped.
+if (false) {
     const today = todayStr();
     const tomorrow = tomorrowStr();
     document.getElementById('greeting').textContent = getGreeting();
@@ -1962,7 +2491,7 @@ async function renderPulse() {
     html += '</tbody></table></div>';
 
     container.innerHTML = html;
-}
+} // end of dead code block (if false)
 
 // ============================================================
 // STUDENTS VIEW

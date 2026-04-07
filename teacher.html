@@ -3286,30 +3286,25 @@ document.addEventListener('click', async (e) => {
     html += '<button onclick="closeLogReview()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
     html += '</div>';
 
-    // Repertoire worked (read-only display)
+    // Repertoire worked (editable)
     html += '<div class="section-label">Repertoire Worked</div>';
-    if (Array.isArray(repWorked)) {
-        repWorked.forEach((r, i) => {
-            const text = typeof r === 'string' ? r : (r.title || r.name || JSON.stringify(r));
-            html += '<p style="font-size: 14px; margin: 0.25rem 0;">' + (i+1) + '. ' + escapeHtml(text) + '</p>';
-        });
-    } else if (repWorked) {
-        html += '<p style="font-size: 14px;">' + escapeHtml(String(repWorked)) + '</p>';
-    }
+    const repText = Array.isArray(repWorked)
+        ? repWorked.map((r, i) => (i+1) + '. ' + (typeof r === 'string' ? r : (r.title || r.name || JSON.stringify(r)))).join('\n')
+        : String(repWorked || '');
+    html += '<textarea class="log-edit-field" data-field="repertoire_worked" data-is-list="true" style="width: 100%; min-height: 60px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;">' + escapeHtml(repText) + '</textarea>';
+    html += '<p style="font-size: 11px; color: var(--text-muted); margin-top: 0.2rem;">One piece per line. Numbering is optional.</p>';
 
-    // Exercises (read-only summary)
+    // Exercises (editable)
     html += '<div class="section-label" style="margin-top: 1rem;">Exercises</div>';
-    if (Array.isArray(exercises) && exercises.length > 0) {
-        exercises.forEach((ex, i) => {
+    const exText = Array.isArray(exercises) && exercises.length > 0
+        ? exercises.map((ex, i) => {
             const name = ex.name || ex.Name || ('Exercise ' + (i+1));
             const purpose = ex.functional_purpose || ex.purpose || '';
-            html += '<p style="font-size: 14px; margin: 0.25rem 0;"><strong>' + escapeHtml(name) + '</strong>';
-            if (purpose) html += ' : ' + escapeHtml(purpose.substring(0, 100));
-            html += '</p>';
-        });
-    } else {
-        html += '<p style="font-size: 13px; color: var(--text-muted);">No structured exercises parsed.</p>';
-    }
+            return name + (purpose ? ' : ' + purpose : '');
+          }).join('\n')
+        : '';
+    html += '<textarea class="log-edit-field" data-field="exercises" data-is-exercises="true" style="width: 100%; min-height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;">' + escapeHtml(exText) + '</textarea>';
+    html += '<p style="font-size: 11px; color: var(--text-muted); margin-top: 0.2rem;">One exercise per line. Format: Name : Functional purpose</p>';
 
     // Exercise categories (editable checkboxes)
     html += '<div class="section-label" style="margin-top: 1rem;">Exercise Categories</div>';
@@ -3356,9 +3351,29 @@ async function saveLogEdits(lessonId, andApprove) {
     const body = document.getElementById('log-review-body');
     const updates = {};
 
-    // Gather text fields
+    // Gather text fields (handle special types)
     body.querySelectorAll('.log-edit-field').forEach(ta => {
-        updates[ta.dataset.field] = ta.value;
+        const field = ta.dataset.field;
+        const val = ta.value;
+
+        if (ta.dataset.isList === 'true') {
+            // Parse numbered list back to array of strings
+            const items = val.split('\n')
+                .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                .filter(Boolean);
+            updates[field] = JSON.stringify(items);
+        } else if (ta.dataset.isExercises === 'true') {
+            // Parse "Name : Purpose" lines back to exercise objects
+            const items = val.split('\n').filter(line => line.trim()).map(line => {
+                const parts = line.split(' : ');
+                const obj = { name: parts[0].trim() };
+                if (parts[1]) obj.functional_purpose = parts[1].trim();
+                return obj;
+            });
+            updates[field] = JSON.stringify(items);
+        } else {
+            updates[field] = val;
+        }
     });
 
     // Gather categories

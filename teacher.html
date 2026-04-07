@@ -3241,14 +3241,29 @@ const LOG_EDITABLE_FIELDS = [
 ];
 
 document.addEventListener('click', async (e) => {
-    if (!e.target.classList.contains('btn-review-log')) return;
+    const btn = e.target.closest('.btn-review-log');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
 
-    const lessonId = e.target.dataset.lessonId;
-    const studentId = e.target.dataset.studentId;
+    btn.textContent = 'Loading...';
+    btn.disabled = true;
 
-    // Fetch full lesson log
-    const { data: lesson } = await sb.from('lesson_logs').select('*').eq('id', lessonId).single();
-    if (!lesson) { showToast('Could not load lesson log.'); return; }
+    const lessonId = btn.dataset.lessonId;
+    const studentId = btn.dataset.studentId;
+
+    let lesson;
+    try {
+        const res = await sb.from('lesson_logs').select('*').eq('id', lessonId).single();
+        lesson = res.data;
+    } catch (err) {
+        console.error('Review fetch error:', err);
+        showToast('Error loading lesson: ' + (err.message || 'Unknown'));
+        btn.textContent = 'Review';
+        btn.disabled = false;
+        return;
+    }
+    if (!lesson) { showToast('Could not load lesson log.'); btn.textContent = 'Review'; btn.disabled = false; return; }
 
     const students = await getStudents();
     const student = students.find(s => s.id === studentId);
@@ -3325,6 +3340,10 @@ document.addEventListener('click', async (e) => {
     document.getElementById('log-review-body').innerHTML = html;
     overlay.style.display = 'block';
     document.body.style.overflow = 'hidden';
+
+    // Reset button
+    btn.textContent = 'Review';
+    btn.disabled = false;
 });
 
 function closeLogReview() {

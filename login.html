@@ -74,8 +74,8 @@
 
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login-username">Username</label>
-                    <input type="text" id="login-username" placeholder="first.last" required autocapitalize="none" autocorrect="off">
+                    <label for="login-username">Email</label>
+                    <input type="text" id="login-username" placeholder="you@berklee.edu" required autocapitalize="none" autocorrect="off">
                 </div>
                 <div class="form-group">
                     <label for="login-password">Password</label>
@@ -85,6 +85,21 @@
                     Sign In
                 </button>
             </form>
+
+            <p style="text-align: center; margin-top: 1rem; font-size: 13px;">
+                <a href="#" id="forgot-link" style="color: var(--text-muted); text-decoration: underline;">Forgot password?</a>
+            </p>
+
+            <div id="forgot-form" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Enter your email and we will send you a password reset link.</p>
+                <div class="form-group">
+                    <input type="email" id="forgot-email" placeholder="you@berklee.edu" required autocapitalize="none" autocorrect="off" style="padding: 0.75rem 0.85rem; font-size: 15px; border-radius: 2px;">
+                </div>
+                <button type="button" id="send-reset" class="btn btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                    Send Reset Link
+                </button>
+                <p id="forgot-message" style="text-align: center; margin-top: 1rem; font-size: 13px; color: var(--text-muted); display: none;"></p>
+            </div>
 
             <p class="dash-login-help">
                 Need access? Contact Prof. Gautereaux.
@@ -101,6 +116,56 @@
                 'https://ukvkljztinkzmkbtsfuo.supabase.co',
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k'
             );
+
+            // Check for password recovery flow (user clicked reset link)
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const recoveryType = hashParams.get('type');
+
+            if (recoveryType === 'recovery') {
+                // Show password set form instead of login form
+                document.querySelector('.dash-login-card h1').textContent = 'Set Your Password';
+                document.querySelector('.dash-login-tagline').textContent = 'Choose a new password for your portal account.';
+
+                const loginForm = document.getElementById('login-form');
+                loginForm.innerHTML = '<div class="form-group"><label for="new-password">New Password</label><input type="password" id="new-password" required minlength="6"></div><div class="form-group"><label for="confirm-password">Confirm Password</label><input type="password" id="confirm-password" required minlength="6"></div><button type="submit" class="btn btn-primary" style="width: 100%;">Set Password</button>';
+
+                document.getElementById('forgot-link').parentElement.style.display = 'none';
+                document.getElementById('forgot-form').style.display = 'none';
+
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const newPwd = document.getElementById('new-password').value;
+                    const confirmPwd = document.getElementById('confirm-password').value;
+                    const errorEl = document.getElementById('login-error');
+                    errorEl.style.display = 'none';
+
+                    if (newPwd !== confirmPwd) {
+                        errorEl.textContent = 'Passwords do not match.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                    if (newPwd.length < 6) {
+                        errorEl.textContent = 'Password must be at least 6 characters.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+
+                    const submitBtn = loginForm.querySelector('button[type="submit"]');
+                    submitBtn.textContent = 'Saving...';
+                    submitBtn.disabled = true;
+
+                    const { error } = await sb.auth.updateUser({ password: newPwd });
+                    if (error) {
+                        errorEl.textContent = 'Could not set password: ' + error.message;
+                        errorEl.style.display = 'block';
+                        submitBtn.textContent = 'Set Password';
+                        submitBtn.disabled = false;
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                });
+                return;
+            }
 
             // If already logged in, go straight to dashboard
             const { data: { session } } = await sb.auth.getSession();
@@ -121,18 +186,58 @@
                 btn.textContent = 'Signing in...';
                 btn.disabled = true;
 
-                const email = username.includes('@') ? username : username + '@studio.kaylagautereaux.com';
+                // If they didn't include @, try berklee.edu first, fall back to studio.kaylagautereaux.com
+                const email = username.includes('@') ? username : username + '@berklee.edu';
 
                 const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
                 if (error) {
-                    errorEl.textContent = 'Invalid username or password.';
+                    errorEl.textContent = 'Invalid email or password.';
                     errorEl.style.display = 'block';
                     btn.textContent = 'Sign In';
                     btn.disabled = false;
                 } else {
                     window.location.href = 'dashboard.html';
                 }
+            });
+
+            // Forgot password flow
+            const forgotLink = document.getElementById('forgot-link');
+            const forgotForm = document.getElementById('forgot-form');
+            const sendResetBtn = document.getElementById('send-reset');
+            const forgotMessage = document.getElementById('forgot-message');
+
+            forgotLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                forgotForm.style.display = forgotForm.style.display === 'none' ? 'block' : 'none';
+            });
+
+            sendResetBtn.addEventListener('click', async function() {
+                const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+                if (!email || !email.includes('@')) {
+                    forgotMessage.textContent = 'Please enter a valid email address.';
+                    forgotMessage.style.color = '#9c5c5c';
+                    forgotMessage.style.display = 'block';
+                    return;
+                }
+
+                sendResetBtn.textContent = 'Sending...';
+                sendResetBtn.disabled = true;
+
+                const { error } = await sb.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/login.html'
+                });
+
+                if (error) {
+                    forgotMessage.textContent = 'Could not send reset link. Please contact Prof. Gautereaux.';
+                    forgotMessage.style.color = '#9c5c5c';
+                } else {
+                    forgotMessage.textContent = 'Check your email for a reset link. If you do not see it, check your spam folder.';
+                    forgotMessage.style.color = '#5a8a5a';
+                }
+                forgotMessage.style.display = 'block';
+                sendResetBtn.textContent = 'Send Reset Link';
+                sendResetBtn.disabled = false;
             });
         } catch (err) {
             console.error('Login init error:', err);

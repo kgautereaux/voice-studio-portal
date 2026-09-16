@@ -111,10 +111,10 @@
 
             <!-- Step 2: code -->
             <form id="code-form" style="display: none;">
-                <p class="code-note" id="code-note">We sent a 6-digit code to your email.<br>Enter it below. It may take a minute to arrive.</p>
+                <p class="code-note" id="code-note">We sent a login code to your email.<br>Enter it below. It may take a minute to arrive.</p>
                 <div class="form-group">
                     <label for="login-code">Login code</label>
-                    <input type="text" id="login-code" class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" required autocomplete="one-time-code">
+                    <input type="text" id="login-code" class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="Enter code" required autocomplete="one-time-code">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
                     Sign In
@@ -239,7 +239,7 @@
                     emailForm.style.display = 'none';
                     codeForm.style.display = 'block';
                     tagline.textContent = 'Check your email.';
-                    codeNote.innerHTML = 'We sent a 6-digit code to <strong>' + email + '</strong>.<br>Enter it below. It may take a minute to arrive.';
+                    codeNote.innerHTML = 'We sent a login code to <strong>' + email + '</strong>.<br>Enter it below. It may take a minute to arrive.';
                     document.getElementById('login-code').focus();
                     startCooldown(30);
                 }

@@ -111,7 +111,7 @@
 
             <!-- Step 2: code -->
             <form id="code-form" style="display: none;">
-                <p class="code-note" id="code-note">We sent a login code to your email.<br>Enter it below. It may take a minute to arrive.</p>
+                <p class="code-note" id="code-note">We sent a login code to your email.<br>Enter it below. It may take a minute to arrive.<br>Can&rsquo;t find it? Check your spam or junk folder.</p>
                 <div class="form-group">
                     <label for="login-code">Login code</label>
                     <input type="text" id="login-code" class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="Enter code" required autocomplete="one-time-code">
@@ -239,7 +239,7 @@
                     emailForm.style.display = 'none';
                     codeForm.style.display = 'block';
                     tagline.textContent = 'Check your email.';
-                    codeNote.innerHTML = 'We sent a login code to <strong>' + email + '</strong>.<br>Enter it below. It may take a minute to arrive.';
+                    codeNote.innerHTML = 'We sent a login code to <strong>' + email + '</strong>.<br>Enter it below. It may take a minute to arrive.<br>Can&rsquo;t find it? Check your spam or junk folder.';
                     document.getElementById('login-code').focus();
                     startCooldown(30);
                 }
@@ -282,7 +282,7 @@
                 if (!currentEmail) return;
                 const ok = await sendCode(currentEmail);
                 if (ok) {
-                    codeNote.innerHTML = 'A new code is on its way to <strong>' + currentEmail + '</strong>.<br>Use the newest code in your inbox.';
+                    codeNote.innerHTML = 'A new code is on its way to <strong>' + currentEmail + '</strong>.<br>Use the newest code in your inbox.<br>Can&rsquo;t find it? Check your spam or junk folder.';
                     startCooldown(30);
                 }
             });

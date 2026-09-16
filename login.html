@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Student Login — Voice Studio</title>
+    <title>Sign In — Voice Studio</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -34,11 +34,18 @@
         .dash-login-card .form-group {
             margin-bottom: 1.5rem;
         }
-        .dash-login-card input[type="text"],
-        .dash-login-card input[type="password"] {
+        .dash-login-card input[type="text"] {
             padding: 0.75rem 0.85rem;
             font-size: 15px;
             border-radius: 2px;
+        }
+        .dash-login-card input.code-input {
+            padding: 0.75rem 0.85rem;
+            font-size: 24px;
+            letter-spacing: 0.35em;
+            text-align: center;
+            border-radius: 2px;
+            width: 100%;
         }
         .dash-login-card .btn-primary {
             padding: 0.75rem 1.5rem;
@@ -54,6 +61,25 @@
             max-width: none;
             padding: 0;
         }
+        .code-note {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .resend-row {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 13px;
+        }
+        .resend-row a {
+            color: var(--text-muted);
+            text-decoration: underline;
+        }
+        .resend-row .cooldown {
+            color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
@@ -67,39 +93,39 @@
 <div class="dash-login-page">
     <div class="dash-login-card">
         <div class="login-container">
-            <h1>Welcome Back</h1>
-            <p class="dash-login-tagline">Sign in to your Voice Studio portal.</p>
+            <h1>Welcome</h1>
+            <p class="dash-login-tagline" id="login-tagline">Enter your email to sign in. No password needed: we will send a code to your inbox.</p>
 
             <div id="login-error" class="login-error"></div>
 
-            <form id="login-form">
+            <!-- Step 1: email -->
+            <form id="email-form">
                 <div class="form-group">
-                    <label for="login-username">Email</label>
-                    <input type="text" id="login-username" placeholder="you@berklee.edu" required autocapitalize="none" autocorrect="off">
+                    <label for="login-email">Email</label>
+                    <input type="text" id="login-email" placeholder="you@berklee.edu" required autocapitalize="none" autocorrect="off" autocomplete="email">
                 </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Continue
+                </button>
+            </form>
+
+            <!-- Step 2: code -->
+            <form id="code-form" style="display: none;">
+                <p class="code-note" id="code-note">We sent a 6-digit code to your email.<br>Enter it below. It may take a minute to arrive.</p>
                 <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" required>
+                    <label for="login-code">Login code</label>
+                    <input type="text" id="login-code" class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" required autocomplete="one-time-code">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
                     Sign In
                 </button>
-            </form>
-
-            <p style="text-align: center; margin-top: 1rem; font-size: 13px;">
-                <a href="#" id="forgot-link" style="color: var(--text-muted); text-decoration: underline;">Forgot password?</a>
-            </p>
-
-            <div id="forgot-form" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Enter your email and we will send you a password reset link.</p>
-                <div class="form-group">
-                    <input type="email" id="forgot-email" placeholder="you@berklee.edu" required autocapitalize="none" autocorrect="off" style="padding: 0.75rem 0.85rem; font-size: 15px; border-radius: 2px;">
+                <div class="resend-row">
+                    <span id="resend-cooldown" class="cooldown"></span>
+                    <a href="#" id="resend-link" style="display: none;">Send a new code</a>
+                    <span> &middot; </span>
+                    <a href="#" id="change-email-link">Use a different email</a>
                 </div>
-                <button type="button" id="send-reset" class="btn btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
-                    Send Reset Link
-                </button>
-                <p id="forgot-message" style="text-align: center; margin-top: 1rem; font-size: 13px; color: var(--text-muted); display: none;"></p>
-            </div>
+            </form>
 
             <p class="dash-login-help">
                 Need access? Contact Prof. Gautereaux.
@@ -110,6 +136,8 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
+        const TEACHER_EMAILS = ['kayla@studio.kaylagautereaux.com'];
+
         try {
             const { createClient } = window.supabase;
             const sb = createClient(
@@ -117,131 +145,163 @@
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k'
             );
 
-            // Check for password recovery flow (user clicked reset link)
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-            const recoveryType = hashParams.get('type');
-
-            if (recoveryType === 'recovery') {
-                // Show password set form instead of login form
-                document.querySelector('.dash-login-card h1').textContent = 'Set Your Password';
-                document.querySelector('.dash-login-tagline').textContent = 'Choose a new password for your portal account.';
-
-                const loginForm = document.getElementById('login-form');
-                loginForm.innerHTML = '<div class="form-group"><label for="new-password">New Password</label><input type="password" id="new-password" required minlength="6"></div><div class="form-group"><label for="confirm-password">Confirm Password</label><input type="password" id="confirm-password" required minlength="6"></div><button type="submit" class="btn btn-primary" style="width: 100%;">Set Password</button>';
-
-                document.getElementById('forgot-link').parentElement.style.display = 'none';
-                document.getElementById('forgot-form').style.display = 'none';
-
-                loginForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    const newPwd = document.getElementById('new-password').value;
-                    const confirmPwd = document.getElementById('confirm-password').value;
-                    const errorEl = document.getElementById('login-error');
-                    errorEl.style.display = 'none';
-
-                    if (newPwd !== confirmPwd) {
-                        errorEl.textContent = 'Passwords do not match.';
-                        errorEl.style.display = 'block';
-                        return;
-                    }
-                    if (newPwd.length < 6) {
-                        errorEl.textContent = 'Password must be at least 6 characters.';
-                        errorEl.style.display = 'block';
-                        return;
-                    }
-
-                    const submitBtn = loginForm.querySelector('button[type="submit"]');
-                    submitBtn.textContent = 'Saving...';
-                    submitBtn.disabled = true;
-
-                    const { error } = await sb.auth.updateUser({ password: newPwd });
-                    if (error) {
-                        errorEl.textContent = 'Could not set password: ' + error.message;
-                        errorEl.style.display = 'block';
-                        submitBtn.textContent = 'Set Password';
-                        submitBtn.disabled = false;
-                    } else {
-                        window.location.href = 'dashboard.html';
-                    }
-                });
-                return;
-            }
-
-            // If already logged in, go straight to dashboard
+            // Already signed in (including arriving via a legacy emailed link):
+            // route to the right home.
             const { data: { session } } = await sb.auth.getSession();
             if (session) {
-                window.location.href = 'dashboard.html';
+                const email = (session.user.email || '').toLowerCase();
+                window.location.href = TEACHER_EMAILS.includes(email) ? 'teacher.html' : 'dashboard.html';
                 return;
             }
 
-            const form = document.getElementById('login-form');
-            const btn = form.querySelector('button[type="submit"]');
+            const emailForm = document.getElementById('email-form');
+            const codeForm = document.getElementById('code-form');
+            const errorEl = document.getElementById('login-error');
+            const tagline = document.getElementById('login-tagline');
+            const codeNote = document.getElementById('code-note');
+            const resendLink = document.getElementById('resend-link');
+            const cooldownEl = document.getElementById('resend-cooldown');
+            const changeEmailLink = document.getElementById('change-email-link');
 
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const username = document.getElementById('login-username').value.trim().toLowerCase();
-                const password = document.getElementById('login-password').value;
-                const errorEl = document.getElementById('login-error');
+            let currentEmail = null;
+            let cooldownTimer = null;
+
+            function showError(msg) {
+                errorEl.textContent = msg;
+                errorEl.style.display = 'block';
+            }
+
+            function clearError() {
                 errorEl.style.display = 'none';
-                btn.textContent = 'Signing in...';
-                btn.disabled = true;
+            }
 
-                // If they didn't include @, try berklee.edu first, fall back to studio.kaylagautereaux.com
-                const email = username.includes('@') ? username : username + '@berklee.edu';
+            function startCooldown(seconds) {
+                resendLink.style.display = 'none';
+                let remaining = seconds;
+                cooldownEl.textContent = 'You can request a new code in ' + remaining + 's';
+                clearInterval(cooldownTimer);
+                cooldownTimer = setInterval(() => {
+                    remaining -= 1;
+                    if (remaining <= 0) {
+                        clearInterval(cooldownTimer);
+                        cooldownEl.textContent = '';
+                        resendLink.style.display = 'inline';
+                    } else {
+                        cooldownEl.textContent = 'You can request a new code in ' + remaining + 's';
+                    }
+                }, 1000);
+            }
 
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
+            async function sendCode(email) {
+                const { error } = await sb.auth.signInWithOtp({
+                    email: email,
+                    options: { shouldCreateUser: false }
+                });
                 if (error) {
-                    errorEl.textContent = 'Invalid email or password.';
-                    errorEl.style.display = 'block';
-                    btn.textContent = 'Sign In';
-                    btn.disabled = false;
-                } else {
-                    window.location.href = 'dashboard.html';
+                    const msg = (error.message || '').toLowerCase();
+                    if (msg.includes('signups not allowed') || msg.includes('user not found')) {
+                        showError('This email is not registered with the studio. Contact Prof. Gautereaux for access.');
+                    } else if (msg.includes('rate limit') || msg.includes('security purposes')) {
+                        showError('A code was sent recently. Check your inbox, or wait a minute before requesting another.');
+                    } else {
+                        showError('Could not send a code: ' + error.message);
+                    }
+                    return false;
                 }
-            });
+                return true;
+            }
 
-            // Forgot password flow
-            const forgotLink = document.getElementById('forgot-link');
-            const forgotForm = document.getElementById('forgot-form');
-            const sendResetBtn = document.getElementById('send-reset');
-            const forgotMessage = document.getElementById('forgot-message');
-
-            forgotLink.addEventListener('click', function(e) {
+            emailForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                forgotForm.style.display = forgotForm.style.display === 'none' ? 'block' : 'none';
-            });
+                clearError();
+                const raw = document.getElementById('login-email').value.trim().toLowerCase();
+                if (!raw) return;
+                // Bare usernames default to berklee.edu
+                const email = raw.includes('@') ? raw : raw + '@berklee.edu';
 
-            sendResetBtn.addEventListener('click', async function() {
-                const email = document.getElementById('forgot-email').value.trim().toLowerCase();
-                if (!email || !email.includes('@')) {
-                    forgotMessage.textContent = 'Please enter a valid email address.';
-                    forgotMessage.style.color = '#9c5c5c';
-                    forgotMessage.style.display = 'block';
+                // Teacher accounts sign in on the Studio page
+                if (TEACHER_EMAILS.includes(email)) {
+                    window.location.href = 'teacher.html';
                     return;
                 }
 
-                sendResetBtn.textContent = 'Sending...';
-                sendResetBtn.disabled = true;
+                const btn = emailForm.querySelector('button[type="submit"]');
+                btn.textContent = 'Sending code...';
+                btn.disabled = true;
 
-                const { error } = await sb.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/login.html'
+                const ok = await sendCode(email);
+
+                btn.textContent = 'Continue';
+                btn.disabled = false;
+
+                if (ok) {
+                    currentEmail = email;
+                    emailForm.style.display = 'none';
+                    codeForm.style.display = 'block';
+                    tagline.textContent = 'Check your email.';
+                    codeNote.innerHTML = 'We sent a 6-digit code to <strong>' + email + '</strong>.<br>Enter it below. It may take a minute to arrive.';
+                    document.getElementById('login-code').focus();
+                    startCooldown(30);
+                }
+            });
+
+            codeForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                clearError();
+                const code = document.getElementById('login-code').value.trim();
+                if (!code || !currentEmail) return;
+
+                const btn = codeForm.querySelector('button[type="submit"]');
+                btn.textContent = 'Signing in...';
+                btn.disabled = true;
+
+                const { data, error } = await sb.auth.verifyOtp({
+                    email: currentEmail,
+                    token: code,
+                    type: 'email'
                 });
 
                 if (error) {
-                    forgotMessage.textContent = 'Could not send reset link. Please contact Prof. Gautereaux.';
-                    forgotMessage.style.color = '#9c5c5c';
-                } else {
-                    forgotMessage.textContent = 'Check your email for a reset link. If you do not see it, check your spam folder.';
-                    forgotMessage.style.color = '#5a8a5a';
+                    const msg = (error.message || '').toLowerCase();
+                    if (msg.includes('expired') || msg.includes('invalid')) {
+                        showError('That code is incorrect or has expired. Check the newest email, or request a new code.');
+                    } else {
+                        showError('Could not sign in: ' + error.message);
+                    }
+                    btn.textContent = 'Sign In';
+                    btn.disabled = false;
+                    return;
                 }
-                forgotMessage.style.display = 'block';
-                sendResetBtn.textContent = 'Send Reset Link';
-                sendResetBtn.disabled = false;
+
+                window.location.href = 'dashboard.html';
             });
+
+            resendLink.addEventListener('click', async function(e) {
+                e.preventDefault();
+                clearError();
+                if (!currentEmail) return;
+                const ok = await sendCode(currentEmail);
+                if (ok) {
+                    codeNote.innerHTML = 'A new code is on its way to <strong>' + currentEmail + '</strong>.<br>Use the newest code in your inbox.';
+                    startCooldown(30);
+                }
+            });
+
+            changeEmailLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                clearError();
+                clearInterval(cooldownTimer);
+                currentEmail = null;
+                codeForm.style.display = 'none';
+                emailForm.style.display = 'block';
+                tagline.textContent = 'Enter your email to sign in. No password needed: we will send a code to your inbox.';
+                document.getElementById('login-code').value = '';
+                document.getElementById('login-email').focus();
+            });
+
         } catch (err) {
             console.error('Login init error:', err);
-            document.getElementById('login-error').textContent = 'Portal loading error. Please refresh.';
+            document.getElementById('login-error').textContent = 'Something went wrong loading the page. Refresh and try again.';
             document.getElementById('login-error').style.display = 'block';
         }
     });

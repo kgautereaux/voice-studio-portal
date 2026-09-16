@@ -252,9 +252,9 @@ async function loadStudentData() {
 // ============================================================
 
 function showLogin() {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-login').classList.add('active');
-    document.getElementById('nav-authenticated').style.display = 'none';
+    // All sign-in happens on login.html (email code flow); the embedded
+    // password form is retired.
+    window.location.href = 'login.html';
 }
 
 function showDashboard() {

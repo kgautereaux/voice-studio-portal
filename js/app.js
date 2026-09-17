@@ -16,6 +16,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb = null;
 let currentUser = null;
 let studentData = null;
+let viewAsStudentId = null;  // set when a teacher session opens ?view_as=<id>
+
+// The student whose data this page shows: the viewed student in teacher
+// view-as mode, otherwise the signed-in student.
+function dataStudentId() {
+    return viewAsStudentId || (currentUser && currentUser.id);
+}
+
+function showViewAsBanner() {
+    const banner = document.createElement('div');
+    banner.id = 'view-as-banner';
+    banner.style.cssText = 'position: sticky; top: 0; z-index: 1000; background: #6c495b; color: #fff; padding: 0.5rem 1rem; text-align: center; font-size: 14px;';
+    banner.innerHTML = 'Viewing as <strong id="view-as-name">student</strong> : read only &nbsp;&middot;&nbsp; <a href="teacher.html" style="color: #fff; text-decoration: underline;">Back to Studio</a>';
+    document.body.prepend(banner);
+}
 
 // ============================================================
 // INITIALIZATION
@@ -31,6 +46,24 @@ async function initApp() {
     // Check for existing session
     const { data: { session } } = await sb.auth.getSession();
     console.log('[VS] session:', session ? session.user.email : 'none');
+
+    // Teacher view-as mode: ?view_as=<student_id>, teacher session only.
+    // Loads that student's real dashboard, read only.
+    const TEACHER_EMAILS = ['kayla@studio.kaylagautereaux.com'];
+    const viewAsParam = new URLSearchParams(window.location.search).get('view_as');
+    if (session && viewAsParam && TEACHER_EMAILS.includes((session.user.email || '').toLowerCase())) {
+        currentUser = session.user;
+        viewAsStudentId = viewAsParam;
+        await loadStudentData();
+        showViewAsBanner();
+        if (studentData && studentData.student) {
+            const nameEl = document.getElementById('view-as-name');
+            if (nameEl) nameEl.textContent = studentData.student.name;
+        }
+        showDashboard();
+        setupNavigation();
+        return;
+    }
 
     if (session) {
         currentUser = session.user;
@@ -157,7 +190,7 @@ async function loadStudentData() {
     const { data: student } = await sb
         .from('students')
         .select('*')
-        .eq('id', currentUser.id)
+        .eq('id', dataStudentId())
         .single();
 
     if (!student) {
@@ -171,7 +204,7 @@ async function loadStudentData() {
     const { data: plans } = await sb
         .from('practice_plans')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .in('status', ['approved', 'delivered'])
         .order('date_generated', { ascending: false })
         .limit(5);
@@ -182,7 +215,7 @@ async function loadStudentData() {
     const { data: reflections } = await sb
         .from('reflections')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .order('date_submitted', { ascending: false })
         .limit(5);
 
@@ -192,7 +225,7 @@ async function loadStudentData() {
     const { data: allRepertoire } = await sb
         .from('repertoire')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .order('timeline');
 
     const allRep = allRepertoire || [];
@@ -204,7 +237,7 @@ async function loadStudentData() {
     const { data: acoustics } = await sb
         .from('acoustic_measurements')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .order('date');
 
     studentData.acoustics = acoustics || [];
@@ -213,7 +246,7 @@ async function loadStudentData() {
     const { data: studioFeedback } = await sb
         .from('studio_class_feedback')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .order('studio_class_date', { ascending: false })
         .limit(3);
 
@@ -223,7 +256,7 @@ async function loadStudentData() {
     const { data: lessonLogs } = await sb
         .from('lesson_logs')
         .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, breakthroughs, next_steps, plan_for_next_lesson, exercise_categories_addressed')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .order('date', { ascending: false })
         .limit(10);
 
@@ -233,7 +266,7 @@ async function loadStudentData() {
     const { data: events } = await sb
         .from('performance_events')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', dataStudentId())
         .order('date');
 
     studentData.events = events || [];
@@ -1070,11 +1103,15 @@ function renderRepertoire() {
 }
 
 async function updateRepertoireField(repId, field, value) {
+    if (viewAsStudentId) {
+        alert('Read-only view: changes are disabled while viewing as a student.');
+        return;
+    }
     const { error } = await sb
         .from('repertoire')
         .update({ [field]: value })
         .eq('id', repId)
-        .eq('student_id', currentUser.id);
+        .eq('student_id', dataStudentId());
 
     if (error) {
         alert('Error updating: ' + error.message);
@@ -1266,6 +1303,10 @@ function renderProgressChart(sv) {
 async function handleReflectionSubmit(event, entryType) {
     event.preventDefault();
 
+    if (viewAsStudentId) {
+        alert('Read-only view: submissions are disabled while viewing as a student.');
+        return;
+    }
     if (!currentUser) return;
 
     const form = event.target;
@@ -1503,6 +1544,10 @@ function setupRepForm() {
         };
         if (sheetMusic) record.sheet_music_url = sheetMusic;
 
+        if (viewAsStudentId) {
+            alert('Read-only view: changes are disabled while viewing as a student.');
+            return;
+        }
         const { data, error } = await sb
             .from('repertoire')
             .insert(record);
@@ -1640,6 +1685,10 @@ function renderStudioClassPlan() {
 }
 
 async function submitStudioRep(plan, myEntry) {
+    if (viewAsStudentId) {
+        alert('Read-only view: changes are disabled while viewing as a student.');
+        return;
+    }
     const select = document.getElementById('studio-rep-select');
     if (!select) return;
 

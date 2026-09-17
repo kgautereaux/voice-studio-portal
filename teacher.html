@@ -2787,6 +2787,13 @@ function closeStudentView() {
 }
 
 async function viewAsStudent(studentId) {
+    // Opens the REAL student dashboard in read-only view-as mode, so what the
+    // teacher sees is exactly what the student sees (no drifting recreation).
+    window.open('dashboard.html?view_as=' + encodeURIComponent(studentId), '_blank');
+    return;
+}
+
+async function viewAsStudent_legacyOverlay(studentId) {
     const overlay = document.getElementById('page-student-view');
     const body = document.getElementById('sv-body');
     body.innerHTML = '<p class="loading-text">Loading student dashboard...</p>';

@@ -439,13 +439,75 @@
         <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
         <h1>Whole-Singer Reflection</h1>
         <p style="font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.75rem;">
-            This is your space to check in before your next lesson.
-            There are no wrong answers. Your responses help shape your practice plans
-            and give Prof. G a window into how things are going between lessons.
+            Two ways to check in, at two different moments.
+            A <strong>Lesson Reflection</strong> is best right after your lesson, while it's fresh:
+            what did you take from it? A <strong>Practice Log</strong> is for the days in between:
+            what you practiced and how your voice is doing. There are no wrong answers.
         </p>
 
-        <form onsubmit="event.preventDefault(); demoSubmit();">
-            <h2 class="form-section-heading">Practice Reflection</h2>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem;">
+            <button type="button" class="btn btn-primary" id="demo-mode-lr" onclick="demoReflectMode('lr')">Lesson Reflection</button>
+            <button type="button" class="btn btn-secondary" id="demo-mode-pl" onclick="demoReflectMode('pl')">Practice Log</button>
+        </div>
+        <script>
+        function demoReflectMode(mode) {
+            document.getElementById('demo-lr-form').style.display = mode === 'lr' ? '' : 'none';
+            document.getElementById('demo-pl-form').style.display = mode === 'lr' ? 'none' : '';
+            document.getElementById('demo-mode-lr').className = mode === 'lr' ? 'btn btn-primary' : 'btn btn-secondary';
+            document.getElementById('demo-mode-pl').className = mode === 'lr' ? 'btn btn-secondary' : 'btn btn-primary';
+        }
+        </script>
+
+        <form id="demo-lr-form" onsubmit="event.preventDefault(); demoSubmit();">
+            <h2 class="form-section-heading">Lesson Reflection</h2>
+            <p class="form-section-note">Best filled out right after your lesson, while it's fresh. Lock it in.</p>
+
+            <div class="form-group">
+                <label>What did you take from your lesson?
+                    <span class="hint">The concepts, sensations, or moments you want to remember. What clicked?</span>
+                </label>
+                <textarea rows="4"></textarea>
+            </div>
+
+            <h2 class="form-section-heading">Self-Perception</h2>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Artistic confidence</label>
+                    <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
+                    <input type="range" min="1" max="10" value="7">
+                </div>
+            </div>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Connection to the art form</label>
+                    <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
+                    <input type="range" min="1" max="10" value="8">
+                </div>
+            </div>
+
+            <h2 class="form-section-heading">Open</h2>
+
+            <div class="form-open-section">
+                <div class="form-group">
+                    <label>Questions or concerns for your next lesson</label>
+                    <textarea rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Wins or celebrations</label>
+                    <textarea rows="2"></textarea>
+                </div>
+            </div>
+
+            <div class="form-submit-area">
+                <button type="submit" class="btn btn-primary">Submit Lesson Reflection</button>
+                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
+            </div>
+        </form>
+
+        <form id="demo-pl-form" style="display: none;" onsubmit="event.preventDefault(); demoSubmit();">
+            <h2 class="form-section-heading">Practice Log</h2>
 
             <div class="form-group">
                 <label>What did you focus on in practice?
@@ -468,75 +530,18 @@
                 <textarea rows="2"></textarea>
             </div>
 
-            <h2 class="form-section-heading">Vocal Load This Week</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Log each vocal activity from your week.</p>
-
-            <div class="vocal-load-entry">
-                <div class="form-group">
-                    <label>Activity</label>
-                    <input type="text" placeholder="Choir rehearsal, show, practice...">
-                </div>
-                <div class="form-group">
-                    <label>Duration (min)</label>
-                    <input type="number" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Intensity</label>
-                    <select>
-                        <option value="low">Low</option>
-                        <option value="moderate" selected>Moderate</option>
-                        <option value="high">High</option>
-                        <option value="very_demanding">Very demanding</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Fatigue?</label>
-                    <select>
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                    </select>
-                </div>
-            </div>
-
-            <h2 class="form-section-heading">Self-Perception</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">Quick check-in. Move each slider to where it feels right.</p>
+            <h2 class="form-section-heading">How does your voice feel right now?</h2>
 
             <div class="form-slider-group">
-                <label>How does your voice feel right now?</label>
-                <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
-                <input type="range" min="1" max="10" value="7">
-                <div class="range-value">7</div>
-            </div>
-
-            <div class="form-slider-group">
-                <label>Artistic confidence</label>
-                <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
-                <input type="range" min="1" max="10" value="6">
-                <div class="range-value">6</div>
-            </div>
-
-            <div class="form-slider-group">
-                <label>Connection to the art form</label>
-                <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
-                <input type="range" min="1" max="10" value="8">
-                <div class="range-value">8</div>
-            </div>
-
-            <h2 class="form-section-heading">Open</h2>
-
-            <div class="form-group">
-                <label>Questions or concerns for your next lesson</label>
-                <textarea rows="2"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Wins or celebrations</label>
-                <textarea rows="2" placeholder="Something that went well this week, big or small."></textarea>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
+                    <input type="range" min="1" max="10" value="7">
+                </div>
             </div>
 
             <div class="form-submit-area">
-                <button type="submit" class="btn btn-primary">Submit Reflection</button>
-                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
+                <button type="submit" class="btn btn-primary">Submit Practice Log</button>
+                <span class="form-submit-note">Submitted logs appear in your dashboard.</span>
             </div>
         </form>
     </div>

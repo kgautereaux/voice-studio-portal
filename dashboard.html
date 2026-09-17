@@ -412,14 +412,78 @@
     <main class="container">
         <h1>Whole-Singer Reflection</h1>
         <p class="form-section-intro">
-            This is your space to check in before your next lesson.
-            There are no wrong answers. Your responses help shape your practice plans
-            and give Prof. G a window into how things are going between lessons.
+            Two ways to check in, at two different moments.
+            A <strong>Lesson Reflection</strong> is best right after your lesson, while it's fresh:
+            what did you take from it? A <strong>Practice Log</strong> is for the days in between:
+            what you practiced and how your voice is doing.
+            There are no wrong answers. Both shape your practice plans
+            and give Prof. G a window into how things are going.
         </p>
 
-        <form id="reflection-form">
+        <div class="reflect-mode-toggle" style="display: flex; gap: 0.5rem; margin-bottom: 2rem;">
+            <button type="button" class="btn btn-primary" id="mode-lesson-reflection">Lesson Reflection</button>
+            <button type="button" class="btn btn-secondary" id="mode-practice-log">Practice Log</button>
+        </div>
 
-            <h2 class="form-section-heading">Practice Reflection</h2>
+        <!-- ============ LESSON REFLECTION (right after a lesson) ============ -->
+        <form id="lesson-reflection-form">
+
+            <h2 class="form-section-heading">Lesson Reflection</h2>
+            <p class="form-section-note">Best filled out right after your lesson, while it's fresh. Lock it in.</p>
+
+            <div class="form-group">
+                <label for="lesson-takeaways">
+                    What did you take from your lesson?
+                    <span class="hint">The concepts, sensations, or moments you want to remember. What clicked?</span>
+                </label>
+                <textarea id="lesson-takeaways" rows="4"></textarea>
+            </div>
+
+            <h2 class="form-section-heading">Self-Perception</h2>
+            <p class="form-section-note">Quick check-in. Move each slider to where it feels right.</p>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="artistic-confidence">Artistic confidence</label>
+                    <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
+                    <input type="range" id="artistic-confidence" min="1" max="10" value="5">
+                    <div class="range-value" id="artistic-confidence-value">5</div>
+                </div>
+            </div>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="engagement">Connection to the art form</label>
+                    <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
+                    <input type="range" id="engagement" min="1" max="10" value="5">
+                    <div class="range-value" id="engagement-value">5</div>
+                </div>
+            </div>
+
+            <h2 class="form-section-heading">Open</h2>
+
+            <div class="form-open-section">
+                <div class="form-group">
+                    <label for="lr-questions">Questions or concerns for your next lesson</label>
+                    <textarea id="lr-questions" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="lr-wins">Wins or celebrations</label>
+                    <textarea id="lr-wins" rows="2" placeholder="Something from the lesson or the week that went well, big or small."></textarea>
+                </div>
+            </div>
+
+            <div class="form-submit-area">
+                <button type="submit" class="btn btn-primary">Submit Lesson Reflection</button>
+                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
+            </div>
+        </form>
+
+        <!-- ============ PRACTICE LOG (the days in between) ============ -->
+        <form id="practice-log-form" style="display: none;">
+
+            <h2 class="form-section-heading">Practice Log</h2>
 
             <div class="form-group">
                 <label for="practice-focus">
@@ -478,53 +542,19 @@
             </div>
             <button type="button" id="add-vocal-load" class="btn btn-secondary btn-small">+ Add Activity</button>
 
-            <h2 class="form-section-heading">Self-Perception</h2>
-            <p class="form-section-note">Quick check-in. Move each slider to where it feels right.</p>
+            <h2 class="form-section-heading">How does your voice feel right now?</h2>
 
             <div class="form-slider-group">
                 <div class="form-group" style="margin-bottom: 0;">
-                    <label for="voice-feeling">How does your voice feel right now?</label>
                     <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
                     <input type="range" id="voice-feeling" min="1" max="10" value="5">
                     <div class="range-value" id="voice-feeling-value">5</div>
                 </div>
             </div>
 
-            <div class="form-slider-group">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="artistic-confidence">Artistic confidence</label>
-                    <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
-                    <input type="range" id="artistic-confidence" min="1" max="10" value="5">
-                    <div class="range-value" id="artistic-confidence-value">5</div>
-                </div>
-            </div>
-
-            <div class="form-slider-group">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="engagement">Connection to the art form</label>
-                    <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
-                    <input type="range" id="engagement" min="1" max="10" value="5">
-                    <div class="range-value" id="engagement-value">5</div>
-                </div>
-            </div>
-
-            <h2 class="form-section-heading">Open</h2>
-
-            <div class="form-open-section">
-                <div class="form-group">
-                    <label for="questions">Questions or concerns for your next lesson</label>
-                    <textarea id="questions" rows="2"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="wins">Wins or celebrations</label>
-                    <textarea id="wins" rows="2" placeholder="Something that went well this week, big or small."></textarea>
-                </div>
-            </div>
-
             <div class="form-submit-area">
-                <button type="submit" class="btn btn-primary">Submit Reflection</button>
-                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
+                <button type="submit" class="btn btn-primary">Submit Practice Log</button>
+                <span class="form-submit-note">Submitted logs appear in your dashboard.</span>
             </div>
         </form>
     </main>

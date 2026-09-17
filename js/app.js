@@ -307,10 +307,29 @@ function setupNavigation() {
         });
     });
 
-    // Reflection form
-    const reflectForm = document.getElementById('reflection-form');
-    if (reflectForm) {
-        reflectForm.addEventListener('submit', handleReflectionSubmit);
+    // Reflection forms: lesson reflection (post-lesson) and practice log (between)
+    const lessonReflectionForm = document.getElementById('lesson-reflection-form');
+    if (lessonReflectionForm) {
+        lessonReflectionForm.addEventListener('submit', (e) => handleReflectionSubmit(e, 'lesson_reflection'));
+    }
+    const practiceLogForm = document.getElementById('practice-log-form');
+    if (practiceLogForm) {
+        practiceLogForm.addEventListener('submit', (e) => handleReflectionSubmit(e, 'practice_log'));
+    }
+
+    // Mode toggle between the two forms
+    const modeLR = document.getElementById('mode-lesson-reflection');
+    const modePL = document.getElementById('mode-practice-log');
+    if (modeLR && modePL && lessonReflectionForm && practiceLogForm) {
+        function setReflectMode(mode) {
+            const lesson = mode === 'lesson_reflection';
+            lessonReflectionForm.style.display = lesson ? '' : 'none';
+            practiceLogForm.style.display = lesson ? 'none' : '';
+            modeLR.className = lesson ? 'btn btn-primary' : 'btn btn-secondary';
+            modePL.className = lesson ? 'btn btn-secondary' : 'btn btn-primary';
+        }
+        modeLR.addEventListener('click', () => setReflectMode('lesson_reflection'));
+        modePL.addEventListener('click', () => setReflectMode('practice_log'));
     }
 
     // Vocal load add button
@@ -1244,13 +1263,14 @@ function renderProgressChart(sv) {
 // REFLECTION FORM
 // ============================================================
 
-async function handleReflectionSubmit(event) {
+async function handleReflectionSubmit(event, entryType) {
     event.preventDefault();
 
     if (!currentUser) return;
 
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
@@ -1282,28 +1302,38 @@ async function handleReflectionSubmit(event) {
         }
     });
 
-    const reflection = {
-        student_id: currentUser.id,
-        practice_focus: form.querySelector('#practice-focus')?.value || null,
-        self_observations: form.querySelector('#self-observations')?.value || null,
-        fatigue_notes: form.querySelector('#fatigue-notes')?.value || null,
-        vocal_load: vocalLoad,
-        voice_feeling: parseInt(form.querySelector('#voice-feeling')?.value) || null,
-        artistic_confidence: parseInt(form.querySelector('#artistic-confidence')?.value) || null,
-        engagement: parseInt(form.querySelector('#engagement')?.value) || null,
-        repertoire_progress: repProgress,
-        questions: form.querySelector('#questions')?.value || null,
-        wins: form.querySelector('#wins')?.value || null,
-    };
+    let reflection;
+    if (entryType === 'lesson_reflection') {
+        reflection = {
+            student_id: currentUser.id,
+            entry_type: 'lesson_reflection',
+            lesson_takeaways: form.querySelector('#lesson-takeaways')?.value || null,
+            artistic_confidence: parseInt(form.querySelector('#artistic-confidence')?.value) || null,
+            engagement: parseInt(form.querySelector('#engagement')?.value) || null,
+            questions: form.querySelector('#lr-questions')?.value || null,
+            wins: form.querySelector('#lr-wins')?.value || null,
+        };
+    } else {
+        reflection = {
+            student_id: currentUser.id,
+            entry_type: 'practice_log',
+            practice_focus: form.querySelector('#practice-focus')?.value || null,
+            self_observations: form.querySelector('#self-observations')?.value || null,
+            fatigue_notes: form.querySelector('#fatigue-notes')?.value || null,
+            vocal_load: vocalLoad,
+            voice_feeling: parseInt(form.querySelector('#voice-feeling')?.value) || null,
+            repertoire_progress: repProgress,
+        };
+    }
 
     const { data, error } = await sb
         .from('reflections')
         .insert(reflection);
 
     if (error) {
-        alert('Error submitting reflection: ' + error.message);
+        alert('Error submitting: ' + error.message);
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Reflection';
+        submitBtn.textContent = originalBtnText;
         return;
     }
 
@@ -1316,13 +1346,14 @@ async function handleReflectionSubmit(event) {
     });
 
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Reflection';
+    submitBtn.textContent = originalBtnText;
 
     // Show confirmation
     const msg = document.createElement('div');
     msg.className = 'card';
     msg.style.borderLeftColor = 'var(--success-color)';
-    msg.innerHTML = '<p><strong>Reflection submitted.</strong> Your input will be part of your next pre-lesson brief.</p>';
+    const submittedLabel = entryType === 'lesson_reflection' ? 'Lesson reflection submitted.' : 'Practice log submitted.';
+    msg.innerHTML = '<p><strong>' + submittedLabel + '</strong> Your input will be part of your next pre-lesson brief.</p>';
     form.parentNode.insertBefore(msg, form);
     setTimeout(() => msg.remove(), 5000);
 

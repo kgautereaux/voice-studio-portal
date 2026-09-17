@@ -24,6 +24,19 @@ function dataStudentId() {
     return viewAsStudentId || (currentUser && currentUser.id);
 }
 
+// Repertoire entries in lesson logs may be full prose paragraphs.
+// Extract a short display title: the first **bold** segment if present,
+// else the text before the first colon, truncated.
+function repTitle(item) {
+    const s = String(item || '');
+    const bold = s.match(/\*\*(.+?)\*\*/);
+    let t = bold ? bold[1] : s.split(':')[0];
+    t = t.replace(/\*/g, '').replace(/^\d+\.\s*/, '').replace(/[\u201c\u201d"]/g, '').trim();
+    if (t.length < 3 || t.toLowerCase().startsWith('none')) return '';
+    if (t.length > 60) t = t.slice(0, 57) + '...';
+    return t;
+}
+
 function showViewAsBanner() {
     const banner = document.createElement('div');
     banner.id = 'view-as-banner';
@@ -456,7 +469,7 @@ function renderDashCards() {
         document.getElementById('dash-lesson-date').textContent =
             d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
-        let summary = rep.length > 0 ? rep.map(r => r.split('—')[0].split('(')[0].trim()).join(', ') : 'Lesson recorded';
+        let summary = rep.length > 0 ? rep.map(repTitle).filter(Boolean).join(', ') || 'Lesson recorded' : 'Lesson recorded';
         if (nextLesson) {
             const nd = new Date(nextLesson.date + 'T12:00:00');
             summary += ' · Next: ' + nd.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -482,7 +495,8 @@ function renderDashCards() {
             parts.push(exercises.length + ' exercise' + (exercises.length > 1 ? 's' : ''));
         }
         if (repFocus.length > 0) {
-            parts.push(repFocus.map(r => r.title || r).join(', '));
+            const rfTitles = repFocus.map(r => repTitle(r.title || r)).filter(Boolean);
+            if (rfTitles.length > 0) parts.push(rfTitles.join(', '));
         }
         document.getElementById('dash-plan-summary').textContent =
             parts.length > 0 ? parts.join(' · ') : 'Plan available';

@@ -1521,6 +1521,53 @@ async function renderStudio() {
     weekStart.setDate(now.getDate() + mondayOffset);
     const weekStartStr = weekStart.toLocaleDateString('en-CA');
 
+    // Two-loop data: last-7-day diary aggregates and monthly check-in status
+    const sevenAgo = new Date(now); sevenAgo.setDate(now.getDate() - 6);
+    const sevenAgoStr = sevenAgo.toLocaleDateString('en-CA');
+    const diaryByStudent = {};
+    allDiary.forEach(e => {
+        if (e.log_date < sevenAgoStr) return;
+        const d = diaryByStudent[e.student_id] = diaryByStudent[e.student_id] ||
+            { n: 0, min: 0, conds: [], flags: [] };
+        d.n += 1;
+        d.min += e.minutes || 0;
+        const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+        const cond = cv.every(v => v) ? cv.reduce((x, y) => x + y, 0) / 3 : null;
+        if (cond) d.conds.push(cond);
+        if (e.minutes >= 90 && cond && cond <= 2.5) {
+            d.flags.push(e.log_date + ': ' + e.minutes + ' min with condition ' + cond.toFixed(1) + '/5');
+        }
+    });
+    Object.values(diaryByStudent).forEach(d => {
+        d.condAvg = d.conds.length ? d.conds.reduce((x, y) => x + y, 0) / d.conds.length : null;
+        if (d.condAvg && d.condAvg <= 2.5) d.flags.unshift('Average condition ' + d.condAvg.toFixed(1) + '/5 this week');
+    });
+    const thisMonth = today.slice(0, 7);
+    const vosesDoneIds = new Set(allCheckins.filter(c => String(c.month).slice(0, 7) === thisMonth).map(c => c.student_id));
+    const latestReflByStudent = {};
+    allReflections.forEach(r => {
+        if (r.entry_type === 'lesson_reflection' && !latestReflByStudent[r.student_id]) {
+            latestReflByStudent[r.student_id] = r;
+        }
+    });
+    function snapshotLine(sid) {
+        const d = diaryByStudent[sid];
+        const parts = [];
+        if (d) {
+            parts.push(d.n + (d.n === 1 ? ' log' : ' logs') + ' · ' + d.min + ' min');
+            if (d.condAvg) parts.push('condition ' + d.condAvg.toFixed(1) + '/5');
+        } else {
+            parts.push('no logs this week');
+        }
+        parts.push(vosesDoneIds.has(sid) ? 'check-in done' : 'check-in due');
+        let line = parts.join(' · ');
+        if (d && d.flags.length) {
+            line += ' · <span style="color: #a04545; font-weight: 600;">' + d.flags.length +
+                (d.flags.length === 1 ? ' flag' : ' flags') + '</span>';
+        }
+        return line;
+    }
+
     // Fetch all data in parallel
     let allLogs, allPlans, allReflections, allBriefs, allStudioFb, allJuryPlans, allJurySelections;
     try {
@@ -1531,7 +1578,9 @@ async function renderStudio() {
             sb.from('pre_lesson_briefs').select('id, student_id, date, full_brief, lesson_plan').order('date', { ascending: false }),
             sb.from('studio_class_feedback').select('student_id, studio_class_date, repertoire_performed').order('studio_class_date', { ascending: false }),
             sb.from('jury_plans').select('*'),
-            sb.from('jury_selections').select('*')
+            sb.from('jury_selections').select('*'),
+            sb.from('voice_use_logs').select('*').order('log_date', { ascending: false }).limit(600),
+            sb.from('voses_checkins').select('student_id, month')
         ]);
         allLogs = results[0].data || [];
         allPlans = results[1].data || [];
@@ -1540,6 +1589,8 @@ async function renderStudio() {
         allStudioFb = results[4].data || [];
         allJuryPlans = results[5].data || [];
         allJurySelections = results[6].data || [];
+        var allDiary = results[7].data || [];
+        var allCheckins = results[8].data || [];
     } catch (err) {
         console.error('[Studio] fetch error:', err);
         container.innerHTML = '<p class="text-muted">Error loading studio data.</p>';
@@ -1665,6 +1716,27 @@ async function renderStudio() {
     // Render
     let html = '';
 
+    // Today's lessons digest: students with a pre-lesson brief dated today
+    const todaysBriefs = allBriefs.filter(b => b.date === today);
+    if (todaysBriefs.length) {
+        html += '<div style="background: var(--bg-white); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); border-radius: 6px; padding: 1.1rem 1.3rem; margin-bottom: 1.5rem;">';
+        html += '<div class="section-label">Today&#39;s Lessons</div>';
+        todaysBriefs.forEach(b => {
+            const stu = students.find(x => x.id === b.student_id);
+            if (!stu) return;
+            const refl = latestReflByStudent[stu.id];
+            html += '<div style="padding: 0.6rem 0; border-top: 1px solid var(--border-color);">';
+            html += '<strong>' + escapeHtml(stu.name) + '</strong> ';
+            html += '<button class="btn-studio-action" data-action-type="view-forecast" data-action-id="' + b.id + '" data-student-id="' + stu.id + '" style="float: right;">Open forecast</button>';
+            html += '<span style="display: block; font-size: 12.5px; color: var(--text-muted);">' + snapshotLine(stu.id) + '</span>';
+            if (refl && refl.questions) html += '<p style="font-size: 13px; margin: 0.3rem 0 0;"><strong>They ask:</strong> ' + escapeHtml(refl.questions) + '</p>';
+            const dg = diaryByStudent[stu.id];
+            if (dg) dg.flags.forEach(f => { html += '<p style="font-size: 13px; margin: 0.2rem 0 0; color: #a04545;"><strong>Flag:</strong> ' + escapeHtml(f) + '</p>'; });
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
     studentStatuses.forEach(({ student, status }) => {
         const s = student;
         const st = status;
@@ -1677,6 +1749,7 @@ async function renderStudio() {
         html += '<div class="studio-card-left">';
         html += '<strong class="studio-card-name">' + escapeHtml(s.name) + '</strong>';
         html += '<span class="studio-card-status">' + escapeHtml(st.message) + '</span>';
+        html += '<span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 0.15rem;">' + snapshotLine(s.id) + '</span>';
         html += '</div>';
         html += '<div class="studio-card-right">';
         if (st.action) {
@@ -1693,6 +1766,24 @@ async function renderStudio() {
         html += '<div class="studio-detail-meta">';
         html += escapeHtml((s.voice_type || '') + (s.voice_type && s.degree_program ? ', ' : '') + (s.degree_program || ''));
         if (st.latestLog) html += '<span style="float: right;">Last lesson: ' + escapeHtml(formatShortDate(st.latestLog.date)) + '</span>';
+        html += '</div>';
+
+        // Since last lesson: reflection content, diary, flags (two-loop data)
+        const refl = latestReflByStudent[s.id];
+        const dsum = diaryByStudent[s.id];
+        html += '<div class="studio-section">';
+        html += '<div class="section-label">Since Last Lesson</div>';
+        if (refl && st.hasReflectionSinceLesson) {
+            if (refl.questions) html += '<p style="font-size: 13px;"><strong>Their questions/goals:</strong> ' + escapeHtml(refl.questions) + '</p>';
+            if (refl.risk_taken) html += '<p style="font-size: 13px;"><strong>Risk taken:</strong> ' + escapeHtml(refl.risk_taken) + '</p>';
+            if (refl.lesson_takeaways) html += '<p style="font-size: 13px;"><strong>Takeaways:</strong> ' + escapeHtml(String(refl.lesson_takeaways).slice(0, 240)) + (String(refl.lesson_takeaways).length > 240 ? '...' : '') + '</p>';
+        } else {
+            html += '<p style="font-size: 13px; color: var(--text-muted);">No reflection yet.</p>';
+        }
+        if (dsum) {
+            html += '<p style="font-size: 13px;"><strong>Week:</strong> ' + dsum.n + ' entries · ' + dsum.min + ' min' + (dsum.condAvg ? ' · condition ' + dsum.condAvg.toFixed(1) + '/5' : '') + '</p>';
+            dsum.flags.forEach(f => { html += '<p style="font-size: 13px; color: #a04545;"><strong>Flag:</strong> ' + escapeHtml(f) + '</p>'; });
+        }
         html += '</div>';
 
         // Workflow steps

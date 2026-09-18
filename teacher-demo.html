@@ -1263,6 +1263,8 @@ function renderStudio() {
         html += '<div class="studio-card-left">';
         html += '<strong class="studio-card-name">' + escapeHtml(s.name) + '</strong>';
         html += '<span class="studio-card-status">' + escapeHtml(st.message) + '</span>';
+        var DEMO_SNAPS = {1: '4 logs · 150 min · condition 3.6/5 · check-in done', 2: '2 logs · 45 min · condition 3.1/5 · check-in due', 3: 'no logs this week · check-in due · <span style=\'color: #a04545; font-weight: 600;\'>1 flag</span>'};
+        html += '<span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 0.15rem;">' + (DEMO_SNAPS[s.id] || '3 logs · 95 min · condition 3.4/5 · check-in due') + '</span>';
         html += '</div>';
         html += '<div class="studio-card-right">';
         if (st.action) {

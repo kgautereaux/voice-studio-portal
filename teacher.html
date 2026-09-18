@@ -1018,6 +1018,99 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ============================================================
+           Two-loop design language (mockup skin) — overrides above
+           ============================================================ */
+        :root {
+            --primary-color: #2d2a2c;
+            --text-color: #2d2a2c;
+            --text-muted: #8a8286;
+            --accent-color: #6c495b;
+            --accent-light: #f3ecf0;
+            --border-color: #e8e3e0;
+            --bg-light: #faf9f7;
+            --bg-warm: #faf9f7;
+            --bg-white: #ffffff;
+            --bg-cream: #faf9f7;
+            --success-color: #4a7c59;
+            --warning-color: #a04545;
+            --error-color: #a04545;
+        }
+        body { background: #faf9f7; color: #2d2a2c; }
+
+        #main-nav {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: none;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .nav-brand {
+            font-size: 13px; font-weight: 700; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--text-color);
+        }
+        .nav-item {
+            background: none; border: 0; border-bottom: 2px solid transparent;
+            border-radius: 4px 4px 0 0; color: var(--text-muted);
+            font-size: 13.5px; font-weight: 500; padding: 0.45rem 0.8rem;
+            text-transform: none; letter-spacing: 0;
+        }
+        .nav-item:hover { color: var(--text-color); background: none; }
+        .nav-item.active {
+            color: var(--text-color); background: none;
+            border-bottom-color: var(--accent-color);
+        }
+        .nav-signout {
+            background: none; border: 0; color: var(--text-muted);
+            font-size: 12.5px; text-transform: none; letter-spacing: 0;
+        }
+        .nav-signout:hover { color: var(--text-color); background: none; }
+
+        .teacher-header h1 { font-size: 1.7rem; font-weight: 600; letter-spacing: 0; color: var(--text-color); }
+        .teacher-date { color: var(--text-muted); font-size: 14px; }
+
+        .card, .studio-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: none;
+        }
+        .card:hover, .studio-card:hover { box-shadow: none; border-color: var(--text-muted); }
+        .studio-card.status-action { border-left: 3px solid var(--accent-color); }
+        .studio-card.status-warn { border-left: 3px solid var(--warning-color); }
+        .studio-card.status-wait { border-left: 1px solid var(--border-color); }
+        .studio-card-name { font-weight: 600; }
+        .studio-card-status { color: var(--text-muted); font-size: 12.5px; }
+
+        .section-label {
+            font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--accent-color);
+        }
+        .studio-detail-meta { color: var(--text-muted); font-size: 12.5px; }
+
+        .btn-studio-action, .workflow-action {
+            background: none; border: 1px solid var(--border-color); border-radius: 4px;
+            color: var(--text-muted); font-size: 12.5px; font-weight: 600;
+            padding: 0.35rem 0.8rem; cursor: pointer; text-transform: none; letter-spacing: 0;
+        }
+        .btn-studio-action:hover, .workflow-action:hover {
+            color: var(--text-color); background: none; border-color: var(--text-muted);
+        }
+        .btn-studio-action[data-action-type="review-log"],
+        .inbox-reply-btn, .goals-save, .plan-start {
+            background: var(--accent-color); border-color: var(--accent-color); color: #faf9f7;
+        }
+        .btn-studio-action[data-action-type="review-log"]:hover,
+        .inbox-reply-btn:hover, .goals-save:hover, .plan-start:hover {
+            background: #5a3c4c; color: #faf9f7;
+        }
+
+        #page-today textarea, #page-inbox textarea, #page-studio textarea,
+        #page-today input[type="text"], #page-inbox input[type="text"] {
+            background: var(--bg-light); border: 1px solid var(--border-color);
+            border-radius: 4px; color: var(--text-color);
+        }
+        .loading-text { color: var(--text-muted); }
     </style>
 </head>
 <body>

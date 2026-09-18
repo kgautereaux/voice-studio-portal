@@ -672,12 +672,15 @@ function debriefHtml(l) {
     for (const r of rep) html += `<li>${escapeHtml(r)}</li>`;
     html += '</ul>';
   }
-  if (l.head_observations) html += `<h3>Intention + learning</h3><p>${escapeHtml(l.head_observations)}</p>`;
-  if (l.heart_observations) html += `<h3>Expression</h3><p>${escapeHtml(l.heart_observations)}</p>`;
-  if (l.hand_observations) html += `<h3>Function</h3><p>${escapeHtml(l.hand_observations)}</p>`;
-  if (l.warmth_brightness_notes) html += `<h3>Warmth + brightness</h3><p>${escapeHtml(l.warmth_brightness_notes)}</p>`;
   if (l.breakthroughs) html += `<h3>Breakthroughs</h3><p>${escapeHtml(l.breakthroughs)}</p>`;
-  if (l.ease_assessment) html += `<h3>Ease</h3><p>${escapeHtml(l.ease_assessment)}</p>`;
+  if (l.head_observations || l.heart_observations || l.hand_observations || l.warmth_brightness_notes || l.ease_assessment) {
+    html += '<h3>Observations</h3>';
+    if (l.head_observations) html += `<p><strong>Intention + learning:</strong> ${escapeHtml(l.head_observations)}</p>`;
+    if (l.heart_observations) html += `<p><strong>Expression:</strong> ${escapeHtml(l.heart_observations)}</p>`;
+    if (l.hand_observations) html += `<p><strong>Function:</strong> ${escapeHtml(l.hand_observations)}</p>`;
+    if (l.warmth_brightness_notes) html += `<p><strong>Warmth + brightness:</strong> ${escapeHtml(l.warmth_brightness_notes)}</p>`;
+    if (l.ease_assessment) html += `<p><strong>Ease:</strong> ${escapeHtml(l.ease_assessment)}</p>`;
+  }
   if (l.plan_for_next_lesson) html += `<h3>What we are working toward</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
   html += '<p class="meta" style="margin-top: 1rem;">Prof. G</p>';
   return html;

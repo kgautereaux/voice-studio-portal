@@ -2050,6 +2050,21 @@ async function renderStudents() {
         html = '<div class="empty-state"><h2>No active students</h2></div>';
     }
 
+    // Archived students: full history retained, portal still viewable
+    const { data: archived } = await sb.from('students').select('*')
+        .neq('status', 'active').order('name');
+    if (archived && archived.length) {
+        html += '<details style="margin-top: 2rem;"><summary style="cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Archived (' + archived.length + ')</summary>';
+        archived.forEach(a2 => {
+            html += '<div style="display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.2rem; border-bottom: 1px solid var(--border-color); font-size: 14px;">';
+            html += '<strong>' + escapeHtml(a2.name) + '</strong>';
+            html += '<span style="color: var(--text-muted); font-size: 12.5px;">' + escapeHtml((lessonCountMap[a2.id] || 0) + ' lessons on record') + '</span>';
+            html += '<button class="btn-view-student" style="margin-left: auto;" onclick="window.open(\'dashboard.html?view_as=' + a2.id + '\')">View Portal</button>';
+            html += '</div>';
+        });
+        html += '</details>';
+    }
+
     container.innerHTML = html;
 
     // Lazy-load student details on expand

@@ -1,285 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Voice Studio — Kayla Gautereaux</title>
-    <link rel="stylesheet" href="css/styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Studio — Kayla Gautereaux</title>
 <style>
-    /* Two-loop design language skin (site cohesion: plum + sage) */
-    :root {
-        --primary-color: #2d2a2c;
-        --text-color: #2d2a2c;
-        --text-muted: #8a8286;
-        --accent-color: #6c495b;
-        --accent-light: #f3ecf0;
-        --border-color: #e8e3e0;
-        --bg-light: #faf9f7;
-        --bg-warm: #faf9f7;
-        --bg-white: #ffffff;
-        --bg-cream: #faf9f7;
-        --success-color: #4a7c59;
-    }
-    body.landing-page { background: #faf9f7; color: #2d2a2c; }
-    nav { background: var(--bg-white); border-bottom: 1px solid var(--border-color); box-shadow: none; }
-    .nav-brand { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-color); }
-    .nav-links a { color: var(--text-muted); font-size: 13.5px; font-weight: 500; text-transform: none; letter-spacing: 0; }
-    .nav-links a:hover { color: var(--text-color); }
-    .landing-login-link { color: var(--accent-color) !important; font-weight: 600; }
+  :root {
+    --ground: #faf9f7;
+    --surface: #ffffff;
+    --ink: #2d2a2c;
+    --muted: #8a8286;
+    --line: #e8e3e0;
+    --plum: #6c495b;
+    --plum-soft: #f3ecf0;
+    --sage: #5f7055;
+    --sage-soft: #eef1ea;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px; line-height: 1.7;
+  }
 
-    .landing-hero-kicker { color: var(--accent-color); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
-    .landing-hero-name { color: var(--text-color); font-weight: 600; letter-spacing: 0; }
-    .landing-hero-rule, .landing-section-rule { background: var(--accent-color); height: 2px; opacity: 0.5; }
-    .landing-hero-tagline { color: var(--text-muted); }
-    .hero, .landing-hero { background: #faf9f7; }
+  nav { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50; }
+  .nav-inner {
+    max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; height: 58px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .wordmark {
+    font-weight: 700; letter-spacing: 0.14em; font-size: 13px; text-transform: uppercase;
+    color: var(--ink); text-decoration: none;
+  }
+  .nav-login {
+    color: var(--plum); font-size: 13.5px; font-weight: 600; text-decoration: none;
+  }
+  .nav-login:hover { text-decoration: underline; }
 
-    .landing-btn-primary {
-        background: var(--accent-color); color: #faf9f7; border: 0; border-radius: 4px;
-        font-weight: 600; letter-spacing: 0; text-transform: none;
-    }
-    .landing-btn-primary:hover { background: #5a3c4c; color: #faf9f7; }
-    .landing-btn-secondary {
-        background: none; border: 1px solid var(--accent-color); color: var(--accent-color);
-        border-radius: 4px; font-weight: 600; letter-spacing: 0; text-transform: none;
-    }
-    .landing-btn-secondary:hover { background: var(--accent-light); color: var(--accent-color); }
+  .hero {
+    max-width: 680px; margin: 0 auto; padding: 5.5rem 1.5rem 4.5rem; text-align: center;
+  }
+  .hero .kicker {
+    color: var(--plum); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 0.75rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.1rem, 6vw, 3rem); font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.15; text-wrap: balance; margin-bottom: 1rem;
+  }
+  .hero .tagline {
+    color: var(--muted); font-size: 1.05rem; max-width: 34em; margin: 0 auto 2rem;
+    text-wrap: balance;
+  }
+  .btn {
+    display: inline-block; text-decoration: none; border-radius: 4px;
+    font-size: 15px; font-weight: 600; padding: 0.7rem 1.5rem;
+  }
+  .btn.primary { background: var(--plum); color: var(--ground); }
+  .btn.primary:hover { background: #5a3c4c; }
+  .btn.quiet { color: var(--plum); border: 1px solid var(--line); margin-left: 0.6rem; }
+  .btn.quiet:hover { border-color: var(--plum); }
+  @media (max-width: 480px) { .btn.quiet { margin-left: 0; margin-top: 0.6rem; } }
 
-    .landing-section-heading, .landing-subsection-heading { color: var(--text-color); letter-spacing: 0; }
-    .landing-section-heading { font-weight: 600; }
-    .landing-subsection-heading { font-weight: 600; color: var(--accent-color); }
-    .landing-pullquote blockquote { color: var(--accent-color); }
-    .studio-section { background: transparent; }
-    .landing-section-why { background: var(--accent-light); }
-    .card { background: var(--bg-white); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: none; }
+  section { max-width: 680px; margin: 0 auto; padding: 3.25rem 1.5rem; }
+  section.tinted { max-width: none; background: var(--plum-soft); }
+  section.tinted > .inner { max-width: 680px; margin: 0 auto; }
+  .eyebrow {
+    color: var(--plum); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.75rem;
+  }
+  section h2 {
+    font-size: 1.45rem; font-weight: 600; margin-bottom: 1rem; text-wrap: balance;
+  }
+  section p { margin-bottom: 1rem; }
+  section p:last-child { margin-bottom: 0; }
+
+  blockquote {
+    font-size: clamp(1.3rem, 4vw, 1.7rem); font-weight: 500; line-height: 1.4;
+    color: var(--plum); text-wrap: balance; margin-bottom: 1.25rem;
+  }
+
+  .culture { list-style: none; margin: 1.25rem 0 0; }
+  .culture li { padding: 0.85rem 0; border-top: 1px solid var(--line); }
+  .culture li:first-child { border-top: 0; padding-top: 0; }
+  .culture b { display: block; font-weight: 600; }
+  .culture span { color: var(--muted); font-size: 15px; }
+
+  .rhythm { list-style: none; counter-reset: step; margin-top: 1.5rem; }
+  .rhythm li {
+    counter-increment: step; position: relative;
+    padding: 0 0 1.4rem 3rem; border-left: 2px solid var(--line); margin-left: 0.9rem;
+  }
+  .rhythm li:last-child { padding-bottom: 0; }
+  .rhythm li::before {
+    content: counter(step); position: absolute; left: -0.95rem; top: -0.1rem;
+    width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    background: var(--sage-soft); color: var(--sage);
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .rhythm b { display: block; font-weight: 600; }
+  .rhythm p { color: var(--muted); font-size: 15px; margin: 0.15rem 0 0; }
+  .demo-link { margin-top: 1.5rem; }
+
+  .fineprint {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.25rem 1.5rem; font-size: 14.5px; color: var(--muted); margin-top: 1.5rem;
+  }
+  .fineprint b { color: var(--ink); }
+
+  .achievement { display: flex; gap: 1rem; align-items: baseline; padding: 0.6rem 0; }
+  .achievement .year { color: var(--plum); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .achievement span { color: var(--muted); }
+  .achievement strong { color: var(--ink); }
+
+  .contact { text-align: center; padding-bottom: 5rem; }
+
+  footer { border-top: 1px solid var(--line); }
+  .footer-inner {
+    max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem;
+    font-size: 13.5px; color: var(--muted);
+  }
+  .footer-inner a { color: var(--plum); text-decoration: none; }
+  .footer-inner a:hover { text-decoration: underline; }
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 </head>
-<body class="landing-page">
-
-<!-- ============================================================
-     PUBLIC LANDING PAGE
-     ============================================================ -->
+<body>
 
 <nav>
-    <div class="container">
-        <a href="index.html" class="nav-brand">Voice Studio</a>
-        <ul class="nav-links">
-            <li><a href="index.html">Studio</a></li>
-            <li><a href="login.html" class="landing-login-link">Student Login</a></li>
-        </ul>
-    </div>
+  <div class="nav-inner">
+    <a class="wordmark" href="index.html">Voice Studio</a>
+    <a class="nav-login" href="login.html">Student Login</a>
+  </div>
 </nav>
 
-<!-- HERO -->
-<header class="hero landing-hero">
-    <div class="container">
-        <p class="landing-hero-kicker">The Voice Studio of</p>
-        <h1 class="landing-hero-name">Kayla Gautereaux</h1>
-        <div class="landing-hero-rule"></div>
-        <p class="landing-hero-tagline">Identity-affirming, evidence-based voice teaching across classical, musical theater, and contemporary styles</p>
-        <div class="landing-hero-actions" style="justify-content: center;">
-            <a href="#contact" class="landing-btn-primary">Contact for Lessons</a>
-        </div>
-    </div>
+<header class="hero">
+  <p class="kicker">The Voice Studio of</p>
+  <h1>Kayla Gautereaux</h1>
+  <p class="tagline">Identity-affirming, evidence-based voice teaching across classical, musical theater, and contemporary styles</p>
+  <div>
+    <a class="btn primary" href="https://www.kaylagautereaux.com/contact">Contact for Lessons</a>
+    <a class="btn quiet" href="demo.html">See the Studio Portal</a>
+  </div>
 </header>
 
-<main>
-
-    <!-- WHY SINGING MATTERS -->
-    <section class="studio-section landing-section-why" id="why-singing">
-        <div class="container">
-            <div class="landing-pullquote">
-                <blockquote>
-                    Singing is inherent to human communication.<br>
-                    When language isn't enough, we sing.
-                </blockquote>
-            </div>
-            <div class="landing-why-body">
-                <p>We live in a time that needs more connection, and singing is the best way I know to create it.</p>
-                <p>Singing has real cognitive and physical health benefits across the lifespan. It builds community, cultivates resilience, and connects us to something larger than ourselves. The voice is both the most personal instrument and the most universal one.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- THE STUDIO -->
-    <section class="studio-section landing-section-studio" id="the-studio">
-        <div class="container">
-            <h2 class="landing-section-heading">The Studio</h2>
-            <div class="landing-section-rule"></div>
-
-            <div class="landing-studio-intro">
-                <p>I am Assistant Professor of Voice and Vocal Pedagogy at Boston Conservatory at Berklee, and Director and Faculty Member of the Vocal Pedagogy Professional Workshop (VPPW). I am a voice teacher informed by science, grounded in the history of singing pedagogy, and driven by the belief that singing is essential to human flourishing.</p>
-                <p>I teach vocal pedagogy at the graduate level, supervise original research, and teach voice privately across classical, musical theater, and contemporary styles. I teach courses in the structure and function of the singing mechanism, the history of vocal pedagogy, and thesis research methodology. The principles I bring to the studio are tested, refined, and connected to the broader world of voice science and pedagogy.</p>
-            </div>
-
-            <!-- Co-Investigation Model -->
-            <div class="landing-coinvestigation">
-                <h3 class="landing-subsection-heading">The Co-Investigation Model</h3>
-                <div class="landing-coinvestigation-body">
-                    <p>You and I observe together. I observe your sound, your movement, your expressive connection. You observe what you feel, what you hear from the inside, what shifts. Neither perspective is complete alone. We are co-investigators, not master and apprentice.</p>
-                    <p>You take responsibility for your own goals. You are a craftsman. I bring tools, a trained ear, and a framework. You bring curiosity, honesty about what you notice, and a willingness to explore.</p>
-                </div>
-            </div>
-
-            <!-- Overtone Singing -->
-            <div class="landing-coinvestigation">
-                <h3 class="landing-subsection-heading">Resonance Made Audible</h3>
-                <div class="landing-coinvestigation-body">
-                    <p>I am an overtone singer, and I bring that practice directly into my teaching. Overtone singing makes the acoustic properties of the voice audible in a way that no diagram or explanation can. When I sing an overtone series for a student, they hear what resonance actually sounds like. They hear how small adjustments change which frequencies ring out and which recede.</p>
-                    <p>This is not a party trick. It is a pedagogical tool that trains the ear to hear warmth, brightness, and balance in real time, and a way to train students to access their own agile resonance strategies. Students learn to listen for these qualities in their own voices, which is the foundation of self-directed vocal development. The science becomes something you can hear, not just something you read about.</p>
-                </div>
-            </div>
-
-            <!-- Studio Culture -->
-            <h3 class="landing-subsection-heading">Studio Culture</h3>
-            <div class="values-grid landing-values-grid">
-                <div class="value-card landing-value-card">
-                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
-                    <h3>Warm, High Expectations</h3>
-                    <p>The studio is a place where you are supported and challenged. We celebrate wins, laugh when things crack, and always keep moving toward the target.</p>
-                </div>
-                <div class="value-card landing-value-card">
-                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
-                    <h3>No Wrong Sounds</h3>
-                    <p>There are no vocal faults. There are aesthetic targets, functional targets, and shots on goal. Every sound teaches us something about your voice.</p>
-                </div>
-                <div class="value-card landing-value-card">
-                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
-                    <h3>Easy, Not Squeezy</h3>
-                    <p>We build from what's free and flexible, then add complexity. Ease first, always. You will learn to hear and feel the qualities that make your voice work best.</p>
-                </div>
-                <div class="value-card landing-value-card">
-                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
-                    <h3>Head, Heart, Hand</h3>
-                    <p>Every lesson attends to intention (head), expression (heart), and function (hand). Singing well requires all three.</p>
-                </div>
-                <div class="value-card landing-value-card">
-                    <div class="landing-value-icon" aria-hidden="true">&#9679;</div>
-                    <h3>Identity-Affirming</h3>
-                    <p>This studio welcomes singers of all gender identities. Your voice is yours. How you want it to sound, what feels authentic to you, what goals you set for your instrument: these are yours to define. I teach many trans and non-binary singers, and my approach begins with listening to your experience of your own voice and body, not imposing expectations from outside.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- BETWEEN-LESSON SUPPORT -->
-    <section class="studio-section landing-section-support" id="support">
-        <div class="container">
-            <h2 class="landing-section-heading">Between-Lesson Support</h2>
-            <div class="landing-section-rule"></div>
-            <p class="landing-section-intro">The lesson is just the beginning. In this studio, you get a support system designed to keep you growing between sessions.</p>
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <a href="demo.html" class="landing-btn-secondary">See the Studio Portal</a>
-            </div>
-
-            <div class="values-grid landing-support-grid">
-                <div class="value-card landing-support-card">
-                    <div class="landing-support-number" aria-hidden="true">1</div>
-                    <h3>Lesson Debriefs</h3>
-                    <p>After every lesson, you receive a written summary of what we covered: what we worked on, what shifted, what to carry forward. We are not relying on memory alone. You have a record of your progress that builds over time.</p>
-                </div>
-                <div class="value-card landing-support-card">
-                    <div class="landing-support-number" aria-hidden="true">2</div>
-                    <h3>Practice Plans</h3>
-                    <p>Alongside each debrief, a practice plan with every exercise, its functional purpose, how it connects to your repertoire, and what to listen for while practicing. You always know <em>why</em> you are doing what you are doing.</p>
-                </div>
-                <div class="value-card landing-support-card">
-                    <div class="landing-support-number" aria-hidden="true">3</div>
-                    <h3>Whole-Singer Reflection</h3>
-                    <p>After each lesson, you reflect while it is fresh: your takeaways, where you took a risk, your questions or goals. Through the week, a 30-second daily log captures every kind of singing you do, including practice, choir, rehearsals, and gigs. Your input directly shapes what we work on.</p>
-                </div>
-                <div class="value-card landing-support-card">
-                    <div class="landing-support-number" aria-hidden="true">4</div>
-                    <h3>Progress Visibility</h3>
-                    <p>Your portal charts your singing time against how your voice is holding up, day by day, so you learn your own instrument's limits. A short monthly check-in drawn from published voice research tracks how singing feels across your range, and your semester goals and jury preparation sit beside the data.</p>
-                </div>
-                <div class="value-card landing-support-card">
-                    <div class="landing-support-number" aria-hidden="true">5</div>
-                    <h3>Repertoire Tracking</h3>
-                    <p>Every piece moves through a learning scaffold from translation and characterization through performance-ready. You always know where you are and what comes next.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- HOW THE TECHNOLOGY WORKS -->
-    <section class="studio-section landing-section-tech" id="how-it-works">
-        <div class="container">
-            <h2 class="landing-section-heading">How It Works</h2>
-            <div class="landing-section-rule"></div>
-            <div class="landing-studio-intro">
-                <p>Everything you see in the portal is generated from our actual lesson work: your recordings, our conversations, the exercises we do together, the observations I make while teaching. AI assists with drafting practice plans and lesson summaries, but the content comes from me and from what happens in our lessons. Nothing is invented.</p>
-                <p>Your lesson recordings are transcribed locally on my computer, never sent to a third-party transcription service. When transcripts are sent to AI for drafting, your name is replaced with an identifier, and the AI provider (Anthropic) does not use any of this input for training their models. I review everything before it reaches you.</p>
-                <p>This is technology in service of teaching, not a replacement for it. The tools save me time on documentation so I can spend more time listening, thinking, and preparing for your next lesson.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- WHO THIS IS FOR -->
-    <section class="studio-section landing-section-who" id="who">
-        <div class="container">
-            <div class="landing-who-content">
-                <h2 class="landing-section-heading">Who This Studio Is For</h2>
-                <div class="landing-section-rule"></div>
-                <p>This studio is for people who want to get better at their craft and are willing to take responsibility for their own goals. People who are dissatisfied with their current operation and know there is more to be had. People who want more facility, more singing, easier singing.</p>
-                <p>This is not the right fit for someone looking for a guru to establish their goals for them. You are the expert on your experience. I am the expert on the instrument. Together, we figure it out.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ACHIEVEMENTS -->
-    <section class="studio-section landing-section-achievements" id="achievements">
-        <div class="container">
-            <h2 class="landing-section-heading">Student Achievements</h2>
-            <div class="landing-section-rule"></div>
-            <div id="achievements-list">
-                <ul class="achievement-list landing-achievement-list">
-                    <li class="landing-achievement-item">
-                        <div class="landing-achievement-year">2026</div>
-                        <div class="landing-achievement-detail">
-                            <strong>Karima Haddouch</strong>
-                            <span class="landing-achievement-description">NATS NE Regional First Prize, Advanced Musical Theater</span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <!-- STUDIO TOOLS -->
-    <section class="studio-section landing-section-tools" id="tools">
-        <div class="container">
-            <h2 class="landing-section-heading">Studio Tools</h2>
-            <div class="landing-section-rule"></div>
-            <p>The studio is equipped with tools that support the co-investigation: overtone singing for live resonance demonstration, RespTrack respiratory analysis, Voce Vista real-time acoustic display, Praat acoustic analysis, and a calibrated recording setup. These tools serve the teaching, not the other way around. They make the invisible visible so we can observe together.</p>
-        </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section class="studio-section landing-section-contact" id="contact">
-        <div class="container" style="text-align: center; max-width: 600px;">
-            <h2 class="landing-section-heading">Get in Touch</h2>
-            <div class="landing-section-rule"></div>
-            <p>Interested in studying voice? Have questions about the studio? I would love to hear from you.</p>
-            <p style="margin-top: 1rem;"><a href="https://www.kaylagautereaux.com/contact" class="btn btn-primary">Get in Touch</a></p>
-        </div>
-    </section>
-
-</main>
-
-<section class="studio-section" style="margin-top: 0;">
-    <div class="container" style="text-align: center; max-width: 600px; padding: 2rem 1.5rem;">
-        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 0.75rem;">Interested in having a portal like this for your own studio?</p>
-        <a href="https://www.kaylagautereaux.com/contact" class="btn btn-secondary">Contact Me</a>
-    </div>
+<section class="tinted">
+  <div class="inner">
+    <blockquote>Singing is inherent to human communication. When language isn't enough, we sing.</blockquote>
+    <p>We live in a time that needs more connection, and singing is the best way I know to create it. Singing has real cognitive and physical health benefits across the lifespan. It builds community, cultivates resilience, and connects us to something larger than ourselves. The voice is both the most personal instrument and the most universal one.</p>
+  </div>
 </section>
 
-<footer class="landing-footer">
-    <div class="container">
-        <div class="landing-footer-content">
-            <p class="landing-footer-name">Kayla Gautereaux</p>
-            <p class="landing-footer-link"><a href="https://kaylagautereaux.com">kaylagautereaux.com</a></p>
-        </div>
-    </div>
+<section>
+  <p class="eyebrow">The Teacher</p>
+  <h2>Science-informed, history-aware, human-first</h2>
+  <p>I am Assistant Professor of Voice and Vocal Pedagogy at Boston Conservatory at Berklee, and Director and Faculty Member of the Vocal Pedagogy Professional Workshop. I teach vocal pedagogy at the graduate level, supervise original research, and teach voice privately across classical, musical theater, and contemporary styles. The principles I bring to the studio are tested, refined, and connected to the broader world of voice science and pedagogy.</p>
+</section>
+
+<section>
+  <p class="eyebrow">How We Work</p>
+  <h2>Co-investigators, not master and apprentice</h2>
+  <p>You and I observe together. I observe your sound, your movement, your expressive connection. You observe what you feel, what you hear from the inside, what shifts. Neither perspective is complete alone. You take responsibility for your own goals. I bring tools, a trained ear, and a framework. You bring curiosity, honesty about what you notice, and a willingness to explore.</p>
+  <p>I am an overtone singer, and I bring that practice directly into my teaching. When I sing an overtone series for a student, they hear what resonance actually sounds like: how small adjustments change which frequencies ring out and which recede. It trains the ear to hear warmth, brightness, and balance in real time, and it is a way to train students to access their own agile resonance strategies. The studio is also equipped with RespTrack respiratory analysis, Voce Vista real-time acoustic display, Praat acoustic analysis, and a calibrated recording setup. The tools serve the teaching and make the invisible visible so we can observe together.</p>
+  <ul class="culture">
+    <li><b>Warm, high expectations</b><span>Supported and challenged. We celebrate wins, laugh when things crack, and keep moving toward the target.</span></li>
+    <li><b>No wrong sounds</b><span>There are no vocal faults. There are aesthetic targets, functional targets, and shots on goal.</span></li>
+    <li><b>Easy, not squeezy</b><span>We build from what's free and flexible, then add complexity. Ease first, always.</span></li>
+    <li><b>Head, heart, hand</b><span>Every lesson attends to intention, expression, and function. Singing well requires all three.</span></li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">Identity-Affirming</p>
+  <h2>Your voice is yours</h2>
+  <p>This studio welcomes singers of all gender identities. How you want to sound, what feels authentic to you, what goals you set for your instrument: these are yours to define. I teach many trans and non-binary singers, and my approach begins with listening to your experience of your own voice and body, not imposing expectations from outside.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Between Lessons</p>
+  <h2>The lesson is just the beginning</h2>
+  <p>Every student has a portal that follows the rhythm of their week, so the work between lessons is visible, supported, and part of what we teach from.</p>
+  <ol class="rhythm">
+    <li><b>Lesson debrief</b><p>After every lesson, a written summary of what we covered: what we worked on, what shifted, what to carry forward. A record of your progress that builds over time.</p></li>
+    <li><b>Practice plan</b><p>Alongside each debrief: every exercise, its functional purpose, how it connects to your repertoire, and what to listen for. You always know why you are doing what you are doing.</p></li>
+    <li><b>Your reflection</b><p>While the lesson is fresh: your takeaways, where you took a risk, your questions or goals for the next lessons. Your input directly shapes what we work on.</p></li>
+    <li><b>Daily voice-use log</b><p>Thirty seconds a day for every kind of singing you do, including practice, choir, rehearsals, and gigs. Your singing time charts against how your voice is holding up, so you learn your own instrument's limits.</p></li>
+    <li><b>Monthly check-in</b><p>A short questionnaire drawn from published voice research tracks how singing feels across your range, month over month.</p></li>
+    <li><b>Repertoire scaffold</b><p>Every piece moves through a learning scaffold from translation and characterization through performance-ready, next to your semester goals and jury preparation. You always know where you are and what comes next.</p></li>
+  </ol>
+  <p class="demo-link"><a class="btn quiet" style="margin-left: 0;" href="demo.html">See the portal with a sample student</a></p>
+  <div class="fineprint">
+    <b>How the technology works.</b> Everything in the portal is generated from our actual lesson work. AI assists with drafting practice plans and lesson summaries, but the content comes from me and from what happens in our lessons. Nothing is invented. Recordings are transcribed locally on my computer, never sent to a third-party transcription service; names are replaced with identifiers before any AI drafting, and the AI provider does not train on this input. I review everything before it reaches you.
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Who This Is For</p>
+  <h2>People who want more facility, more singing, easier singing</h2>
+  <p>This studio is for people who want to get better at their craft and are willing to take responsibility for their own goals. People who are dissatisfied with their current operation and know there is more to be had.</p>
+  <p>This is not the right fit for someone looking for a guru to establish their goals for them. You are the expert on your experience. I am the expert on the instrument. Together, we figure it out.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Student Achievements</p>
+  <div class="achievement">
+    <span class="year">2026</span>
+    <span><strong>Karima Haddouch</strong> · NATS NE Regional First Prize, Advanced Musical Theater</span>
+  </div>
+</section>
+
+<section class="contact">
+  <p class="eyebrow">Get in Touch</p>
+  <h2>Interested in studying voice?</h2>
+  <p style="color: var(--muted); margin-bottom: 1.5rem;">Have questions about the studio? I would love to hear from you.</p>
+  <a class="btn primary" href="https://www.kaylagautereaux.com/contact">Get in Touch</a>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <span>Kayla Gautereaux · <a href="https://kaylagautereaux.com">kaylagautereaux.com</a></span>
+    <span>Teachers: interested in a portal like this for your studio? <a href="https://www.kaylagautereaux.com/contact">Contact me</a></span>
+  </div>
 </footer>
 
 </body>

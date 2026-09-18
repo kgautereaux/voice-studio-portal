@@ -1521,6 +1521,35 @@ async function renderStudio() {
     weekStart.setDate(now.getDate() + mondayOffset);
     const weekStartStr = weekStart.toLocaleDateString('en-CA');
 
+    // Fetch all data in parallel
+    let allLogs, allPlans, allReflections, allBriefs, allStudioFb, allJuryPlans, allJurySelections;
+    try {
+        const results = await Promise.all([
+            sb.from('lesson_logs').select('id, student_id, date, approved, has_transcript, repertoire_worked, exercise_categories_addressed').order('date', { ascending: false }),
+            sb.from('practice_plans').select('id, student_id, lesson_log_id, status, content, date_generated').order('date_generated', { ascending: false }),
+            sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
+            sb.from('pre_lesson_briefs').select('id, student_id, date, full_brief, lesson_plan').order('date', { ascending: false }),
+            sb.from('studio_class_feedback').select('student_id, studio_class_date, repertoire_performed').order('studio_class_date', { ascending: false }),
+            sb.from('jury_plans').select('*'),
+            sb.from('jury_selections').select('*'),
+            sb.from('voice_use_logs').select('*').order('log_date', { ascending: false }).limit(600),
+            sb.from('voses_checkins').select('student_id, month')
+        ]);
+        allLogs = results[0].data || [];
+        allPlans = results[1].data || [];
+        allReflections = results[2].data || [];
+        allBriefs = results[3].data || [];
+        allStudioFb = results[4].data || [];
+        allJuryPlans = results[5].data || [];
+        allJurySelections = results[6].data || [];
+        var allDiary = results[7].data || [];
+        var allCheckins = results[8].data || [];
+    } catch (err) {
+        console.error('[Studio] fetch error:', err);
+        container.innerHTML = '<p class="text-muted">Error loading studio data.</p>';
+        return;
+    }
+
     // Two-loop data: last-7-day diary aggregates and monthly check-in status
     const sevenAgo = new Date(now); sevenAgo.setDate(now.getDate() - 6);
     const sevenAgoStr = sevenAgo.toLocaleDateString('en-CA');
@@ -1566,35 +1595,6 @@ async function renderStudio() {
                 (d.flags.length === 1 ? ' flag' : ' flags') + '</span>';
         }
         return line;
-    }
-
-    // Fetch all data in parallel
-    let allLogs, allPlans, allReflections, allBriefs, allStudioFb, allJuryPlans, allJurySelections;
-    try {
-        const results = await Promise.all([
-            sb.from('lesson_logs').select('id, student_id, date, approved, has_transcript, repertoire_worked, exercise_categories_addressed').order('date', { ascending: false }),
-            sb.from('practice_plans').select('id, student_id, lesson_log_id, status, content, date_generated').order('date_generated', { ascending: false }),
-            sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
-            sb.from('pre_lesson_briefs').select('id, student_id, date, full_brief, lesson_plan').order('date', { ascending: false }),
-            sb.from('studio_class_feedback').select('student_id, studio_class_date, repertoire_performed').order('studio_class_date', { ascending: false }),
-            sb.from('jury_plans').select('*'),
-            sb.from('jury_selections').select('*'),
-            sb.from('voice_use_logs').select('*').order('log_date', { ascending: false }).limit(600),
-            sb.from('voses_checkins').select('student_id, month')
-        ]);
-        allLogs = results[0].data || [];
-        allPlans = results[1].data || [];
-        allReflections = results[2].data || [];
-        allBriefs = results[3].data || [];
-        allStudioFb = results[4].data || [];
-        allJuryPlans = results[5].data || [];
-        allJurySelections = results[6].data || [];
-        var allDiary = results[7].data || [];
-        var allCheckins = results[8].data || [];
-    } catch (err) {
-        console.error('[Studio] fetch error:', err);
-        container.innerHTML = '<p class="text-muted">Error loading studio data.</p>';
-        return;
     }
 
     // Build per-student lookup maps

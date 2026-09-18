@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Desk — Voice Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ground: #faf9f7;
+    --surface: #ffffff;
+    --ink: #2d2a2c;
+    --muted: #8a8286;
+    --line: #e8e3e0;
+    --teacher: #6c495b;
+    --teacher-soft: #f3ecf0;
+    --student: #5f7055;
+    --student-soft: #eef1ea;
+    --good: #4a7c59;
+    --warn: #a04545;
+    --chip: #f1edea;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1e1a1d; --surface: #282329; --ink: #ece7e9; --muted: #a49aa0;
+      --line: #3a333a; --teacher: #c9a0b6; --teacher-soft: #382e35;
+      --student: #a9bb9b; --student-soft: #2e352b; --good: #8fc09b;
+      --warn: #d08585; --chip: #332d33;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1e1a1d; --surface: #282329; --ink: #ece7e9; --muted: #a49aa0;
+    --line: #3a333a; --teacher: #c9a0b6; --teacher-soft: #382e35;
+    --student: #a9bb9b; --student-soft: #2e352b; --good: #8fc09b;
+    --warn: #d08585; --chip: #332d33;
+  }
+
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif; font-size: 15px; line-height: 1.6;
+  }
+  * { box-sizing: border-box; }
+
+  .proto-banner {
+    background: var(--teacher); color: var(--ground); text-align: center;
+    font-size: 12.5px; letter-spacing: 0.04em; padding: 0.45rem 1rem;
+  }
+  .proto-banner strong { letter-spacing: 0.08em; text-transform: uppercase; }
+
+  nav { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50; }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 1.25rem;
+    display: flex; align-items: center; gap: 1.5rem; height: 58px;
+  }
+  .wordmark { font-weight: 700; letter-spacing: 0.14em; font-size: 13px; text-transform: uppercase; white-space: nowrap; }
+  .tabs { display: flex; gap: 0.25rem; flex: 1; }
+  .tab {
+    border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 500;
+    padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--teacher); border-radius: 4px 4px 0 0; }
+  .badge {
+    display: inline-block; min-width: 18px; height: 18px; border-radius: 999px;
+    background: var(--teacher); color: var(--ground); font-size: 11px; font-weight: 700;
+    line-height: 18px; text-align: center; margin-left: 5px; padding: 0 4px; vertical-align: 1px;
+  }
+  .who-chip {
+    background: var(--chip); border-radius: 999px; font-size: 12.5px;
+    padding: 0.3rem 0.85rem; color: var(--muted); white-space: nowrap;
+  }
+  @media (max-width: 700px) {
+    .nav-inner { gap: 0.7rem; padding: 0 0.9rem; overflow-x: auto; }
+    .who-chip { display: none; }
+  }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 2.25rem 1.25rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h1 { font-size: 1.7rem; font-weight: 600; margin: 0 0 1.5rem; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.3rem 1.5rem; margin-bottom: 1.25rem; }
+  .panel h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.2rem; }
+  .panel .meta { font-size: 12.5px; color: var(--muted); margin: 0 0 0.9rem; font-variant-numeric: tabular-nums; }
+  .panel h3 { font-size: 13px; font-weight: 600; margin: 1.1rem 0 0.4rem; }
+  .panel p { margin: 0 0 0.6rem; font-size: 14px; }
+
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.35rem; }
+  .eyebrow.teacher { color: var(--teacher); }
+  .eyebrow.student { color: var(--student); }
+
+  .lesson-card { border-top: 3px solid var(--teacher); }
+  .lesson-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; }
+  .lesson-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+  .snap { font-size: 12.5px; color: var(--muted); }
+  .flag { color: var(--warn); font-weight: 600; }
+  .ask { background: var(--student-soft); border-radius: 5px; padding: 0.6rem 0.8rem; font-size: 14px; margin: 0.6rem 0; }
+  .ask b { color: var(--student); }
+
+  /* Inbox */
+  .thread { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.8rem; overflow: hidden; }
+  .thread-head {
+    width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+    background: var(--surface); border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  .thread-head:focus-visible { outline: 2px solid var(--teacher); outline-offset: -2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teacher); flex-shrink: 0; }
+  .thread.read .dot { background: var(--line); }
+  .t-kind {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 0.12rem 0.55rem; white-space: nowrap;
+    background: var(--student-soft); color: var(--student);
+  }
+  .t-kind.rep { background: var(--chip); color: var(--muted); }
+  .t-who { font-weight: 600; }
+  .t-sum { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .t-date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .thread-body { display: none; border-top: 1px solid var(--line); padding: 1rem; }
+  .thread.open .thread-body { display: block; }
+  .msg { border-left: 3px solid var(--student-soft); padding: 0.2rem 0 0.2rem 0.85rem; margin-bottom: 0.8rem; font-size: 14px; }
+  .msg .m-meta { font-size: 12px; color: var(--muted); }
+  .msg.mine { border-left-color: var(--teacher-soft); }
+  .msg.mine .m-meta { color: var(--teacher); }
+  .reply-row { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.6rem; }
+  .reply-row textarea {
+    flex: 1; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.5rem 0.7rem; resize: vertical; min-height: 40px;
+  }
+  .reply-row textarea:focus { outline: 2px solid var(--teacher); outline-offset: 1px; }
+  .btn {
+    border: 0; border-radius: 4px; font: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 0.5rem 1rem; cursor: pointer;
+  }
+  .btn.teacher-bg { background: var(--teacher); color: var(--ground); }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
+  .btn.ghost:hover { color: var(--ink); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .notify-set { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+  .chip-opt {
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12.5px; padding: 0.28rem 0.7rem; border-radius: 999px; cursor: pointer;
+  }
+  .chip-opt.on { background: var(--teacher-soft); color: var(--teacher); border-color: var(--teacher); font-weight: 600; }
+
+  /* Students */
+  .roster-row { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.8rem; }
+  .roster-head {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem;
+    background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  .roster-head strong { min-width: 9em; }
+  .roster-body { display: none; border-top: 1px solid var(--line); padding: 1rem; }
+  .roster-row.open .roster-body { display: block; }
+
+  /* Repertoire board */
+  .board-student { margin-bottom: 2rem; }
+  .board-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .board-head h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+  .board-prog { font-size: 12.5px; color: var(--muted); }
+  .fill-count { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--teacher); }
+  .slot {
+    display: flex; align-items: center; gap: 0.9rem; padding: 0.6rem 0.9rem;
+    border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.45rem;
+    background: var(--surface); font-size: 13.5px; flex-wrap: wrap;
+  }
+  .slot .req { color: var(--muted); font-size: 12.5px; flex: 1 1 220px; }
+  .slot.empty { border-style: dashed; background: none; }
+  .slot .piece { font-weight: 600; }
+  .slot .phase { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mini-rail { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem; }
+  .mini-rail span { width: 12px; height: 6px; border-radius: 3px; background: var(--line); }
+  .mini-rail span.d { background: var(--student); }
+  .mini-rail span.c { background: var(--student); opacity: 0.45; }
+  .assign-form { display: none; width: 100%; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .slot.assigning .assign-form { display: flex; }
+  .assign-form input {
+    border: 1px solid var(--line); border-radius: 4px; background: var(--ground); color: var(--ink);
+    font: inherit; font-size: 13.5px; padding: 0.4rem 0.6rem; flex: 1 1 150px;
+  }
+  .pool { font-size: 12.5px; color: var(--muted); margin: 0.3rem 0 0; }
+  .pool button { font-size: 12px; }
+
+  /* Analytics */
+  .an-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 900px) { .an-grid { grid-template-columns: 1fr; } }
+  .an-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1rem 1.1rem; cursor: pointer; text-align: left; font: inherit; color: inherit;
+    transition: border-color 0.15s;
+  }
+  .an-card:hover { border-color: var(--muted); }
+  .an-card.flagged { border-left: 3px solid var(--warn); }
+  .an-card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 0.1rem; }
+  .an-nums { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 0.5rem; }
+  .an-delta { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .an-delta .up { color: var(--good); font-weight: 600; }
+  .an-delta .down { color: var(--warn); font-weight: 600; }
+  .an-delta .flat { color: var(--muted); }
+  .drill { margin-top: 1.5rem; }
+  .drill-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+  .drill-head h2 { margin: 0; font-size: 1.15rem; }
+  .goals-edit textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; resize: vertical;
+  }
+
+  /* Announcements */
+  .ann { border-left: 3px solid var(--teacher-soft); padding: 0.2rem 0 0.2rem 0.85rem; margin-bottom: 0.9rem; }
+  .ann .m-meta { font-size: 12px; color: var(--muted); }
+  textarea.full {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; resize: vertical;
+  }
+
+  .toast {
+    position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 210;
+    background: var(--ink); color: var(--ground); font-size: 13px;
+    padding: 0.55rem 0.9rem; border-radius: 6px; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; max-width: 300px;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ---- legacy token aliases for ported machinery ---- */
+  :root {
+    --primary-color: #2d2a2c; --text-color: #2d2a2c; --text-muted: #8a8286;
+    --accent-color: #6c495b; --accent-light: #f3ecf0; --border-color: #e8e3e0;
+    --bg-light: #faf9f7; --bg-warm: #faf9f7; --bg-white: #ffffff; --bg-cream: #faf9f7;
+    --success-color: #4a7c59; --warning-color: #a04545; --error-color: #a04545;
+  }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.3rem 1.4rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.4rem; }
+  .btn-studio-action, .workflow-action, .btn {
+    background: none; border: 1px solid var(--line); border-radius: 4px;
+    color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 600;
+    padding: 0.35rem 0.8rem; cursor: pointer;
+  }
+  .btn-studio-action:hover, .btn:hover { color: var(--ink); border-color: var(--muted); }
+  .btn-primary, .btn-approve,
+  .btn-studio-action[data-action-type="review-log"], .inbox-reply-btn, .goals-save, .plan-start {
+    background: var(--teacher); border-color: var(--teacher); color: var(--ground);
+  }
+  .btn-primary:hover, .btn-approve:hover,
+  .btn-studio-action[data-action-type="review-log"]:hover, .inbox-reply-btn:hover,
+  .goals-save:hover, .plan-start:hover { background: #5a3c4c; border-color: #5a3c4c; color: var(--ground); }
+  .btn-small { font-size: 12px; padding: 0.25rem 0.6rem; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teacher); margin-bottom: 0.5rem; }
+  .text-muted { color: var(--muted); }
+  .loading-text { color: var(--muted); }
+  .empty-state { text-align: center; color: var(--muted); padding: 3rem 1rem; }
+  input[type="text"], input[type="password"], input[type="date"], textarea, select {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--ground); color: var(--ink); font: inherit; font-size: 14px; padding: 0.55rem 0.7rem;
+  }
+  textarea:focus, input:focus, select:focus { outline: 2px solid var(--teacher); outline-offset: 1px; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 0.3rem; }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+  .category-check { display: flex; align-items: center; gap: 0.4rem; font-size: 13.5px; }
+  input[type="checkbox"] { width: auto; accent-color: var(--teacher); }
+  .slot-form { display: none; width: 100%; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .slot-form.open { display: flex; }
+  .slot-form input { flex: 1 1 150px; font-size: 13.5px; padding: 0.4rem 0.6rem; }
+  #artifact-modal > div, #log-review-overlay > div {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    max-width: 760px; margin: 4vh auto; max-height: 90vh; overflow-y: auto; padding: 1.75rem 2rem;
+  }
+  .lesson-log-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .log-edit-field { margin-bottom: 1rem; }
+  .log-edit-field label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teacher); margin-bottom: 0.3rem; }
+  .log-edit-field textarea { min-height: 70px; }
+  .detail-section { margin-bottom: 1.25rem; }
+  .detail-section h3, .brief-content h3 { font-size: 13px; font-weight: 600; margin: 1rem 0 0.4rem; }
+  .plan-date { color: var(--muted); font-size: 12.5px; }
+  .plan-signoff { color: var(--muted); font-style: italic; margin-top: 1rem; }
+  .fb-panelist { font-weight: 600; }
+  .feedback-block { border-left: 3px solid var(--teacher-soft); padding-left: 0.85rem; margin-bottom: 0.8rem; }
+  .draft-badge { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 0.12rem 0.55rem; background: var(--chip); color: var(--muted); }
+  .teacher-login-wrap { min-height: calc(100vh - 58px); display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem; }
+  .teacher-login-inner { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 2rem; }
+  .teacher-login-inner h2 { font-size: 1.2rem; margin: 0 0 0.25rem; }
+  .teacher-login-inner p { color: var(--muted); font-size: 13.5px; margin: 0 0 1.25rem; }
+  .login-error { color: var(--warn); font-size: 13px; margin-top: 0.75rem; }
+  .roster-flag { border-left: 3px solid var(--warn); }
+  .culture-rail { display: inline-flex; }
+</style>
+</head>
+<body>
+
+<div id="page-login" style="display: none;">
+    <div class="teacher-login-wrap">
+        <div class="teacher-login-inner">
+            <h2>Teacher Portal</h2>
+            <p>Voice Studio lesson planning, student tracking, and studio management.</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" id="login-email" placeholder="kayla@studio.kaylagautereaux.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+                <div class="login-error" id="login-error"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<nav id="main-nav" style="display: none;">
+  <div class="nav-inner">
+    <span class="wordmark">Studio Desk</span>
+    <div class="tabs">
+      <button class="tab nav-item active" data-nav="today">Today</button>
+      <button class="tab nav-item" data-nav="inbox">Inbox<span id="inbox-badge" class="badge" style="display: none;"></span></button>
+      <button class="tab nav-item" data-nav="studio">Students</button>
+      <button class="tab nav-item" data-nav="announcements">Announcements</button>
+    </div>
+    <button class="nav-signout signout" onclick="signOut()">Sign out</button>
+  </div>
+</nav>
+
+<main>
+  <div id="page-today" style="display: none;">
+    <h1 id="today-greeting">Today</h1>
+    <p class="meta" id="today-date" style="color: var(--muted); margin: -1rem 0 1.5rem;"></p>
+    <div id="today-content"></div>
+  </div>
+
+  <div id="page-inbox" style="display: none;">
+    <h1>Inbox</h1>
+    <div id="inbox-content"></div>
+  </div>
+
+  <div id="page-studio" style="display: none;">
+    <h1>Students</h1>
+    <div id="studio-content"></div>
+  </div>
+
+  <div id="page-announcements" style="display: none;">
+    <h1>Announcements</h1>
+    <div class="panel">
+      <h2>Post to the studio</h2>
+      <p class="meta">Appears on every student's dashboard; they get an email</p>
+      <form id="ann-form">
+        <input type="text" id="ann-title" placeholder="Title (optional)" style="margin-bottom: 0.6rem;">
+        <textarea id="ann-body" rows="3" placeholder="Studio class Friday at 4 in T405..."></textarea>
+        <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.6rem;">
+          <button type="submit" class="btn teacher-bg">Post</button>
+          <label style="font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; margin: 0;">Expires <input type="date" id="ann-expires" style="width: auto;"></label>
+        </div>
+      </form>
+    </div>
+    <div class="panel">
+      <h2>Posted</h2>
+      <div id="ann-list"></div>
+    </div>
+  </div>
+</main>
+
+<div id="artifact-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
+    <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 600px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div id="artifact-modal-body"></div>
+    </div>
+</div>
+
+<!-- Log Review Overlay -->
+<div id="log-review-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
+    <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 700px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <div id="log-review-body"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+
+// ============================================================
+// CONFIG
+// ============================================================
+
+const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+let ANTHROPIC_API_KEY = sessionStorage.getItem('vs_anthropic_key') || '';
+
+function ensureApiKey() {
+    if (ANTHROPIC_API_KEY) return true;
+    const key = prompt('Enter your Anthropic API key to enable practice plan generation:');
+    if (key && key.startsWith('sk-ant-')) {
+        ANTHROPIC_API_KEY = key;
+        sessionStorage.setItem('vs_anthropic_key', key);
+        return true;
+    }
+    return false;
+}
+const PRACTICE_PLAN_MODEL = 'claude-sonnet-4-6';
+const PRACTICE_PLAN_SYSTEM = `You are an AI assistant for a university voice studio run by Prof. Kayla Gautereaux. Generate practice plans in Kayla's co-investigative voice.
+
+Key principles:
+- Teacher and student are co-observers. Use warmth/brightness/buzziness as primary perceptual dimensions (three independent qualities, not a spectrum).
+- No em dashes. Use commas, periods, or colons instead.
+- Connect every exercise to its functional purpose and repertoire application.
+- Include "what to listen for" targets in warmth/brightness/buzziness terms.
+- Frame growth areas positively: "next level" not "problem."
+- Be concise and actionable. Address the student directly.
+- Include practice structure guidance (session structure, fatigue awareness).
+- Ease first. Easy not squeezy.`;
+const TEACHER_AUTH_ID = 'af095774-b74a-4f74-8507-95cdf2aaec77';
+const ALL_CATEGORIES = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
+const CATEGORY_LABELS = {
+    body: 'Body', breath: 'Breath', speech_access: 'Speech Access',
+    chest_voice: 'Chest Voice', sustain: 'Sustain', head_voice: 'Head Voice',
+    range_extension: 'Range Extension', middle_range: 'Middle Range',
+    mix_registration: 'Mix/Registration', dynamics: 'Dynamics', agility: 'Agility'
+};
+
+const JURY_REQUIREMENTS = {
+    'MFA_MT_Vocal_Pedagogy': ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song', 'Wildcard'],
+    'MM_Vocal_Pedagogy': ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4', 'Wildcard'],
+    'BFA_MT_Sophomore': ['32-bar cut', 'Legit selection', 'Additional selection 1', 'Additional selection 2', 'Wildcard']
+};
+
+function programKeyFromDegree(degree) {
+    if (!degree) return null;
+    const d = degree.toLowerCase();
+    if (d.includes('mfa') && d.includes('mt')) return 'MFA_MT_Vocal_Pedagogy';
+    if (d.includes('mm') && d.includes('ped')) return 'MM_Vocal_Pedagogy';
+    if (d.includes('bfa') && d.includes('mt') && d.includes('soph')) return 'BFA_MT_Sophomore';
+    if (d.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
+    if (d.includes('mm')) return 'MM_Vocal_Pedagogy';
+    if (d.includes('bfa')) return 'BFA_MT_Sophomore';
+    return null;
+}
+
+let sb = null;
+let currentUser = null;
+let currentPage = 'today';
+
+// Cache to avoid redundant fetches within a session
+let studentsCache = null;
+
+// ============================================================
+// INIT
+// ============================================================
+
+async function initApp() {
+    const { createClient } = window.supabase;
+    sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (session) {
+        currentUser = session.user;
+        const role = currentUser.user_metadata?.role;
+        if (role !== 'teacher') {
+            alert('This page is for teachers only.');
+            await sb.auth.signOut();
+            showLogin();
+            return;
+        }
+        navigateTo('today');
+    } else {
+        showLogin();
+    }
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            currentUser = session.user;
+            navigateTo('today');
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            studentsCache = null;
+            showLogin();
+        }
+    });
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+
+    let loginEmail = email;
+    if (!email.includes('@')) {
+        loginEmail = email + '@studio.kaylagautereaux.com';
+    }
+
+    const { error } = await sb.auth.signInWithPassword({ email: loginEmail, password });
+    if (error) {
+        errorEl.textContent = 'Invalid credentials.';
+        errorEl.style.display = 'block';
+    }
+}
+
+async function signOut() {
+    await sb.auth.signOut();
+    showLogin();
+}
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+
+const PAGE_IDS = ['today', 'inbox', 'studio', 'announcements'];
+
+function showLogin() {
+    document.getElementById('main-nav').style.display = 'none';
+    PAGE_IDS.forEach(p => { document.getElementById('page-' + p).style.display = 'none'; });
+    document.getElementById('page-login').style.display = 'block';
+}
+
+function navigateTo(page) {
+    currentPage = page;
+    document.getElementById('main-nav').style.display = 'block';
+    document.getElementById('page-login').style.display = 'none';
+
+    PAGE_IDS.forEach(p => {
+        document.getElementById('page-' + p).style.display = (p === page) ? 'block' : 'none';
+    });
+
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.nav === page);
+    });
+
+    // Load data for the page
+    const loaders = {
+        today: renderTodayPage,
+        inbox: renderInbox,
+        studio: renderStudentsHub,
+        announcements: renderAnnouncementsDesk
+    };
+    if (loaders[page]) loaders[page]();
+}
+
+function switchPage(page) {
+    navigateTo(page);
+}
+
+// Nav click handlers
+document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => {
+        navigateTo(el.dataset.nav);
+    });
+});
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
+function todayStr() {
+    return new Date().toLocaleDateString('en-CA');
+}
+
+function tomorrowStr() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toLocaleDateString('en-CA');
+}
+
+function formatDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+}
+
+function formatShortDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric'
+    });
+}
+
+function formatWeekLabel(d) {
+    const date = new Date(d + 'T12:00:00');
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay());
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return 'Week of ' + fmt(start) + ' to ' + fmt(end);
+}
+
+function daysBetween(dateStr1, dateStr2) {
+    const d1 = new Date(dateStr1 + 'T12:00:00');
+    const d2 = new Date(dateStr2 + 'T12:00:00');
+    return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type || 'success');
+    setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+function addExpandHandlers(container) {
+    container.querySelectorAll('.card-header').forEach(el => {
+        el.addEventListener('click', () => {
+            el.closest('.card').classList.toggle('expanded');
+        });
+    });
+}
+
+async function getStudents() {
+    if (studentsCache) return studentsCache;
+    const { data } = await sb.from('students').select('*').eq('status', 'active').order('name');
+    studentsCache = data || [];
+    return studentsCache;
+}
+
+function studentNameMap(students) {
+    const m = {};
+    (students || []).forEach(s => { m[s.id] = s; });
+    return m;
+}
+
+// ============================================================
+// MARKDOWN RENDERING
+// ============================================================
+
+function markdownToHtml(md) {
+    if (!md) return '';
+    md = md.replace(/^---[\s\S]*?---\s*\n/, '');
+    md = md.replace(/^# .+\n/m, '');
+
+    let lines = md.split('\n');
+    let html = '';
+    let inList = false;
+    let inTable = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        if (line.match(/^## /)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            if (inTable) { html += '</table>'; inTable = false; }
+            html += '<h2>' + inlineFormat(line.replace(/^## /, '')) + '</h2>';
+            continue;
+        }
+        if (line.match(/^### /)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h3>' + inlineFormat(line.replace(/^### /, '')) + '</h3>';
+            continue;
+        }
+
+        if (line.match(/^---+$/)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<hr>';
+            continue;
+        }
+
+        if (line.match(/^\|/)) {
+            if (line.match(/^\|[\s-|]+$/)) continue;
+            const cells = line.split('|').filter(c => c.trim()).map(c => c.trim());
+            if (!inTable) {
+                html += '<table style="width:100%;font-size:13px;border-collapse:collapse;margin:0.5rem 0">';
+                html += '<tr>' + cells.map(c => '<th style="text-align:left;padding:0.35rem 0.5rem;border-bottom:1px solid var(--border-color)">' + inlineFormat(c) + '</th>').join('') + '</tr>';
+                inTable = true;
+            } else {
+                html += '<tr>' + cells.map(c => '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--border-color)">' + inlineFormat(c) + '</td>').join('') + '</tr>';
+            }
+            continue;
+        }
+        if (inTable && !line.match(/^\|/)) {
+            html += '</table>';
+            inTable = false;
+        }
+
+        if (line.match(/^- \[[ x]\]/i)) {
+            const checked = line.match(/\[x\]/i);
+            const text = line.replace(/^- \[[ x]\]\s*/i, '');
+            if (!inList) { html += '<ul style="list-style:none;padding-left:0.5rem">'; inList = true; }
+            html += '<li>' + (checked ? '\u2713 ' : '\u25CB ') + inlineFormat(text) + '</li>';
+            continue;
+        }
+
+        if (line.match(/^[-*] /)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + inlineFormat(line.replace(/^[-*] /, '')) + '</li>';
+            continue;
+        }
+        if (line.match(/^\d+\. /)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + inlineFormat(line.replace(/^\d+\. /, '')) + '</li>';
+            continue;
+        }
+
+        if (inList && line.trim() === '') {
+            html += '</ul>';
+            inList = false;
+            continue;
+        }
+
+        if (line.trim()) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<p>' + inlineFormat(line) + '</p>';
+        }
+    }
+
+    if (inList) html += '</ul>';
+    if (inTable) html += '</table>';
+    return html;
+}
+
+function inlineFormat(text) {
+    text = escapeHtml(text);
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    text = text.replace(/`(.+?)`/g, '<code>$1</code>');
+    return text;
+}
+
+// ============================================================
+// STUDIO VIEW (prioritized action list)
+// ============================================================
+
+// ============================================================
+// TODAY
+// ============================================================
+
+
+const JURY_SLOTS = {
+    MFA_MT_Vocal_Pedagogy: ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song'],
+    MM_Vocal_Pedagogy: ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4'],
+    BFA_MT_Year1: ['Legit selection', '32-bar cut', 'Additional selection'],
+    BFA_MT_Sophomore: ['Legit selection', '32-bar cut', 'Additional selection', 'Wildcard'],
+    BFA_MT_Junior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
+    BFA_MT_Senior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
+};
+function programKeyFor(student) {
+    const p = (student.degree_program || '').toLowerCase();
+    if (p.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
+    if (p.includes('mm')) return 'MM_Vocal_Pedagogy';
+    if (p.includes('bfa')) return 'BFA_MT_Junior';
+    return null;
+}
+const REP_PHASES = [
+    ['translation_characterization', 'Translation + Characterization'],
+    ['text_rhythm', 'Text + Rhythm'],
+    ['melody_text_rhythm', 'Melody + Text + Rhythm'],
+    ['characterization_integration', 'Characterization Integration'],
+    ['memorization', 'Memorization'],
+    ['performance_ready', 'Performance Ready'],
+];
+function hubMiniRail(phaseIdx) {
+    let out = '<span style="display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem;">';
+    for (let i = 0; i < 6; i++) {
+        const bg = i < phaseIdx ? 'var(--accent-color)' : (i === phaseIdx ? 'var(--accent-color); opacity: 0.45' : 'var(--border-color)');
+        out += '<span style="width: 12px; height: 6px; border-radius: 3px; background: ' + bg + ';"></span>';
+    }
+    return out + '</span>';
+}
+function hubStrips(mins, cond) {
+    const xs = i => 40 + i * 38;
+    const maxM = Math.max(60, ...mins);
+    let svg = '<svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="Daily minutes and condition, two weeks">';
+    svg += '<text x="0" y="14" font-size="11" font-weight="600" fill="var(--text-muted)">SINGING MINUTES</text>';
+    svg += '<line x1="0" y1="110" x2="560" y2="110" stroke="var(--border-color)"/>';
+    mins.forEach((m, i) => {
+        if (!m) return;
+        const bh = Math.round(m / maxM * 88);
+        svg += '<rect x="' + (xs(i) - 12) + '" y="' + (110 - bh) + '" width="24" height="' + bh + '" rx="2" fill="var(--accent-color)" opacity="0.3"/>';
+        svg += '<text x="' + xs(i) + '" y="' + (110 - bh - 4) + '" font-size="8.5" fill="var(--text-muted)" text-anchor="middle">' + m + '</text>';
+    });
+    svg += '<text x="0" y="142" font-size="11" font-weight="600" fill="var(--text-muted)">VOICE CONDITION (1 TO 5)</text>';
+    svg += '<line x1="0" y1="225" x2="560" y2="225" stroke="var(--border-color)"/>';
+    svg += '<line x1="0" y1="191" x2="560" y2="191" stroke="var(--border-color)" stroke-dasharray="3 5"/>';
+    cond.forEach((c, i) => {
+        if (c == null) return;
+        svg += '<circle cx="' + xs(i) + '" cy="' + Math.round(225 - (c - 1) * 17) + '" r="3.5" fill="var(--primary-color)"/>';
+    });
+    return svg + '</svg>';
+}
+
+
+async function renderTodayPage() {
+    const container = document.getElementById('today-content');
+    container.innerHTML = '<p class="loading-text">Loading...</p>';
+    document.getElementById('today-greeting').textContent = getGreeting();
+    document.getElementById('today-date').textContent = formatDate(todayStr());
+
+    const students = await getStudents();
+    const nameOf = id => { const st = students.find(x => x.id === id); return st ? st.name : null; };
+    const today = todayStr();
+
+    const [draftsRes, briefsRes, reflRes, diaryRes] = await Promise.all([
+        sb.from('lesson_logs').select('id, student_id, date, approved').eq('approved', false).order('date', { ascending: false }).limit(20),
+        sb.from('pre_lesson_briefs').select('id, student_id, date').eq('date', today),
+        sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').order('date_submitted', { ascending: false }).limit(40),
+        sb.from('voice_use_logs').select('*').gte('log_date', addDaysStr(today, -6)),
+    ]);
+    const drafts = (draftsRes.data || []).filter(l => nameOf(l.student_id));
+    const briefs = briefsRes.data || [];
+    const latestRefl = {};
+    (reflRes.data || []).forEach(r => { if (!latestRefl[r.student_id]) latestRefl[r.student_id] = r; });
+    const diary = {};
+    (diaryRes.data || []).forEach(e => {
+        const d = diary[e.student_id] = diary[e.student_id] || { n: 0, min: 0, conds: [], flags: [] };
+        d.n++; d.min += e.minutes || 0;
+        const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+        const c = cv.every(v => v) ? cv.reduce((x, y) => x + y, 0) / 3 : null;
+        if (c) d.conds.push(c);
+        if (e.minutes >= 90 && c && c <= 2.5) d.flags.push(e.log_date + ': ' + e.minutes + ' min with condition ' + c.toFixed(1) + '/5');
+    });
+    Object.values(diary).forEach(d => {
+        d.avg = d.conds.length ? d.conds.reduce((x, y) => x + y, 0) / d.conds.length : null;
+        if (d.avg && d.avg <= 2.5) d.flags.unshift('Average condition ' + d.avg.toFixed(1) + '/5 this week');
+    });
+
+    let html = '';
+
+    html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.5rem;">Needs review</h2>';
+    if (drafts.length) {
+        drafts.forEach(l => {
+            html += '<div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-top: 1px solid var(--border-color); font-size: 14px;">';
+            html += '<strong>' + escapeHtml(nameOf(l.student_id)) + '</strong><span class="text-muted">' + escapeHtml(formatShortDate(l.date)) + ' lesson log</span>';
+            html += '<button class="btn-studio-action" style="margin-left: auto;" data-action-type="review-log" data-action-id="' + l.id + '" data-student-id="' + l.student_id + '">Review + Approve</button></div>';
+        });
+    } else {
+        html += '<p class="text-muted" style="font-size: 13.5px;">Nothing waiting.</p>';
+    }
+    html += '</div>';
+
+    html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.5rem;">Today\'s lessons</h2>';
+    if (briefs.length) {
+        briefs.forEach(b => {
+            const name = nameOf(b.student_id);
+            if (!name) return;
+            const refl = latestRefl[b.student_id];
+            const dg = diary[b.student_id];
+            html += '<div style="padding: 0.6rem 0; border-top: 1px solid var(--border-color);">';
+            html += '<strong>' + escapeHtml(name) + '</strong> ';
+            html += '<button class="btn-studio-action" style="float: right;" data-action-type="view-forecast" data-action-id="' + b.id + '" data-student-id="' + b.student_id + '">Open forecast</button>';
+            if (dg) html += '<span style="display: block; font-size: 12.5px; color: var(--text-muted);">' + dg.n + (dg.n === 1 ? ' log' : ' logs') + ' · ' + dg.min + ' min' + (dg.avg ? ' · condition ' + dg.avg.toFixed(1) + '/5' : '') + '</span>';
+            if (refl && refl.questions) html += '<p style="font-size: 13px; margin: 0.3rem 0 0;"><strong>They ask:</strong> ' + escapeHtml(refl.questions) + '</p>';
+            if (dg) dg.flags.forEach(f => { html += '<p style="font-size: 13px; margin: 0.2rem 0 0; color: #a04545;"><strong>Flag:</strong> ' + escapeHtml(f) + '</p>'; });
+            html += '</div>';
+        });
+    } else {
+        html += '<p class="text-muted" style="font-size: 13.5px;">No forecasts generated today. Forecasts generate at 7:00 AM on lesson days.</p>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.querySelectorAll('.btn-studio-action').forEach(btn => {
+        btn.addEventListener('click', () => handleStudioAction(btn.dataset.actionType, btn.dataset.actionId, btn.dataset.studentId));
+    });
+}
+
+function addDaysStr(dateStr, days) {
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    return d.toLocaleDateString('en-CA');
+}
+
+// ============================================================
+// INBOX
+// ============================================================
+
+
+async function renderInbox() {
+    const container = document.getElementById('inbox-content');
+    container.innerHTML = '<p class="loading-text">Loading inbox...</p>';
+    const students = await getStudents();
+    const nameOf = id => { const st = students.find(x => x.id === id); return st ? st.name : null; };
+    const since = addDaysStr(todayStr(), -14);
+
+    const [reflRes, diaryRes, ckRes, repRes, thrRes, disRes] = await Promise.all([
+        sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').gte('date_submitted', since).order('date_submitted', { ascending: false }),
+        sb.from('voice_use_logs').select('*').gte('log_date', since).order('log_date', { ascending: false }).limit(120),
+        sb.from('voses_checkins').select('*').gte('month', since.slice(0, 7) + '-01'),
+        sb.from('repertoire').select('*').gte('created_at', since).order('created_at', { ascending: false }),
+        sb.from('thread_replies').select('*').order('created_at'),
+        sb.from('inbox_dismissals').select('*'),
+    ]);
+    const threads = thrRes.data || [];
+    const repliesFor = (t, id) => threads.filter(x => x.anchor_type === t && x.anchor_id === id);
+
+    const items = [];
+    (reflRes.data || []).forEach(r => {
+        if (!nameOf(r.student_id)) return;
+        items.push({ kind: 'Reflection', type: 'reflection', id: r.id, sid: r.student_id,
+            date: String(r.date_submitted).slice(0, 10),
+            sum: r.questions || r.lesson_takeaways || 'Reflection submitted',
+            body: ['lesson_takeaways', 'risk_taken', 'questions'].filter(f => r[f]).map(f =>
+                '<p><strong>' + { lesson_takeaways: 'Takeaways', risk_taken: 'Risk taken', questions: 'Questions or goals' }[f] + ':</strong> ' + escapeHtml(r[f]) + '</p>').join('') });
+    });
+    (diaryRes.data || []).forEach(e => {
+        if (!nameOf(e.student_id)) return;
+        const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+        const c = cv.every(v => v) ? (cv.reduce((x, y) => x + y, 0) / 3) : null;
+        const flagged = e.minutes >= 90 && c && c <= 2.5;
+        if (!e.notes && !flagged) return;
+        const parts = [e.kind, e.minutes ? e.minutes + ' min' : null, c ? 'condition ' + c.toFixed(1) + '/5' : null].filter(Boolean).join(' · ');
+        items.push({ kind: 'Practice log', type: 'voice_use_log', id: e.id, sid: e.student_id,
+            date: e.log_date, sum: parts + (e.notes ? ' (' + e.notes + ')' : ''), flagged,
+            body: '<p>' + escapeHtml(parts) + '</p>' + (e.focus ? '<p><strong>Sang:</strong> ' + escapeHtml(e.focus) + '</p>' : '') + (e.notes ? '<p>' + escapeHtml(e.notes) + '</p>' : '') });
+    });
+    (ckRes.data || []).forEach(c => {
+        if (!nameOf(c.student_id)) return;
+        const sum = 'Singing-VoSES: higher + transitions ' + c.mean_higher + ' · middle ' + c.mean_middle + ' · lower ' + c.mean_lower;
+        items.push({ kind: 'Check-in', type: 'voses_checkin', id: c.id, sid: c.student_id,
+            date: String(c.month).slice(0, 10), sum, body: '<p>' + escapeHtml(sum) + ' (of 6)</p>' });
+    });
+    (repRes.data || []).forEach(r => {
+        if (!nameOf(r.student_id)) return;
+        items.push({ kind: 'Repertoire', type: 'repertoire', id: r.id, sid: r.student_id,
+            date: String(r.created_at).slice(0, 10),
+            sum: 'Added "' + r.title + '"' + (r.composer ? ' (' + r.composer + ')' : ''),
+            body: '<p>"' + escapeHtml(r.title) + '"' + (r.composer ? ' (' + escapeHtml(r.composer) + ')' : '') + '</p>' });
+    });
+
+    const dismissals = {};
+    (disRes.data || []).forEach(d => { dismissals[d.anchor_type + '|' + d.anchor_id] = d.dismissed_at; });
+    items.forEach(it => {
+        const reps = repliesFor(it.type, it.id);
+        it.replies = reps;
+        it.lastDate = reps.length ? String(reps[reps.length - 1].created_at).slice(0, 10) : it.date;
+        it.unanswered = !reps.some(r => r.author === 'teacher');
+        it.unreadStudent = reps.some(r => r.author === 'student' && !r.read_by_teacher);
+        const dis = dismissals[it.type + '|' + it.id];
+        it.dismissed = !!dis && !reps.some(r => r.author === 'student' && r.created_at > dis);
+    });
+    const visible = items.filter(it => !it.dismissed);
+    const dismissedCount = items.length - visible.length;
+    items.length = 0;
+    visible.forEach(it => items.push(it));
+    items.sort((a, b) => b.lastDate < a.lastDate ? -1 : 1).reverse();
+    items.sort((a, b) => (b.unanswered || b.unreadStudent ? 1 : 0) - (a.unanswered || a.unreadStudent ? 1 : 0));
+
+    let html = '';
+    if (!items.length) html = '<p class="text-muted">No activity in the last two weeks.</p>';
+    items.forEach((it, idx) => {
+        const dot = (it.unanswered || it.unreadStudent)
+            ? '<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-color); flex-shrink: 0;"></span>'
+            : '<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--border-color); flex-shrink: 0;"></span>';
+        html += '<div class="card" style="margin-bottom: 0.7rem; padding: 0;">';
+        html += '<button class="inbox-head" data-idx="' + idx + '" style="width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;">';
+        html += dot;
+        html += '<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; color: var(--text-muted);">' + it.kind + '</span>';
+        html += '<strong>' + escapeHtml(nameOf(it.sid)) + '</strong>';
+        html += '<span style="color: var(--text-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">' + escapeHtml(String(it.sum).slice(0, 90)) + '</span>';
+        html += '<span style="color: var(--text-muted); font-size: 12px; white-space: nowrap;">' + escapeHtml(formatShortDate(it.lastDate)) + '</span>';
+        html += '</button>';
+        html += '<div class="inbox-body" id="inbox-body-' + idx + '" style="display: none; border-top: 1px solid var(--border-color); padding: 1rem; font-size: 14px;">';
+        html += it.body;
+        html += '<div class="inbox-replies">';
+        it.replies.forEach(r => {
+            const mine = r.author === 'teacher';
+            html += '<div style="border-left: 3px solid var(--border-color); padding: 0.15rem 0 0.15rem 0.85rem; margin: 0.6rem 0;">';
+            html += '<p class="text-muted" style="font-size: 12px; margin: 0 0 0.15rem;">' + (mine ? 'You' : escapeHtml((nameOf(it.sid) || '').split(' ')[0])) + ' · ' + escapeHtml(formatShortDate(String(r.created_at).slice(0, 10))) + '</p>';
+            html += '<p style="margin: 0;">' + escapeHtml(r.body) + '</p></div>';
+        });
+        html += '</div>';
+        html += '<div style="display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.6rem;">';
+        html += '<textarea class="inbox-reply-text" rows="1" style="flex: 1; font: inherit; font-size: 14px; padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Reply..."></textarea>';
+        html += '<button class="btn-studio-action inbox-reply-btn" data-idx="' + idx + '">Reply</button></div>';
+        html += '<p class="text-muted" style="font-size: 12px; margin: 0.4rem 0 0;">Appears in their portal next to this item; they can reply back here.</p>';
+        html += '<div style="margin-top: 0.6rem; text-align: right;"><button class="btn-studio-action inbox-dismiss" data-idx="' + idx + '" style="opacity: 0.75;">Dismiss</button></div>';
+        html += '</div></div>';
+    });
+    if (dismissedCount) html += '<p class="text-muted" style="font-size: 12.5px;">' + dismissedCount + ' dismissed item' + (dismissedCount === 1 ? '' : 's') + ' hidden. Dismissed items return if the student replies.</p>';
+    container.innerHTML = html;
+    window.__inboxItems = items;
+
+    container.querySelectorAll('.inbox-head').forEach(h => {
+        h.addEventListener('click', async () => {
+            const idx = h.dataset.idx;
+            const body = document.getElementById('inbox-body-' + idx);
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+            const it = window.__inboxItems[idx];
+            if (it.unreadStudent) {
+                await sb.from('thread_replies').update({ read_by_teacher: true })
+                    .eq('anchor_type', it.type).eq('anchor_id', it.id).eq('author', 'student');
+                it.unreadStudent = false;
+                updateInboxBadge();
+            }
+        });
+    });
+    container.querySelectorAll('.inbox-dismiss').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const it = window.__inboxItems[btn.dataset.idx];
+            const { error } = await sb.from('inbox_dismissals').upsert(
+                { anchor_type: it.type, anchor_id: it.id, dismissed_at: new Date().toISOString() },
+                { onConflict: 'anchor_type,anchor_id' });
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            await sb.from('thread_replies').update({ read_by_teacher: true })
+                .eq('anchor_type', it.type).eq('anchor_id', it.id).eq('author', 'student');
+            showToast('Dismissed');
+            renderInbox();
+        });
+    });
+    container.querySelectorAll('.inbox-reply-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const idx = btn.dataset.idx;
+            const it = window.__inboxItems[idx];
+            const ta = btn.parentNode.querySelector('.inbox-reply-text');
+            const text = ta.value.trim();
+            if (!text) return;
+            btn.disabled = true;
+            const { error } = await sb.from('thread_replies').insert({
+                student_id: it.sid, anchor_type: it.type, anchor_id: it.id,
+                author: 'teacher', body: text, read_by_teacher: true,
+            });
+            btn.disabled = false;
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Reply sent');
+            renderInbox();
+        });
+    });
+    updateInboxBadge();
+}
+
+async function updateInboxBadge() {
+    try {
+        const { data } = await sb.from('thread_replies').select('id')
+            .eq('author', 'student').eq('read_by_teacher', false);
+        const n = (data || []).length;
+        const b = document.getElementById('inbox-badge');
+        if (!b) return;
+        b.style.display = n ? 'inline-block' : 'none';
+        b.textContent = n;
+    } catch (e) { /* table may not exist yet */ }
+}
+
+// ---- Students hub helpers: jury slots, charts, goals ----
+
+
+// ============================================================
+// STUDENTS HUB (Studio Desk roster)
+// ============================================================
+
+const DESK_PHASES = [
+    ['translation_characterization', 'Translation + Characterization'],
+    ['text_rhythm', 'Text + Rhythm'],
+    ['melody_text_rhythm', 'Melody + Text + Rhythm'],
+    ['characterization_integration', 'Characterization Integration'],
+    ['memorization', 'Memorization'],
+    ['performance_ready', 'Performance Ready'],
+];
+
+function deskMiniStrip(mins, conds) {
+    const w = 220, hh = 54;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + hh + '" width="220" height="' + hh + '" aria-hidden="true" style="flex-shrink: 0;">';
+    const maxM = Math.max(60, ...mins);
+    mins.forEach((m, i) => {
+        if (!m) return;
+        const bh = Math.round(m / maxM * 26);
+        svg += '<rect x="' + (4 + i * 15.4) + '" y="' + (28 - bh) + '" width="10" height="' + bh + '" rx="1.5" fill="var(--student)" opacity="0.35"/>';
+    });
+    conds.forEach((c, i) => {
+        if (c == null) return;
+        svg += '<circle cx="' + (9 + i * 15.4) + '" cy="' + Math.round(52 - (c - 1) * 4.5) + '" r="2.2" fill="var(--ink)"/>';
+    });
+    svg += '<line x1="0" y1="29" x2="' + w + '" y2="29" stroke="var(--line)"/></svg>';
+    return svg;
+}
+
+function deskRail(phaseIdx) {
+    let out = '<span class="mini-rail">';
+    for (let i = 0; i < 6; i++) {
+        out += '<span class="' + (i < phaseIdx ? 'd' : (i === phaseIdx ? 'c' : '')) + '"></span>';
+    }
+    return out + '</span>';
+}
+
+async function renderStudentsHub() {
+    const container = document.getElementById('studio-content');
+    container.innerHTML = '<p class="loading-text">Loading students...</p>';
+    wireHubHandlers();
+
+    const students = await getStudents();
+    const today = todayStr();
+    const since14 = addDaysStr(today, -13);
+
+    const [logsR, plansR, reflR, diaryR, ckR, repR, jpR, jsR, archR] = await Promise.all([
+        sb.from('lesson_logs').select('id, student_id, date, approved, repertoire_worked').order('date', { ascending: false }),
+        sb.from('practice_plans').select('id, student_id, lesson_log_id, status').order('date_generated', { ascending: false }),
+        sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').order('date_submitted', { ascending: false }),
+        sb.from('voice_use_logs').select('*').gte('log_date', since14),
+        sb.from('voses_checkins').select('*'),
+        sb.from('repertoire').select('*'),
+        sb.from('jury_plans').select('*'),
+        sb.from('jury_selections').select('*'),
+        sb.from('students').select('*').neq('status', 'active').order('name'),
+    ]);
+    const logs = logsR.data || [], plans = plansR.data || [], refls = reflR.data || [];
+    const diary = diaryR.data || [], cks = ckR.data || [], reps = repR.data || [];
+    const jplans = jpR.data || [], jsels = jsR.data || [], archived = archR.data || [];
+
+    const logsBy = {}, replBy = {}, repBy = {};
+    logs.forEach(l => (logsBy[l.student_id] = logsBy[l.student_id] || []).push(l));
+    refls.forEach(r => (replBy[r.student_id] = replBy[r.student_id] || []).push(r));
+    reps.forEach(r => (repBy[r.student_id] = repBy[r.student_id] || []).push(r));
+
+    let html = '';
+    students.forEach(s => {
+        const myLogs = logsBy[s.id] || [];
+        const latest = myLogs[0];
+        const myRefl = (replBy[s.id] || []);
+        const reflAfter = latest ? myRefl.find(r => String(r.date_submitted).slice(0, 10) >= latest.date) : null;
+
+        const myDiary = diary.filter(e => e.student_id === s.id);
+        const dayIdx = {};
+        for (let i = 0; i < 14; i++) dayIdx[addDaysStr(today, i - 13)] = i;
+        const mins = new Array(14).fill(0), conds = new Array(14).fill(null);
+        const flags = [];
+        let weekN = 0, weekMin = 0; const weekConds = [];
+        myDiary.forEach(e => {
+            const idx = dayIdx[e.log_date];
+            const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+            const c = cv.every(v => v) ? cv.reduce((x, y) => x + y, 0) / 3 : null;
+            if (idx != null) { mins[idx] += e.minutes || 0; if (c) conds[idx] = c; }
+            if (e.log_date >= addDaysStr(today, -6)) {
+                weekN++; weekMin += e.minutes || 0; if (c) weekConds.push(c);
+                if (e.minutes >= 90 && c && c <= 2.5) flags.push(e.log_date + ': ' + e.minutes + ' min with condition ' + c.toFixed(1) + '/5');
+            }
+        });
+        const weekAvg = weekConds.length ? weekConds.reduce((x, y) => x + y, 0) / weekConds.length : null;
+        if (weekAvg && weekAvg <= 2.5) flags.unshift('Average condition ' + weekAvg.toFixed(1) + '/5 this week');
+
+        const snapParts = [];
+        if (latest) snapParts.push('Last lesson ' + formatShortDate(latest.date) + (latest.approved ? '' : ' · log needs review'));
+        snapParts.push(reflAfter ? 'reflection submitted' : 'reflection due');
+        snapParts.push(weekN ? weekN + (weekN === 1 ? ' log' : ' logs') + ' · ' + weekMin + ' min' : 'no logs this week');
+        if (weekAvg) snapParts.push('condition ' + weekAvg.toFixed(1) + '/5');
+        const snap = snapParts.join(' · ') + (flags.length ? ' · <span class="flag">' + flags.length + (flags.length === 1 ? ' flag' : ' flags') + '</span>' : '');
+
+        // Jury plan
+        const plan = jplans.find(p => p.student_id === s.id && p.semester === 'Fall 2026');
+        let juryHtml = '';
+        if (plan) {
+            const slots = JURY_SLOTS[plan.program_key] || ['Selection 1', 'Selection 2', 'Selection 3'];
+            const sels = jsels.filter(x => x.jury_plan_id === plan.id);
+            const filled = slots.filter(sl => sels.some(x => x.requirement_slot === sl && x.status === 'accepted')).length;
+            juryHtml += '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Repertoire · ' + filled + ' of ' + slots.length + ' jury slots filled</h3>';
+            juryHtml += '<p class="meta" style="margin: 0 0 0.5rem;">' + escapeHtml(plan.program_key.replace(/_/g, ' ')) + (plan.jury_date ? ' · jury ' + formatShortDate(plan.jury_date) : '') + (plan.notes ? ' · ' + escapeHtml(plan.notes) : '') + '</p>';
+            slots.forEach((sl, slotIdx) => {
+                const sel = sels.find(x => x.requirement_slot === sl && x.status === 'accepted');
+                const fid = 'sf-' + plan.id + '-' + slotIdx;
+                juryHtml += '<div class="slot' + (sel ? '' : ' empty') + '">';
+                juryHtml += '<span class="req">' + escapeHtml(sl) + '</span>';
+                if (sel) {
+                    const rr = (repBy[s.id] || []).find(r => r.title && sel.title && r.title.toLowerCase() === sel.title.toLowerCase());
+                    const pi = rr ? Math.max(0, DESK_PHASES.findIndex(p => p[0] === rr.learning_phase)) : null;
+                    juryHtml += '<span class="piece">"' + escapeHtml(sel.title) + '"' + (sel.composer ? ' (' + escapeHtml(sel.composer) + ')' : '') + '</span>';
+                    if (pi != null) juryHtml += deskRail(pi) + '<span class="phase">' + DESK_PHASES[pi][1] + '</span>';
+                    juryHtml += '<button class="btn ghost slot-open" data-fid="' + fid + '">Change</button>';
+                    juryHtml += '<div class="slot-form" id="' + fid + '"><input type="text" class="sf-t" value="' + escapeHtml(sel.title) + '" placeholder="Title"><input type="text" class="sf-c" value="' + escapeHtml(sel.composer || '') + '" placeholder="Composer or show"><button class="btn teacher-bg slot-change" data-sel-id="' + sel.id + '" data-fid="' + fid + '">Replace</button><button class="btn ghost slot-clear" data-sel-id="' + sel.id + '">Clear slot</button></div>';
+                } else {
+                    juryHtml += '<button class="btn ghost slot-open" data-fid="' + fid + '">Assign piece</button>';
+                    juryHtml += '<div class="slot-form" id="' + fid + '"><input type="text" class="sf-t" placeholder="Title"><input type="text" class="sf-c" placeholder="Composer or show"><button class="btn teacher-bg slot-assign" data-plan-id="' + plan.id + '" data-slot="' + escapeHtml(sl) + '" data-fid="' + fid + '">Assign</button></div>';
+                }
+                juryHtml += '</div>';
+            });
+            const pool = sels.filter(x => x.status === 'proposed');
+            if (pool.length) {
+                juryHtml += '<p class="pool">Proposed: ' + pool.map(x =>
+                    '"' + escapeHtml(x.title) + '" <button class="btn ghost slot-accept" data-sel-id="' + x.id + '" style="font-size: 11px; padding: 0.15rem 0.5rem;">Accept into slot</button>').join(' · ') + '</p>';
+            }
+        } else {
+            const pk = programKeyFor(s);
+            juryHtml += '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Repertoire</h3>';
+            juryHtml += pk
+                ? '<button class="btn teacher-bg plan-start" data-student-id="' + s.id + '" data-pk="' + pk + '">Start Fall 2026 jury plan (' + pk.replace(/_/g, ' ') + ')</button>'
+                : '<p class="meta">No jury requirements mapped for ' + escapeHtml(s.degree_program || 'this program') + '.</p>';
+        }
+
+        // Analytics
+        let anHtml = '';
+        if (myDiary.length) {
+            anHtml += '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Analytics</h3>' + hubStrips(mins, conds);
+            const myCk = cks.filter(c => c.student_id === s.id).sort((a, b) => String(a.month) < String(b.month) ? -1 : 1);
+            if (myCk.length) {
+                const last = myCk[myCk.length - 1];
+                anHtml += '<p style="font-size: 13px; margin: 0.5rem 0 0;"><strong>Singing-VoSES ' + escapeHtml(String(last.month).slice(0, 7)) + ':</strong> higher + transitions ' + last.mean_higher + ' · middle ' + last.mean_middle + ' · lower ' + last.mean_lower + ' (of 6)</p>';
+            }
+        }
+
+        // History (teacher layer)
+        let histHtml = '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Lesson history</h3>';
+        myLogs.slice(0, 6).forEach(l => {
+            let repw = l.repertoire_worked;
+            if (typeof repw === 'string') { try { repw = JSON.parse(repw); } catch (e) { repw = []; } }
+            const sum = (repw && repw.length ? repw.map(x => String(x).split(':')[0].replace(/\*/g, '').slice(0, 30)).slice(0, 2).join(', ') + ' · ' : '') + (l.approved ? 'approved' : 'draft, needs review');
+            histHtml += '<div class="hist-row" style="align-items: center;"><span class="d">' + formatShortDate(l.date) + '</span><span style="flex: 1;">' + escapeHtml(sum) + '</span>';
+            histHtml += '<button class="btn ' + (l.approved ? 'ghost' : 'teacher-bg') + ' hist-review" data-lesson-id="' + l.id + '" data-student-id="' + s.id + '">' + (l.approved ? 'View log' : 'Review + Approve') + '</button></div>';
+        });
+
+        const row = '<div class="roster-row' + (flags.length ? ' roster-flag' : '') + '">' +
+            '<button class="roster-head" style="flex-wrap: wrap;">' +
+            '<strong>' + escapeHtml(s.name) + '</strong>' +
+            '<span class="snap" style="flex: 1 1 240px;">' + snap + '</span>' +
+            deskMiniStrip(mins, conds) +
+            '</button>' +
+            '<div class="roster-body">' +
+            (reflAfter && reflAfter.questions ? '<div class="ask"><b>They ask:</b> ' + escapeHtml(reflAfter.questions) + '</div>' : '') +
+            flags.map(f => '<p class="flag" style="font-size: 13.5px; margin: 0 0 0.3rem;">' + escapeHtml(f) + '</p>').join('') +
+            (reflAfter && reflAfter.risk_taken ? '<p style="font-size: 13.5px;"><strong>Risk taken:</strong> ' + escapeHtml(reflAfter.risk_taken) + '</p>' : '') +
+            juryHtml + anHtml +
+            '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Semester goals</h3>' +
+            '<div class="goals-edit"><textarea rows="3" class="goals-text" data-student-id="' + s.id + '">' + escapeHtml(s.goals || '') + '</textarea>' +
+            '<div style="margin-top: 0.4rem;"><button class="btn teacher-bg goals-save" data-student-id="' + s.id + '">Save goals</button></div></div>' +
+            histHtml +
+            '<div style="display: flex; gap: 0.5rem; margin-top: 1rem;">' +
+            '<button class="btn ghost view-portal" data-student-id="' + s.id + '">View portal</button>' +
+            '<button class="btn ghost goto-inbox">Reply in inbox</button>' +
+            '</div></div></div>';
+        html += row;
+    });
+
+    if (archived.length) {
+        html += '<details style="margin-top: 1.5rem;"><summary style="cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">Archived (' + archived.length + ')</summary>';
+        archived.forEach(a => {
+            const n = (logsBy[a.id] || []).length;
+            html += '<div class="roster-row" style="margin-top: 0.6rem;"><div class="roster-head" style="cursor: default;"><strong>' + escapeHtml(a.name) + '</strong><span class="snap">' + n + ' lessons on record</span><button class="btn ghost view-portal" data-student-id="' + a.id + '" style="margin-left: auto;">View portal</button></div></div>';
+        });
+        html += '</details>';
+    }
+
+    container.innerHTML = html || '<div class="empty-state"><h2>No active students</h2></div>';
+}
+
+let hubWired = false;
+function wireHubHandlers() {
+    if (hubWired) return;
+    hubWired = true;
+    const container = document.getElementById('studio-content');
+    container.addEventListener('click', async e => {
+        const t = e.target;
+        if (t.closest('.roster-head') && !t.closest('button.btn')) {
+            const row = t.closest('.roster-row');
+            if (row && !row.closest('details')) row.classList.toggle('open');
+            return;
+        }
+        if (t.classList.contains('slot-open')) {
+            const f = document.getElementById(t.dataset.fid);
+            if (f) f.classList.toggle('open');
+        } else if (t.classList.contains('slot-assign') || t.classList.contains('slot-change')) {
+            const f = document.getElementById(t.dataset.fid);
+            const title = f.querySelector('.sf-t').value.trim();
+            if (!title) { showToast('Enter a title.'); return; }
+            const composer = f.querySelector('.sf-c').value.trim() || null;
+            let error;
+            if (t.classList.contains('slot-assign')) {
+                ({ error } = await sb.from('jury_selections').insert({
+                    jury_plan_id: t.dataset.planId, requirement_slot: t.dataset.slot,
+                    title, composer, status: 'accepted', proposed_by: 'teacher' }));
+            } else {
+                ({ error } = await sb.from('jury_selections').update({ title, composer }).eq('id', t.dataset.selId));
+            }
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast(t.classList.contains('slot-assign') ? 'Assigned' : 'Changed');
+            renderStudentsHub();
+        } else if (t.classList.contains('slot-clear')) {
+            const { error } = await sb.from('jury_selections').update({ status: 'dropped' }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('Slot cleared');
+            renderStudentsHub();
+        } else if (t.classList.contains('slot-accept')) {
+            const slot = prompt('Which requirement slot does this piece fill? (exactly as listed)');
+            if (!slot) return;
+            const { error } = await sb.from('jury_selections').update({ status: 'accepted', requirement_slot: slot.trim() }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('Accepted into slot');
+            renderStudentsHub();
+        } else if (t.classList.contains('plan-start')) {
+            const { error } = await sb.from('jury_plans').insert({
+                student_id: t.dataset.studentId, program_key: t.dataset.pk,
+                semester: 'Fall 2026', status: 'planning', jury_date: '2026-12-05' });
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('Jury plan started');
+            renderStudentsHub();
+        } else if (t.classList.contains('goals-save')) {
+            const ta = container.querySelector('textarea.goals-text[data-student-id="' + t.dataset.studentId + '"]');
+            const { error } = await sb.from('students').update({ goals: ta.value }).eq('id', t.dataset.studentId);
+            if (error) { showToast('Error: ' + error.message); return; }
+            studentsCache = null;
+            showToast('Goals saved to their Analytics page');
+        } else if (t.classList.contains('hist-review')) {
+            handleStudioAction('review-log', t.dataset.lessonId, t.dataset.studentId);
+        } else if (t.classList.contains('view-portal')) {
+            window.open('dashboard.html?view_as=' + t.dataset.studentId, '_blank');
+        } else if (t.classList.contains('goto-inbox')) {
+            navigateTo('inbox');
+        }
+    });
+}
+function renderStudio() { return renderStudentsHub(); }
+
+// ============================================================
+// ANNOUNCEMENTS (Studio Desk)
+// ============================================================
+
+async function renderAnnouncementsDesk() {
+    const list = document.getElementById('ann-list');
+    list.innerHTML = '<p class="loading-text">Loading...</p>';
+    const { data } = await sb.from('studio_announcements').select('*').order('created_at', { ascending: false }).limit(30);
+    const anns = data || [];
+    list.innerHTML = anns.length ? anns.map(a =>
+        '<div class="hist-row" style="display: block;">' +
+        '<p class="meta" style="margin: 0 0 0.15rem;">' + formatShortDate(String(a.created_at).slice(0, 10)) +
+        (a.expires_at ? ' · expires ' + formatShortDate(a.expires_at) : '') +
+        ' <button class="btn ghost ann-del" data-id="' + a.id + '" style="float: right; font-size: 11px; padding: 0.15rem 0.5rem;">Delete</button></p>' +
+        (a.title ? '<p style="margin: 0; font-weight: 600;">' + escapeHtml(a.title) + '</p>' : '') +
+        '<p style="margin: 0; font-size: 14px;">' + escapeHtml(a.body || '') + '</p></div>').join('')
+        : '<p class="meta">Nothing posted.</p>';
+    list.querySelectorAll('.ann-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this announcement?')) return;
+        await sb.from('studio_announcements').delete().eq('id', b.dataset.id);
+        renderAnnouncementsDesk();
+    }));
+}
+document.getElementById('ann-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const title = document.getElementById('ann-title').value.trim();
+    const body = document.getElementById('ann-body').value.trim();
+    const expires = document.getElementById('ann-expires').value || null;
+    if (!body) { showToast('Write the announcement.'); return; }
+    const { error } = await sb.from('studio_announcements').insert({ title: title || null, body, expires_at: expires });
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Posted to all student dashboards; emails go out within five minutes');
+    document.getElementById('ann-form').reset();
+    renderAnnouncementsDesk();
+});
+
+async function handleStudioAction(type, id, studentId) {
+    if (type === 'review-log' || type === 'view-log') {
+        // Trigger the existing log review modal
+        const btn = document.createElement('button');
+        btn.classList.add('btn-review-log');
+        btn.dataset.lessonId = id;
+        btn.dataset.studentId = studentId || '';
+        btn.style.display = 'none';
+        document.body.appendChild(btn);
+        btn.click();
+        btn.remove();
+    } else if (type === 'view-plan') {
+        // Show practice plan in read-only modal
+        try {
+            const { data: plan } = await sb.from('practice_plans').select('content, date_generated').eq('lesson_log_id', id).single();
+            if (plan) {
+                showArtifactModal('Practice Plan', plan.content ? markdownToHtml(plan.content) : '<p class="text-muted">No content.</p>', plan.date_generated ? 'Generated ' + formatShortDate(plan.date_generated) : '');
+            }
+        } catch (err) { showToast('Could not load practice plan.'); }
+    } else if (type === 'view-reflection') {
+        try {
+            const { data: ref } = await sb.from('reflections').select('*').eq('id', id).single();
+            if (ref) {
+                let content = '';
+                if (ref.practice_summary) content += '<p><strong>Practice Summary</strong></p><p>' + escapeHtml(ref.practice_summary) + '</p>';
+                if (ref.self_observations) content += '<p><strong>Self-Observations</strong></p><p>' + escapeHtml(ref.self_observations) + '</p>';
+                if (ref.voice_feeling) content += '<p><strong>Voice Feeling:</strong> ' + ref.voice_feeling + '/10</p>';
+                if (ref.engagement) content += '<p><strong>Engagement:</strong> ' + ref.engagement + '/10</p>';
+                if (ref.artistic_confidence) content += '<p><strong>Artistic Confidence:</strong> ' + ref.artistic_confidence + '/10</p>';
+                if (ref.questions) content += '<p><strong>Questions</strong></p><p>' + escapeHtml(ref.questions) + '</p>';
+                if (ref.wins) content += '<p><strong>Wins</strong></p><p>' + escapeHtml(ref.wins) + '</p>';
+                showArtifactModal('Student Reflection', content, 'Submitted ' + formatShortDate(ref.date_submitted));
+            }
+        } catch (err) { showToast('Could not load reflection.'); }
+    } else if (type === 'view-forecast') {
+        try {
+            const { data: brief } = await sb.from('pre_lesson_briefs').select('full_brief, lesson_plan, date').eq('id', id).single();
+            if (brief) {
+                const content = brief.full_brief ? markdownToHtml(brief.full_brief) : (brief.lesson_plan ? markdownToHtml(brief.lesson_plan) : '<p class="text-muted">No content.</p>');
+                showArtifactModal('Lesson Forecast', content, 'Generated ' + formatShortDate(brief.date));
+            }
+        } catch (err) { showToast('Could not load forecast.'); }
+    }
+}
+
+function showArtifactModal(title, htmlContent, subtitle) {
+    const modal = document.getElementById('artifact-modal');
+    const body = document.getElementById('artifact-modal-body');
+    let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">';
+    html += '<div><h2 style="margin: 0;">' + escapeHtml(title) + '</h2>';
+    if (subtitle) html += '<p style="font-size: 13px; color: var(--text-muted); margin: 0.25rem 0 0;">' + escapeHtml(subtitle) + '</p>';
+    html += '</div>';
+    html += '<button onclick="closeArtifactModal()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
+    html += '</div>';
+    html += '<div class="brief-content">' + htmlContent + '</div>';
+    body.innerHTML = html;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeArtifactModal() {
+    document.getElementById('artifact-modal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('artifact-modal').style.display === 'block') {
+        closeArtifactModal();
+    }
+});
+
+// Keep old function name references for backward compatibility
+
+// Old renderToday/renderPulse code has been removed. renderStudio replaces both.
+
+
+// ============================================================
+// STUDENTS VIEW
+// ============================================================
+
+
+const LOG_EDITABLE_FIELDS = [
+    { key: 'head_observations', label: 'Head (intention + motor learning)' },
+    { key: 'heart_observations', label: 'Heart (expression)' },
+    { key: 'hand_observations', label: 'Hand (function)' },
+    { key: 'motor_learning_phase', label: 'Motor Learning Phase' },
+    { key: 'warmth_brightness_notes', label: 'Warmth/Brightness/Buzziness' },
+    { key: 'ease_assessment', label: 'Ease Assessment' },
+    { key: 'breakthroughs', label: 'Breakthroughs' },
+    { key: 'pivots', label: 'Pivots' },
+    { key: 'next_steps', label: 'Next Steps' },
+];
+
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-review-log');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    btn.textContent = 'Loading...';
+    btn.disabled = true;
+
+    const lessonId = btn.dataset.lessonId;
+    const studentId = btn.dataset.studentId;
+
+    let lesson;
+    try {
+        const res = await sb.from('lesson_logs').select('*').eq('id', lessonId).single();
+        lesson = res.data;
+    } catch (err) {
+        console.error('Review fetch error:', err);
+        showToast('Error loading lesson: ' + (err.message || 'Unknown'));
+        btn.textContent = 'Review';
+        btn.disabled = false;
+        return;
+    }
+    if (!lesson) { showToast('Could not load lesson log.'); btn.textContent = 'Review'; btn.disabled = false; return; }
+
+    const students = await getStudents();
+    const student = students.find(s => s.id === studentId);
+    const studentName = student ? student.name : 'Student';
+
+    // Parse JSON fields
+    let repWorked = lesson.repertoire_worked;
+    if (typeof repWorked === 'string') try { repWorked = JSON.parse(repWorked); } catch(e) {}
+    let exercises = lesson.exercises;
+    if (typeof exercises === 'string') try { exercises = JSON.parse(exercises); } catch(e) {}
+    let categories = lesson.exercise_categories_addressed || [];
+
+    // Build overlay
+    let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">';
+    html += '<div><h2 style="margin:0;">' + escapeHtml(studentName) + ' : ' + escapeHtml(formatDate(lesson.date)) + '</h2>';
+    html += '<span class="draft-badge" style="margin-top: 0.25rem; display: inline-block;">' + (lesson.approved ? 'Approved' : 'Draft') + '</span>';
+    if (lesson.duration_minutes) html += '<span style="color: var(--text-muted); font-size: 13px; margin-left: 0.75rem;">' + lesson.duration_minutes + ' min</span>';
+    html += '</div>';
+    html += '<button onclick="closeLogReview()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
+    html += '</div>';
+
+    // Repertoire worked (editable)
+    html += '<div class="section-label">Repertoire Worked</div>';
+    const repText = Array.isArray(repWorked)
+        ? repWorked.map((r, i) => (i+1) + '. ' + (typeof r === 'string' ? r : (r.title || r.name || JSON.stringify(r)))).join('\n')
+        : String(repWorked || '');
+    html += '<textarea class="log-edit-field" data-field="repertoire_worked" data-is-list="true" style="width: 100%; min-height: 60px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;">' + escapeHtml(repText) + '</textarea>';
+    html += '<p style="font-size: 11px; color: var(--text-muted); margin-top: 0.2rem;">One piece per line. Numbering is optional.</p>';
+
+    // Exercises (editable)
+    html += '<div class="section-label" style="margin-top: 1rem;">Exercises</div>';
+    const exText = Array.isArray(exercises) && exercises.length > 0
+        ? exercises.map((ex, i) => {
+            const name = ex.name || ex.Name || ('Exercise ' + (i+1));
+            const purpose = ex.functional_purpose || ex.purpose || '';
+            return name + (purpose ? ' : ' + purpose : '');
+          }).join('\n')
+        : '';
+    html += '<textarea class="log-edit-field" data-field="exercises" data-is-exercises="true" style="width: 100%; min-height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;">' + escapeHtml(exText) + '</textarea>';
+    html += '<p style="font-size: 11px; color: var(--text-muted); margin-top: 0.2rem;">One exercise per line. Format: Name : Functional purpose</p>';
+
+    // Exercise categories (editable checkboxes)
+    html += '<div class="section-label" style="margin-top: 1rem;">Exercise Categories</div>';
+    html += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">';
+    ALL_CATEGORIES.forEach(c => {
+        const checked = categories.includes(c) ? 'checked' : '';
+        html += '<label style="font-size: 13px; display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">';
+        html += '<input type="checkbox" class="log-cat-checkbox" value="' + c + '" ' + checked + '>';
+        html += escapeHtml(CATEGORY_LABELS[c]) + '</label>';
+    });
+    html += '</div>';
+
+    // Editable text fields
+    LOG_EDITABLE_FIELDS.forEach(f => {
+        const val = lesson[f.key] || '';
+        html += '<div class="section-label" style="margin-top: 1rem;">' + escapeHtml(f.label) + '</div>';
+        html += '<textarea class="log-edit-field" data-field="' + f.key + '" style="width: 100%; min-height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;">' + escapeHtml(val) + '</textarea>';
+    });
+
+    // Action buttons
+    html += '<div style="display: flex; gap: 0.5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">';
+    html += '<button id="log-save-btn" data-lesson-id="' + lessonId + '" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 1rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Save Changes</button>';
+    html += '<button id="log-save-approve-btn" data-lesson-id="' + lessonId + '" data-student-id="' + studentId + '" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 1rem; border-radius: 3px; background: #5a8a5a; color: #fff; border: none; cursor: pointer; font-family: inherit;">Save + Approve</button>';
+    html += '<button onclick="closeLogReview()" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 1rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">Cancel</button>';
+    html += '</div>';
+
+    // Show overlay
+    const overlay = document.getElementById('log-review-overlay');
+    document.getElementById('log-review-body').innerHTML = html;
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Reset button
+    btn.textContent = 'Review';
+    btn.disabled = false;
+});
+
+function closeLogReview() {
+    document.getElementById('log-review-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+async function saveLogEdits(lessonId, andApprove) {
+    const body = document.getElementById('log-review-body');
+    const updates = {};
+
+    // Gather text fields (handle special types)
+    body.querySelectorAll('.log-edit-field').forEach(ta => {
+        const field = ta.dataset.field;
+        const val = ta.value;
+
+        if (ta.dataset.isList === 'true') {
+            // Parse numbered list back to array of strings
+            const items = val.split('\n')
+                .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                .filter(Boolean);
+            updates[field] = JSON.stringify(items);
+        } else if (ta.dataset.isExercises === 'true') {
+            // Parse "Name : Purpose" lines back to exercise objects
+            const items = val.split('\n').filter(line => line.trim()).map(line => {
+                const parts = line.split(' : ');
+                const obj = { name: parts[0].trim() };
+                if (parts[1]) obj.functional_purpose = parts[1].trim();
+                return obj;
+            });
+            updates[field] = JSON.stringify(items);
+        } else {
+            updates[field] = val;
+        }
+    });
+
+    // Gather categories
+    const cats = [];
+    body.querySelectorAll('.log-cat-checkbox:checked').forEach(cb => {
+        cats.push(cb.value);
+    });
+    updates.exercise_categories_addressed = cats;
+
+    if (andApprove) updates.approved = true;
+
+    try {
+        await sb.from('lesson_logs').update(updates).eq('id', lessonId);
+        closeLogReview();
+        showToast(andApprove ? 'Saved and approved.' : 'Changes saved.');
+
+        // Refresh current view
+        const activeNav = document.querySelector('.nav-item.active');
+        if (activeNav) activeNav.click();
+    } catch (err) {
+        showToast('Error saving: ' + (err.message || 'Unknown error'));
+    }
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'log-save-btn') {
+        saveLogEdits(e.target.dataset.lessonId, false);
+    }
+    if (e.target.id === 'log-save-approve-btn') {
+        saveLogEdits(e.target.dataset.lessonId, true);
+    }
+});
+
+// Close log review with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('log-review-overlay').style.display === 'block') {
+        closeLogReview();
+    }
+});
+
+
+// ============================================================
+// BOOT
+// ============================================================
+
+// ============================================================
+// LESSON APPROVAL + PRACTICE PLAN GENERATION
+// ============================================================
+
+document.addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('btn-approve')) return;
+
+    const btn = e.target;
+    const lessonId = btn.dataset.lessonId;
+    const studentId = btn.dataset.studentId;
+
+    btn.disabled = true;
+    btn.textContent = 'Approving...';
+    btn.style.opacity = '0.6';
+
+    try {
+        // Mark lesson as approved in Supabase
+        await sb.from('lesson_logs').update({ approved: true }).eq('id', lessonId);
+
+        // Update UI
+        btn.textContent = 'Approved';
+        btn.style.background = 'rgba(90, 138, 90, 0.12)';
+        btn.style.color = '#5a8a5a';
+        btn.style.opacity = '1';
+        btn.style.cursor = 'default';
+
+        showToast('Lesson approved. Practice plan will generate shortly.');
+    } catch (err) {
+        console.error('Approval error:', err);
+        btn.textContent = 'Error, retry';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        showToast('Error: ' + (err.message || 'Failed to approve'));
+    }
+});
+
+async function generatePracticePlan(student, lesson) {
+    const repWorked = typeof lesson.repertoire_worked === 'string'
+        ? JSON.parse(lesson.repertoire_worked) : (lesson.repertoire_worked || []);
+    const exercises = typeof lesson.exercises === 'string'
+        ? JSON.parse(lesson.exercises) : (lesson.exercises || []);
+
+    let prompt = `Generate a practice plan for this student based on their most recent lesson.\n\n`;
+    prompt += `## Student: ${student.name}\n`;
+    prompt += `- Voice type: ${student.voice_type || 'Not specified'}\n`;
+    prompt += `- Program: ${student.degree_program || 'Not specified'}\n\n`;
+    prompt += `## Lesson Date: ${lesson.date}\n\n`;
+
+    if (repWorked.length > 0) {
+        prompt += `### Repertoire Worked\n`;
+        repWorked.forEach(r => { prompt += `- ${typeof r === 'string' ? r : r.title || JSON.stringify(r)}\n`; });
+        prompt += '\n';
+    }
+
+    if (exercises.length > 0) {
+        prompt += `### Exercises Used\n`;
+        exercises.forEach(ex => {
+            prompt += `- **${ex.name || 'Unnamed'}**: ${ex.pattern || ''}\n`;
+            if (ex.functional_purpose) prompt += `  - Purpose: ${ex.functional_purpose}\n`;
+            if (ex.category) prompt += `  - Category: ${ex.category}\n`;
+        });
+        prompt += '\n';
+    }
+
+    prompt += `### Observations\n`;
+    prompt += `- **Head**: ${lesson.head_observations || 'Not recorded'}\n`;
+    prompt += `- **Heart**: ${lesson.heart_observations || 'Not recorded'}\n`;
+    prompt += `- **Hand**: ${lesson.hand_observations || 'Not recorded'}\n`;
+    prompt += `- **Motor learning**: ${lesson.motor_learning_phase || 'Not recorded'}\n`;
+    prompt += `- **Warmth/brightness/buzziness**: ${lesson.warmth_brightness_notes || 'Not recorded'}\n`;
+    prompt += `- **Ease**: ${lesson.ease_assessment || 'Not recorded'}\n\n`;
+
+    if (lesson.breakthroughs) prompt += `### Breakthroughs\n${lesson.breakthroughs}\n\n`;
+    if (lesson.next_steps) prompt += `### Next Steps\n${lesson.next_steps}\n\n`;
+
+    prompt += `## Instructions\n\n`;
+    prompt += `Write a practice plan that:\n`;
+    prompt += `1. Lists each exercise with what it sounds like, what it's for, how it connects to repertoire, and what to listen for (warmth, brightness, buzziness)\n`;
+    prompt += `2. Includes practice structure guidance (session length, fatigue awareness, when to stop)\n`;
+    prompt += `3. Includes repertoire work plan with sections to focus on and functional skills to apply\n`;
+    prompt += `4. Includes an "Areas for Growth" section framed positively\n`;
+    prompt += `5. Be concise and actionable. Address the student directly. No em dashes.\n`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: PRACTICE_PLAN_MODEL,
+            max_tokens: 3000,
+            system: PRACTICE_PLAN_SYSTEM,
+            messages: [{ role: 'user', content: prompt }]
+        })
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error('Claude API error: ' + response.status + ' ' + errText.substring(0, 200));
+    }
+
+    const data = await response.json();
+    return data.content[0].text;
+}
+
+// ============================================================
+// JURY PLAN ACTIONS
+// ============================================================
+
+document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('btn-jury-approve')) {
+        const btn = e.target;
+        const selId = btn.dataset.selId;
+        btn.disabled = true;
+        btn.textContent = 'Approving...';
+        btn.style.opacity = '0.6';
+        try {
+            await sb.from('jury_selections').update({ status: 'accepted' }).eq('id', selId);
+            btn.textContent = 'Approved';
+            btn.style.background = 'rgba(90, 138, 90, 0.12)';
+            btn.style.color = '#5a8a5a';
+            btn.style.cursor = 'default';
+            btn.style.opacity = '1';
+            // Remove the adjacent drop button
+            const dropBtn = btn.parentElement.querySelector('.btn-jury-drop');
+            if (dropBtn) dropBtn.remove();
+            showToast('Selection approved.');
+        } catch (err) {
+            btn.textContent = 'Error';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            showToast('Error: ' + (err.message || 'Failed to approve'));
+        }
+    }
+
+    if (e.target.classList.contains('btn-jury-drop')) {
+        const btn = e.target;
+        const selId = btn.dataset.selId;
+        btn.disabled = true;
+        btn.textContent = 'Dropping...';
+        try {
+            await sb.from('jury_selections').update({ status: 'dropped' }).eq('id', selId);
+            const row = btn.closest('tr');
+            if (row) {
+                row.style.textDecoration = 'line-through';
+                row.style.color = 'var(--text-muted)';
+            }
+            btn.textContent = 'Dropped';
+            btn.style.cursor = 'default';
+            // Remove the adjacent approve button
+            const approveBtn = btn.parentElement.querySelector('.btn-jury-approve');
+            if (approveBtn) approveBtn.remove();
+            showToast('Selection dropped.');
+        } catch (err) {
+            btn.textContent = 'Error';
+            btn.disabled = false;
+            showToast('Error: ' + (err.message || 'Failed to drop'));
+        }
+    }
+});
+
+document.addEventListener('submit', async (e) => {
+    if (!e.target.classList.contains('teacher-add-piece-form')) return;
+    e.preventDefault();
+    const form = e.target;
+    const studentId = form.dataset.studentId;
+    const planId = form.dataset.planId;
+    const title = form.querySelector('[name="piece-title"]').value.trim();
+    const composer = form.querySelector('[name="piece-composer"]').value.trim();
+    const style = form.querySelector('[name="piece-style"]')?.value || '';
+    const jurySlotEl = form.querySelector('[name="piece-jury-slot"]');
+    const jurySlot = jurySlotEl ? jurySlotEl.value : '';
+
+    if (!title) return;
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+
+    try {
+        // Add to repertoire
+        const record = {
+            student_id: studentId,
+            title: title,
+            composer: composer || null,
+            style: style || null,
+            status: 'in_progress',
+            assignment_type: 'short_term',
+        };
+        if (jurySlot) {
+            record.jury_slot = jurySlot;
+            record.jury_status = 'proposed';
+            record.proposed_by = 'teacher';
+        }
+
+        await sb.from('repertoire').insert(record);
+
+        // If jury slot selected and plan exists, also create jury_selection
+        if (jurySlot && planId) {
+            await sb.from('jury_selections').insert({
+                jury_plan_id: planId,
+                requirement_slot: jurySlot,
+                title: title,
+                composer: composer || null,
+                proposed_by: 'teacher',
+                status: 'proposed',
+            });
+        }
+
+        form.reset();
+        btn.disabled = false;
+        btn.textContent = 'Add';
+        showToast(jurySlot ? 'Piece added and proposed for jury.' : 'Piece added to repertoire.');
+
+        renderStudentsHub();
+    } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Add';
+        showToast('Error: ' + (err.message || 'Failed to add piece'), 'error');
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>

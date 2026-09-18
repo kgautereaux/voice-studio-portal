@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard — Voice Studio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        /* ============================================================
+           DASHBOARD ENHANCEMENTS
+           ============================================================ */
+
+        /* Login warmth */
+        .dash-login-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 2rem 1.5rem;
+        }
+        .dash-login-inner {
+            max-width: 380px;
+            width: 100%;
+        }
+        .dash-login-greeting {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            color: var(--primary-color);
+        }
+        .dash-login-subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .dash-login-inner .login-container {
+            margin: 0;
+            max-width: none;
+            padding: 0;
+        }
+        .dash-login-inner .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .dash-login-inner input[type="text"],
+        .dash-login-inner input[type="password"] {
+            padding: 0.75rem 0.85rem;
+            font-size: 15px;
+            border-radius: 2px;
+        }
+        .dash-login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Dashboard welcome area */
+        .dash-welcome {
+            padding: 1.5rem 0 0.5rem;
+        }
+        .dash-welcome h1 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+        .dash-welcome-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        /* Card grid polish */
+        .dashboard-grid {
+            margin: 1.75rem 0 2rem;
+        }
+        .dash-card {
+            border-radius: 2px;
+            position: relative;
+            padding: 1.5rem;
+        }
+        .dash-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0.75rem;
+            right: 0.75rem;
+            width: 16px;
+            height: 16px;
+            border-right: 1.5px solid var(--border-color);
+            border-bottom: 1.5px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        .dash-card:hover::after {
+            border-color: var(--accent-color);
+        }
+        .dash-card-label {
+            margin-bottom: 0.6rem;
+        }
+        .dash-card-value {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Detail panels: distinct from dashboard */
+        .dash-detail-wrap {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 2rem 2.5rem;
+            margin-top: 0.5rem;
+        }
+        .dash-detail-wrap h2 {
+            margin-top: 0.5rem;
+        }
+        .dash-detail-wrap .detail-back {
+            margin-bottom: 1.25rem;
+        }
+
+        /* Add repertoire form */
+        .dash-add-rep {
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 1.5rem;
+            margin-top: 0.75rem;
+            background: var(--bg-white);
+        }
+        .dash-rep-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        /* Reflection page feel */
+        .form-section-intro {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.75rem;
+        }
+        .form-section-heading {
+            font-weight: 400;
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
+            color: var(--primary-color);
+            margin: 2.5rem 0 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-section-heading:first-of-type {
+            margin-top: 0;
+        }
+        .form-section-note {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+        }
+        .form-vocal-load-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .form-slider-group {
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            background: var(--bg-light);
+        }
+        .form-slider-group label {
+            margin-bottom: 0.5rem;
+        }
+        .form-open-section {
+            margin-top: 0.5rem;
+        }
+        .form-submit-area {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .form-submit-note {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Progress page */
+        .dash-progress-intro {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .rep-select {
+            font-size: 12px;
+            padding: 0.2rem 0.4rem;
+        }
+
+        @media (max-width: 768px) {
+            .dash-detail-wrap {
+                padding: 1.5rem;
+            }
+            .dash-rep-grid {
+                grid-template-columns: 1fr;
+            }
+            .rep-select {
+                min-height: 44px;
+                font-size: 14px;
+                padding: 0.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand">Voice Studio</a>
+        <ul class="nav-links" id="nav-authenticated" style="display: none;">
+            <li><a href="#" data-nav="dashboard" class="active">Dashboard</a></li>
+            <li><a href="#" data-nav="reflect">Reflection</a></li>
+            <li><a href="#" data-nav="progress">Analytics</a></li>
+        </ul>
+        <div class="nav-user" id="nav-authenticated">
+            <button id="btn-settings" style="margin-right: 0.75rem;">Settings</button>
+            <button id="btn-logout">Sign Out</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ============================================================
+     LOGIN PAGE
+     ============================================================ -->
+<div class="page active" id="page-login">
+    <div class="dash-login-wrap">
+        <div class="dash-login-inner">
+            <div class="login-container">
+                <h1 class="dash-login-greeting">Welcome Back</h1>
+                <p class="dash-login-subtitle">Sign in to your Voice Studio portal.</p>
+
+                <div id="login-error" class="login-error"></div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" placeholder="first.last" required autocapitalize="none" autocorrect="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                </form>
+
+                <p class="dash-login-footer">
+                    Need access? Contact Prof. Gautereaux.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     DASHBOARD PAGE
+     ============================================================ -->
+<div class="page" id="page-dashboard">
+    <main class="container">
+        <div class="dash-welcome">
+            <h1>Welcome, <span id="welcome-name"></span></h1>
+            <p class="dash-welcome-sub">Here is what is happening in your studio this week.</p>
+        </div>
+
+        <!-- UPCOMING EVENTS -->
+        <div id="upcoming-events"></div>
+
+        <!-- DASHBOARD CARDS -->
+        <div class="dashboard-grid" id="dashboard-grid">
+            <div class="dash-card" data-detail="detail-lesson">
+                <div class="dash-card-label">Latest Lesson</div>
+                <div class="dash-card-value" id="dash-lesson-date">--</div>
+                <div class="dash-card-summary" id="dash-lesson-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-plan">
+                <div class="dash-card-label">Practice Plan</div>
+                <div class="dash-card-value" id="dash-plan-date">--</div>
+                <div class="dash-card-summary" id="dash-plan-summary">Loading...</div>
+            </div>
+            <div class="dash-card dash-card-action" data-detail="page-reflect">
+                <div class="dash-card-label">Reflection</div>
+                <div class="dash-card-value" id="dash-reflection-status">--</div>
+                <div class="dash-card-summary" id="dash-reflection-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-repertoire">
+                <div class="dash-card-label">Repertoire</div>
+                <div class="dash-card-value" id="dash-rep-count">--</div>
+                <div class="dash-card-summary" id="dash-rep-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="page-progress">
+                <div class="dash-card-label">Voice Analytics</div>
+                <div class="dash-card-value" id="dash-progress-value">--</div>
+                <div class="dash-card-summary" id="dash-progress-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-wins">
+                <div class="dash-card-label">Vocal Progress</div>
+                <div class="dash-card-value" id="dash-wins-value">--</div>
+                <div class="dash-card-summary" id="dash-wins-summary">Loading...</div>
+            </div>
+            <div class="dash-card" data-detail="detail-studio">
+                <div class="dash-card-label">Studio Class</div>
+                <div class="dash-card-value" id="dash-studio-date">--</div>
+                <div class="dash-card-summary" id="dash-studio-summary">Loading...</div>
+            </div>
+        </div>
+
+        <!-- DETAIL PANELS (hidden by default, shown on card click) -->
+
+        <div class="detail-panel" id="detail-lesson" style="display:none;">
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Lesson Debrief</h2>
+                <div id="lesson-debrief-content"><p class="text-muted">Loading...</p></div>
+            </div>
+        </div>
+
+        <div class="detail-panel" id="detail-plan" style="display:none;">
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Practice Plan</h2>
+                <div id="practice-plan-content"><p class="text-muted">Loading...</p></div>
+                <h3 style="margin-top: 2rem;">Past Practice Plans</h3>
+                <div id="past-plans-content"><p class="text-muted">Loading...</p></div>
+            </div>
+        </div>
+
+        <div class="detail-panel" id="detail-repertoire" style="display:none;">
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Active Repertoire</h2>
+                <div id="repertoire-content"><p class="text-muted">Loading...</p></div>
+
+                <h3 style="margin-top: 2rem;">Add a Piece</h3>
+                <form id="add-rep-form" class="dash-add-rep">
+                    <div class="form-group">
+                        <label for="rep-title">Title</label>
+                        <input type="text" id="rep-title" required placeholder="Song or aria title">
+                    </div>
+                    <div class="dash-rep-grid">
+                        <div class="form-group">
+                            <label for="rep-composer">Composer</label>
+                            <input type="text" id="rep-composer" placeholder="Composer name">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-style">Style</label>
+                            <select id="rep-style">
+                                <option value="">Select...</option>
+                                <option value="classical">Classical</option>
+                                <option value="MT">Musical Theater</option>
+                                <option value="pop-rock">Pop/Rock</option>
+                                <option value="jazz">Jazz</option>
+                                <option value="folk">Folk</option>
+                                <option value="art song">Art Song</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="rep-sheet-music">Sheet Music Link <span class="hint">Google Drive, Dropbox, or any shareable URL (optional)</span></label>
+                        <input type="url" id="rep-sheet-music" placeholder="https://drive.google.com/...">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="detail-panel" id="detail-wins" style="display:none;">
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Vocal Progress</h2>
+                <p class="text-muted" style="margin-bottom: 1.5rem;">Breakthroughs, wins, and milestones from your lessons and studio work.</p>
+                <div id="wins-content"><p class="text-muted">Loading...</p></div>
+            </div>
+        </div>
+
+        <div class="detail-panel" id="detail-studio" style="display:none;">
+            <div class="dash-detail-wrap">
+                <button class="btn btn-secondary btn-small detail-back">Back to Dashboard</button>
+                <h2>Studio Class</h2>
+                <div id="studio-feedback-content"><p class="text-muted">Loading...</p></div>
+
+                <h3 style="margin-top: 2rem;">Upcoming Studio Class</h3>
+                <div id="studio-class-plan"><p class="text-muted">Loading...</p></div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ============================================================
+     REFLECTION PAGE
+     ============================================================ -->
+<div class="page" id="page-reflect">
+    <main class="container">
+        <h1>Whole-Singer Reflection</h1>
+        <p class="form-section-intro">
+            Two ways to check in, at two different moments.
+            A <strong>Lesson Reflection</strong> is best right after your lesson, while it's fresh:
+            what did you take from it? A <strong>Practice Log</strong> is for the days in between:
+            what you practiced and how your voice is doing.
+            There are no wrong answers. Both shape your practice plans
+            and give Prof. G a window into how things are going.
+        </p>
+
+        <div class="reflect-mode-toggle" style="display: flex; gap: 0.5rem; margin-bottom: 2rem;">
+            <button type="button" class="btn btn-primary" id="mode-lesson-reflection">Lesson Reflection</button>
+            <button type="button" class="btn btn-secondary" id="mode-practice-log">Practice Log</button>
+        </div>
+
+        <!-- ============ LESSON REFLECTION (right after a lesson) ============ -->
+        <form id="lesson-reflection-form">
+
+            <h2 class="form-section-heading">Lesson Reflection</h2>
+            <p class="form-section-note">Best filled out right after your lesson, while it's fresh. Lock it in.</p>
+
+            <div class="form-group">
+                <label for="lesson-takeaways">
+                    What did you take from your lesson?
+                    <span class="hint">The concepts, sensations, or moments you want to remember. What clicked?</span>
+                </label>
+                <textarea id="lesson-takeaways" rows="4"></textarea>
+            </div>
+
+            <h2 class="form-section-heading">Self-Perception</h2>
+            <p class="form-section-note">Quick check-in. Move each slider to where it feels right.</p>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="artistic-confidence">Artistic confidence</label>
+                    <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
+                    <input type="range" id="artistic-confidence" min="1" max="10" value="5">
+                    <div class="range-value" id="artistic-confidence-value">5</div>
+                </div>
+            </div>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="engagement">Connection to the art form</label>
+                    <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
+                    <input type="range" id="engagement" min="1" max="10" value="5">
+                    <div class="range-value" id="engagement-value">5</div>
+                </div>
+            </div>
+
+            <h2 class="form-section-heading">Open</h2>
+
+            <div class="form-open-section">
+                <div class="form-group">
+                    <label for="lr-questions">Questions or concerns for your next lesson</label>
+                    <textarea id="lr-questions" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="lr-wins">Wins or celebrations</label>
+                    <textarea id="lr-wins" rows="2" placeholder="Something from the lesson or the week that went well, big or small."></textarea>
+                </div>
+            </div>
+
+            <div class="form-submit-area">
+                <button type="submit" class="btn btn-primary">Submit Lesson Reflection</button>
+                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
+            </div>
+        </form>
+
+        <!-- ============ PRACTICE LOG (the days in between) ============ -->
+        <form id="practice-log-form" style="display: none;">
+
+            <h2 class="form-section-heading">Practice Log</h2>
+
+            <div class="form-group">
+                <label for="practice-focus">
+                    What did you focus on in practice?
+                    <span class="hint">What exercises, repertoire sections, or skills did you work on?</span>
+                </label>
+                <textarea id="practice-focus" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="self-observations">
+                    What did you notice?
+                    <span class="hint">Self-listening observations: warmth, brightness, ease, effort, anything that shifted.</span>
+                </label>
+                <textarea id="self-observations" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="fatigue-notes">
+                    Fatigue notes
+                    <span class="hint">When or if fatigue set in during practice, how it felt.</span>
+                </label>
+                <textarea id="fatigue-notes" rows="2"></textarea>
+            </div>
+
+            <h2 class="form-section-heading">Vocal Load This Week</h2>
+            <p class="form-section-note">Log each vocal activity from your week. Include rehearsals, performances, practice, gigs, anything that used your voice.</p>
+
+            <div id="vocal-load-entries">
+                <div class="vocal-load-entry">
+                    <div class="form-group">
+                        <label>Activity</label>
+                        <input type="text" name="vl-activity" placeholder="Choir rehearsal, show, practice...">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (min)</label>
+                        <input type="number" name="vl-duration" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Intensity</label>
+                        <select name="vl-intensity">
+                            <option value="low">Low</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="high">High</option>
+                            <option value="very_demanding">Very demanding</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fatigue?</label>
+                        <select name="vl-fatigue">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-vocal-load" class="btn btn-secondary btn-small">+ Add Activity</button>
+
+            <h2 class="form-section-heading">How does your voice feel right now?</h2>
+
+            <div class="form-slider-group">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
+                    <input type="range" id="voice-feeling" min="1" max="10" value="5">
+                    <div class="range-value" id="voice-feeling-value">5</div>
+                </div>
+            </div>
+
+            <div class="form-submit-area">
+                <button type="submit" class="btn btn-primary">Submit Practice Log</button>
+                <span class="form-submit-note">Submitted logs appear in your dashboard.</span>
+            </div>
+        </form>
+    </main>
+</div>
+
+<!-- ============================================================
+     PROGRESS PAGE
+     ============================================================ -->
+<div class="page" id="page-progress">
+    <main class="container">
+        <h1>Voice Analytics</h1>
+        <p class="dash-progress-intro">
+            Acoustic assessments from your beginning, middle, and end-of-semester sessions.
+            These measurements give us an objective picture of how your voice is developing over time.
+        </p>
+        <div id="progress-content">
+            <p class="text-muted">Loading...</p>
+        </div>
+    </main>
+</div>
+
+<!-- ============================================================
+     SETTINGS PAGE
+     ============================================================ -->
+<div class="page" id="page-settings">
+    <main class="container" style="max-width: 500px;">
+        <h1>Settings</h1>
+
+        <h2 style="margin-top: 1.5rem;">Change Password</h2>
+        <form id="change-password-form">
+            <div class="form-group">
+                <label for="current-password">Current Password</label>
+                <input type="password" id="current-password" required>
+            </div>
+            <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password" required minlength="8">
+                <span class="hint">At least 8 characters.</span>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm New Password</label>
+                <input type="password" id="confirm-password" required>
+            </div>
+            <div id="password-message" style="display: none; font-size: 13px; margin-bottom: 1rem;"></div>
+            <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+
+        <div style="margin-top: 2rem;">
+            <a href="#" data-nav="dashboard" class="btn btn-secondary btn-small">Back to Dashboard</a>
+        </div>
+    </main>
+</div>
+
+<footer>
+    <div class="container">
+        <p>Kayla Gautereaux — Voice Studio</p>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+
+<script src="js/feedback-widget.js"></script>
+</body>
+</html>

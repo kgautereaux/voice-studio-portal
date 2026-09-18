@@ -1,658 +1,1140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Demo Dashboard — Voice Studio</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <style>
-        .demo-banner {
-            background: var(--bg-warm);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0.6rem 0;
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-muted);
-            letter-spacing: 0.02em;
-        }
-        .demo-banner strong { color: var(--accent-color); }
-        .demo-banner a { color: var(--accent-color); margin-left: 0.5rem; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo — Voice Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ground: #faf9f7;
+    --surface: #ffffff;
+    --ink: #2d2a2c;
+    --muted: #8a8286;
+    --line: #e8e3e0;
+    --teacher: #6c495b;
+    --teacher-soft: #f3ecf0;
+    --student: #5f7055;
+    --student-soft: #eef1ea;
+    --good: #4a7c59;
+    --chip: #f1edea;
+    --range-low: #a3703f;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1e1a1d;
+      --surface: #282329;
+      --ink: #ece7e9;
+      --muted: #a49aa0;
+      --line: #3a333a;
+      --teacher: #c9a0b6;
+      --teacher-soft: #382e35;
+      --student: #a9bb9b;
+      --student-soft: #2e352b;
+      --good: #8fc09b;
+      --chip: #332d33;
+      --range-low: #d0a06f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1e1a1d;
+    --surface: #282329;
+    --ink: #ece7e9;
+    --muted: #a49aa0;
+    --line: #3a333a;
+    --teacher: #c9a0b6;
+    --teacher-soft: #382e35;
+    --student: #a9bb9b;
+    --student-soft: #2e352b;
+    --good: #8fc09b;
+    --chip: #332d33;
+    --range-low: #d0a06f;
+  }
 
-        /* Reuse dashboard styles */
-        .dash-welcome { padding: 1.5rem 0 0.5rem; }
-        .dash-welcome h1 { font-size: 1.8rem; font-weight: 300; margin-bottom: 0.25rem; }
-        .dash-welcome-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 0; }
-        .dash-detail-wrap {
-            background: var(--bg-light); border: 1px solid var(--border-color);
-            border-radius: 2px; padding: 2rem 2.5rem; margin-top: 0.5rem;
-        }
-        @media (max-width: 768px) { .dash-detail-wrap { padding: 1.5rem; } }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  * { box-sizing: border-box; }
 
-        /* Repertoire form classes */
-        .dash-rep-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-        }
-        .form-section-heading {
-            font-weight: 400;
-            font-size: 1.2rem;
-            letter-spacing: 0.02em;
-            color: var(--primary-color);
-            margin: 2.5rem 0 0.5rem;
-            padding-bottom: 0.3rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .form-section-heading:first-of-type {
-            margin-top: 0;
-        }
-        .form-slider-group {
-            padding: 1.25rem 1.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 2px;
-            margin-bottom: 1rem;
-            background: var(--bg-light);
-        }
-        .form-submit-area {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .form-submit-note {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .rep-select {
-            font-size: 12px;
-            padding: 0.2rem 0.4rem;
-        }
-        @media (max-width: 768px) {
-            .dash-rep-grid {
-                grid-template-columns: 1fr;
-            }
-            .rep-select {
-                min-height: 44px;
-                font-size: 14px;
-                padding: 0.4rem;
-            }
-        }
-    </style>
+  .proto-banner {
+    background: var(--teacher);
+    color: var(--ground);
+    text-align: center;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    padding: 0.45rem 1rem;
+  }
+  .proto-banner strong { letter-spacing: 0.08em; text-transform: uppercase; }
+
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .nav-inner {
+    max-width: 1060px; margin: 0 auto; padding: 0 1.25rem;
+    display: flex; align-items: center; gap: 2rem; height: 58px;
+  }
+  .wordmark {
+    font-weight: 700; letter-spacing: 0.14em; font-size: 13px;
+    text-transform: uppercase;
+  }
+  .tabs { display: flex; gap: 0.25rem; flex: 1; }
+  .tab {
+    border: 0; background: none; color: var(--muted);
+    font: inherit; font-size: 13.5px; font-weight: 500;
+    padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--teacher); border-radius: 4px 4px 0 0; }
+  @media (max-width: 700px) {
+    .nav-inner { gap: 0.9rem; padding: 0 0.9rem; overflow-x: auto; }
+    .student-chip { display: none; }
+    .tab { padding: 0.45rem 0.5rem; }
+  }
+  .student-chip {
+    background: var(--chip); border-radius: 999px;
+    font-size: 12.5px; padding: 0.3rem 0.85rem; color: var(--muted); white-space: nowrap;
+  }
+  .student-chip b { color: var(--ink); font-weight: 600; }
+
+  main { max-width: 1060px; margin: 0 auto; padding: 2.25rem 1.25rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  h1 { font-size: 1.7rem; font-weight: 600; margin: 0 0 0.25rem; text-wrap: balance; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 2rem; }
+
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; margin: 0 0 0.35rem;
+  }
+  .eyebrow.teacher { color: var(--teacher); }
+  .eyebrow.student { color: var(--student); }
+
+  /* The pairing grid: teacher artifact | student artifact */
+  .loop {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 800px) { .loop { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 6px; padding: 1.4rem 1.5rem;
+  }
+  .panel.teacher { border-top: 3px solid var(--teacher); }
+  .panel.student { border-top: 3px solid var(--student); }
+  .panel h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.2rem; }
+  .panel .meta { font-size: 12.5px; color: var(--muted); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
+  .panel h3 { font-size: 13px; font-weight: 600; margin: 1.3rem 0 0.4rem; }
+  .panel p { margin: 0 0 0.75rem; font-size: 14px; }
+  .panel ul { margin: 0 0 0.75rem; padding-left: 1.1rem; font-size: 14px; }
+  .panel li { margin-bottom: 0.35rem; }
+
+  .quote {
+    border-left: 3px solid var(--teacher-soft);
+    padding: 0.1rem 0 0.1rem 0.85rem;
+    color: var(--ink); font-size: 14px; margin: 0 0 0.75rem;
+  }
+  .quote .who { color: var(--muted); font-size: 12.5px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 0.3rem; }
+  label .hint { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  textarea, input[type="text"] {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--ground); color: var(--ink);
+    font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; margin-bottom: 1rem;
+    resize: vertical;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--student); outline-offset: 1px; }
+  .form-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .load-grid { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; margin-bottom: 0.25rem; }
+  @media (max-width: 500px) { .load-grid { grid-template-columns: 1fr; gap: 0; } }
+  .chip-set { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+  .chip-opt {
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12.5px; padding: 0.3rem 0.75rem; border-radius: 999px; cursor: pointer;
+  }
+  .chip-opt:hover { color: var(--ink); }
+  .chip-opt.on { background: var(--student-soft); color: var(--student); border-color: var(--student); font-weight: 600; }
+  .chip-opt:focus-visible { outline: 2px solid var(--student); outline-offset: 2px; }
+  input[type="range"] { flex: 1; accent-color: var(--student); }
+  .range-val { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 1.5em; text-align: right; }
+
+  .btn {
+    border: 0; border-radius: 4px; font: inherit; font-size: 14px; font-weight: 600;
+    padding: 0.55rem 1.2rem; cursor: pointer;
+  }
+  .btn.teacher-bg { background: var(--teacher); color: var(--ground); }
+  .btn.student-bg { background: var(--student); color: var(--ground); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .submitted {
+    background: var(--student-soft); border-radius: 6px; padding: 1rem 1.1rem; font-size: 14px;
+  }
+  .submitted .meta { margin-bottom: 0.5rem; }
+
+  .check-item { display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 0.65rem; font-size: 14px; }
+  .check-item input { margin-top: 0.25rem; accent-color: var(--teacher); }
+  .check-item .why { color: var(--muted); font-size: 12.5px; display: block; }
+
+  /* Dashboard cards */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 800px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.3rem 1.4rem; cursor: pointer; transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--muted); }
+  .card .pair { display: flex; gap: 0.75rem; margin-top: 0.9rem; }
+  .half { flex: 1; border-radius: 5px; padding: 0.7rem 0.85rem; font-size: 13px; }
+  .half.t { background: var(--teacher-soft); }
+  .half.s { background: var(--student-soft); }
+  .half .state { font-weight: 600; display: block; }
+  .half .state.due { color: var(--teacher); }
+  .half .state.done { color: var(--good); }
+
+  .week-total {
+    font-size: 13px; font-weight: 600; margin: 0 0 0.4rem;
+    color: var(--student); font-variant-numeric: tabular-nums;
+  }
+
+  .full-plan { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+  .full-plan summary {
+    cursor: pointer; font-size: 13px; font-weight: 600; color: var(--teacher);
+  }
+  .full-plan summary:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .full-plan p { margin-top: 0.75rem; }
+
+  .rep-card {
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.9rem 1rem; margin-bottom: 0.9rem;
+  }
+  .rep-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  .rep-status {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 0.15rem 0.6rem; white-space: nowrap;
+  }
+  .rep-status.ip { background: var(--teacher-soft); color: var(--teacher); }
+  .rep-status.as { background: var(--chip); color: var(--muted); }
+  .rep-sub { font-size: 12.5px; color: var(--muted); margin: 0.15rem 0 0.6rem; }
+  .rep-sub a { color: var(--teacher); }
+  .phase-rail { display: flex; gap: 4px; margin-bottom: 0.35rem; }
+  .ph { height: 6px; flex: 1; border-radius: 3px; background: var(--line); }
+  .ph.done { background: var(--teacher); }
+  .ph.cur { background: var(--teacher); opacity: 0.45; }
+  .phase-rail.interactive .ph {
+    border: 0; padding: 0; height: 10px; cursor: pointer; font: inherit;
+  }
+  .phase-rail.interactive .ph.done { background: var(--student); }
+  .phase-rail.interactive .ph.cur { background: var(--student); opacity: 0.45; }
+  .phase-rail.interactive .ph:hover { background: var(--student); opacity: 0.7; }
+  .phase-rail.interactive .ph:focus-visible { outline: 2px solid var(--student); outline-offset: 2px; }
+  .rep-phase { font-size: 12.5px; color: var(--muted); margin: 0; font-variant-numeric: tabular-nums; }
+
+  .due-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--teacher); margin-left: 5px; vertical-align: 2px;
+  }
+  .checkin-badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    background: var(--teacher-soft); color: var(--teacher);
+    border-radius: 999px; padding: 0.15rem 0.6rem; white-space: nowrap;
+  }
+  .checkin-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  .bi-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+  .bi-row:last-of-type { margin-bottom: 1rem; }
+  .bi-anchor { font-size: 11.5px; color: var(--muted); width: 4.6em; flex-shrink: 0; }
+  .bi-anchor.right { text-align: left; }
+  .bi-anchor.left { text-align: right; }
+  .voses-head { display: flex; justify-content: flex-end; padding-bottom: 0.25rem; }
+  .voses-anchors {
+    width: 177px; display: flex; justify-content: space-between;
+    font-size: 10.5px; line-height: 1.25; color: var(--muted);
+  }
+  .voses-anchors span:last-child { text-align: right; }
+  @media (max-width: 560px) { .voses-head { justify-content: flex-start; } }
+  .voses-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.45rem 0; border-top: 1px solid var(--line); font-size: 13.5px;
+  }
+  .voses-row:first-child { border-top: 0; }
+  @media (max-width: 560px) { .voses-row { flex-direction: column; align-items: flex-start; gap: 0.3rem; } }
+  .scale-6 { display: flex; gap: 3px; flex-shrink: 0; }
+  .s6 {
+    width: 27px; height: 27px; border-radius: 4px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--muted); cursor: pointer;
+    font: inherit; font-size: 12px; font-variant-numeric: tabular-nums; padding: 0;
+  }
+  .s6:hover { color: var(--ink); border-color: var(--muted); }
+  .s6.on { background: var(--student); color: var(--ground); border-color: var(--student); font-weight: 600; }
+  .s6:focus-visible { outline: 2px solid var(--student); outline-offset: 2px; }
+
+  .fab {
+    position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 60;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12.5px; font-weight: 600;
+    padding: 0.5rem 0.95rem; cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .fab:hover { color: var(--ink); }
+  .fab:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .toast {
+    position: fixed; right: 1.1rem; bottom: 3.6rem; z-index: 60;
+    background: var(--ink); color: var(--ground);
+    font-size: 13px; padding: 0.55rem 0.9rem; border-radius: 6px;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none; max-width: 260px;
+  }
+  .toast.show { opacity: 1; }
+
+  .history { margin-top: 1.25rem; }
+  .history h3 { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .hist-row {
+    display: flex; gap: 0.75rem; font-size: 13.5px; padding: 0.5rem 0;
+    border-top: 1px solid var(--line); align-items: baseline;
+  }
+  button.hist-row.linked {
+    width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0;
+    font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  button.hist-row.linked.current .d { color: var(--teacher); font-weight: 700; }
+  button.hist-row.linked.current .open-hint { opacity: 1; color: var(--teacher); }
+  .lesson-list { max-height: 260px; overflow-y: auto; }
+  .open-hint { margin-left: auto; color: var(--muted); font-size: 12px; opacity: 0; transition: opacity 0.12s; white-space: nowrap; }
+  button.hist-row.linked:hover .open-hint, button.hist-row.linked:focus-visible .open-hint { opacity: 1; color: var(--teacher); }
+  @media (hover: none) { .open-hint { opacity: 1; } }
+  button.hist-row.linked:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .hist-row .d { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.2em; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; position: relative; top: -1px; }
+  .dot.t { background: var(--teacher); }
+  .dot.s { background: var(--student); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.5rem; }
+  @media (max-width: 800px) { .stats { grid-template-columns: 1fr; } }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.1rem 1.3rem; }
+  .stat .n { font-size: 1.9rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--muted); font-size: 12.5px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .page.active { animation: fade 0.18s ease; }
+    @keyframes fade { from { opacity: 0.4; } to { opacity: 1; } }
+  }
+</style>
 </head>
 <body>
 
-<!-- DEMO BANNER -->
-<div class="demo-banner">
-    <strong>Sample Dashboard</strong> — This is a sample view of the between-lesson support system. Content shown is illustrative but reflects real lesson workflows.
-    <a href="index.html">Back to Studio</a>
-</div>
+<div class="proto-banner"><strong>Demo</strong> &nbsp;·&nbsp; sample student, sample data &nbsp;·&nbsp; entries reset on refresh</div>
 
 <nav>
-    <div class="container">
-        <a href="index.html" class="nav-brand">Voice Studio</a>
-        <ul class="nav-links">
-            <li><a href="#" id="nav-dashboard" class="active">Dashboard</a></li>
-            <li><a href="#" id="nav-plan">Practice Plan</a></li>
-            <li><a href="#" id="nav-debrief">Lesson Debrief</a></li>
-            <li><a href="#" id="nav-repertoire">Repertoire</a></li>
-            <li><a href="#" id="nav-reflection">Reflection</a></li>
-        </ul>
+  <div class="nav-inner">
+    <span class="wordmark">Voice Studio</span>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-page="dashboard">Dashboard</button>
+      <button class="tab" data-page="lesson">Lesson</button>
+      <button class="tab" data-page="practice">Practice</button>
+      <button class="tab" data-page="repertoire">Repertoire</button>
+      <button class="tab" data-page="analytics">Analytics<span class="due-dot" id="checkin-dot"></span></button>
     </div>
+    <span class="student-chip">Signed in as <b>Riley Okafor</b></span>
+  </div>
 </nav>
 
-<main class="container">
+<main>
 
-    <!-- DASHBOARD VIEW -->
-    <div id="view-dashboard">
-        <div class="dash-welcome">
-            <h1>Welcome, Alex</h1>
-            <p class="dash-welcome-sub">Here is what is happening in your studio this week.</p>
+  <!-- ================= DASHBOARD ================= -->
+  <section class="page active" id="page-dashboard">
+    <h1>Welcome, Riley</h1>
+
+    <div class="cards">
+      <div class="card" data-page="lesson" tabindex="0" role="button" aria-label="Open the Lesson loop">
+        <p class="eyebrow teacher">Lesson loop</p>
+        <strong>Tue Sep 15</strong>
+        <div class="pair">
+          <div class="half t"><span class="state done">Debrief ready</span>Prof. G's record of the lesson</div>
+          <div class="half s"><span class="state due" id="dash-lr-state">Reflection due</span>Your takeaways, while it's fresh</div>
+        </div>
+      </div>
+
+      <div class="card" data-page="practice" tabindex="0" role="button" aria-label="Open the Practice loop">
+        <p class="eyebrow student">Practice loop</p>
+        <strong>This week</strong>
+        <div class="pair">
+          <div class="half t"><span class="state done">Plan ready</span>3 exercises · Deep River, She Used to Be Mine</div>
+          <div class="half s"><span class="state" id="dash-pl-state">3 logs this week</span>165 min of singing so far</div>
+        </div>
+      </div>
+
+      <div class="card" data-page="repertoire" tabindex="0" role="button" aria-label="Open the Repertoire room">
+        <p class="eyebrow teacher">Repertoire</p>
+        <strong>3 active pieces</strong>
+        <div class="pair">
+          <div class="half t"><span class="state done">2 in progress</span>1 assigned Sep 15</div>
+          <div class="half s"><span class="state">1 suggestion waiting</span>Sent Sep 10</div>
+        </div>
+      </div>
+
+      <div class="card" data-page="analytics" tabindex="0" role="button" aria-label="Open Analytics">
+        <p class="eyebrow student">Analytics</p>
+        <strong>September</strong>
+        <div class="pair">
+          <div class="half t"><span class="state">Dec 11 jury</span>Last jury 3.4 of 4, May 8</div>
+          <div class="half s"><span class="state due" id="dash-ck-state">Check-in due</span>Singing-VoSES, monthly</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LESSON ================= -->
+  <section class="page" id="page-lesson">
+    <h1>Lesson</h1>
+
+    <div class="loop">
+      <!-- Teacher side -->
+      <div class="panel teacher">
+        <p class="eyebrow teacher">From Prof. G</p>
+        <h2>Lesson debrief</h2>
+
+        <div id="debrief-sep15">
+          <p class="meta">Tuesday, September 15 · 60 minutes</p>
+          <h3>Repertoire worked</h3>
+          <ul>
+            <li><strong>"Deep River" (Burleigh)</strong>: worked from "I want to cross over" with the warm quality leading. The low F entrances got the open-open onset treatment; the descent kept its brightness instead of going smoky.</li>
+            <li><strong>"She Used to Be Mine" (Waitress)</strong>: bridge only. The build stayed on airflow instead of squeeze through "she is gone, but she used to be mine."</li>
+          </ul>
+          <h3>Exercises</h3>
+          <ul>
+            <li><strong>Marmalade descents</strong>: bright and buzzy on the way down, small space, no dome.</li>
+            <li><strong>Open-open onsets</strong>: breathe in, close, then open. The onset is a release, not a push.</li>
+            <li><strong>Straw slides</strong>: through the passaggio, spigot on the whole way.</li>
+          </ul>
+          <div class="quote">
+            "That descent kept every bit of its ring. That is the version we keep."
+            <span class="who">Prof. G, in the lesson</span>
+          </div>
         </div>
 
-        <!-- Upcoming Events -->
-        <div class="upcoming-events">
-            <strong>Monday Apr 7</strong>: Voice Lesson (10:00 AM, 60 min) &nbsp;&middot;&nbsp;
-            <strong>Friday Apr 11</strong>: Studio Class (10:00 AM, Houston Hall)
+        <div id="debrief-sep1" hidden>
+          <p class="meta">Tuesday, September 1 · 60 minutes · first lesson</p>
+          <h3>What we covered</h3>
+          <ul>
+            <li>Goals conversation: rebuilding after a year away from lessons; wants warmth back in the middle voice.</li>
+            <li>Speech-level check-ins ("my mama made marmalade") to map the starting point.</li>
+            <li>Repertoire direction set: one spiritual, one contemporary MT, oratorio later in the fall.</li>
+          </ul>
+          <div class="quote">
+            "You do not have anything to prove to me. All we are doing is getting you one semester better every semester."
+            <span class="who">Prof. G, in the lesson</span>
+          </div>
         </div>
 
-        <!-- Dashboard Cards -->
-        <div class="dashboard-grid">
-            <div class="dash-card" onclick="showView('debrief')">
-                <div class="dash-card-label">Latest Lesson</div>
-                <div class="dash-card-value">Apr 1</div>
-                <div class="dash-card-summary">Breath management, "Somewhere Over the Rainbow," registration work &middot; Next: Mon Apr 7</div>
-            </div>
-            <div class="dash-card" onclick="showView('plan')">
-                <div class="dash-card-label">Practice Plan</div>
-                <div class="dash-card-value">Apr 1</div>
-                <div class="dash-card-summary">3 exercises &middot; Somewhere Over the Rainbow, Come to My Garden</div>
-            </div>
-            <div class="dash-card dash-card-action" onclick="showView('reflection')">
-                <div class="dash-card-label">Reflection</div>
-                <div class="dash-card-value">Due Sun Apr 6</div>
-                <div class="dash-card-summary">Submit before Monday Apr 7 lesson</div>
-            </div>
-            <div class="dash-card" onclick="showView('repertoire')">
-                <div class="dash-card-label">Repertoire</div>
-                <div class="dash-card-value">6 pieces</div>
-                <div class="dash-card-summary">Next: Apr 25 (jury)</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Voice Analytics</div>
-                <div class="dash-card-value">Coming Soon</div>
-                <div class="dash-card-summary">Data collection pending</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Vocal Progress</div>
-                <div class="dash-card-value">3 highlights</div>
-                <div class="dash-card-summary">Registration shift on "Garden" landed cleanly for the first time...</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Studio Class</div>
-                <div class="dash-card-value">Apr 11</div>
-                <div class="dash-card-summary">10:00 AM &middot; Houston Hall</div>
-            </div>
+        <div id="debrief-sep8" hidden>
+          <p class="meta">Tuesday, September 8 · 60 minutes</p>
+          <h3>Repertoire worked</h3>
+          <ul>
+            <li><strong>"Deep River" (Burleigh)</strong>: first read. Key check settled on the medium-low edition.</li>
+          </ul>
+          <h3>Exercises</h3>
+          <ul>
+            <li><strong>Speech-to-sing check-in</strong>: "my mama made marmalade" from speech into pitch.</li>
+            <li><strong>Hose metaphor introduced</strong>: spigot, kink, and thumb-downstream narrowing.</li>
+          </ul>
+          <div class="quote">
+            "Brightness comes from the narrowing downstream, never from the squeeze."
+            <span class="who">Prof. G, in the lesson</span>
+          </div>
         </div>
+      </div>
+
+      <!-- Student side -->
+      <div class="panel student">
+        <p class="eyebrow student">Your reflection</p>
+        <h2>What did you take from it?</h2>
+
+        <div id="reflect-sep15">
+          <p class="meta">Not yet submitted · best done while the lesson is fresh</p>
+          <form id="reflection-form">
+            <label for="takeaways">Takeaways
+              <span class="hint">The concepts, sensations, moments, or wins from this lesson you want to remember. What clicked?</span>
+            </label>
+            <textarea id="takeaways" rows="4" placeholder="The open-open onset finally made sense when..."></textarea>
+
+            <label for="risk">Where did you take a risk in this lesson?
+              <span class="hint">Something unfamiliar you tried, or something you let change how you sang.</span></label>
+            <textarea id="risk" rows="2"></textarea>
+
+            <label for="questions">Questions or goals for the next lessons</label>
+            <textarea id="questions" rows="2"></textarea>
+
+            <button type="submit" class="btn student-bg">Submit reflection</button>
+          </form>
+        </div>
+
+        <div id="reflect-sep1" hidden>
+          <div class="submitted">
+            <p class="meta">Submitted Tue Sep 1, 8:12 PM</p>
+            <p><strong>Takeaways:</strong> I came in braced to be fixed and instead we mapped where I actually am. The marmalade check-in showed me my speech still has the warmth I thought I lost.</p>
+            <p><strong>Questions or goals:</strong> Can we record the check-in each week so I can hear the change?</p>
+          </div>
+        </div>
+
+        <div id="reflect-sep8" hidden>
+          <div class="submitted">
+            <p class="meta">Submitted Tue Sep 8, 9:41 PM</p>
+            <p><strong>Takeaways:</strong> The hose picture finally separated two things I always mixed up. Squeezing my throat for brightness is the kink. The narrowing that works is way downstream, tongue and space. I could feel the difference on the marmalade descents.</p>
+            <p><strong>Risk taken:</strong> I let the cracky sound happen on the slides instead of smoothing it over, and stayed with it long enough to hear where it lives.</p>
+            <p><strong>Questions or goals:</strong> How do I find the narrowing on an EE vowel without spreading?</p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- PRACTICE PLAN VIEW -->
-    <div id="view-plan" style="display: none;">
-        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
-        <h2>Practice Plan</h2>
-        <div class="dash-detail-wrap">
-            <div class="practice-plan-letter">
-                <p class="plan-date">Tuesday, April 1, 2026</p>
-
-                <h2>What We Worked On and Why</h2>
-                <p>Today we focused on breath management and how it connects to your registration work in "Somewhere Over the Rainbow." The core discovery: when you maintain rib expansion through the ascending phrase, the registration shift takes care of itself. Your body already knows the coordination. We just needed to give it enough air to work with.</p>
-
-                <h2>Exercises for This Week</h2>
-
-                <h3>1. Lip trill with rib expansion (warm-up)</h3>
-                <p><strong>What it sounds like:</strong> Lip trill on a 5-note descending scale, starting in your comfortable range and moving up by half steps.</p>
-                <p><strong>What it's for:</strong> Connects breath flow to phonation without any registration pressure. The trill regulates airflow for you.</p>
-                <p><strong>What to listen for:</strong> Evenness. If the trill sputters, you are pushing too much air. If it stops, not enough. Find the sweet spot where it hums along easily.</p>
-
-                <h3>2. Sustained [u] with rib monitoring</h3>
-                <p><strong>What it sounds like:</strong> Sustained "oo" on a comfortable pitch, hands on your ribs.</p>
-                <p><strong>What it's for:</strong> Builds awareness of rib expansion during phonation. Your pattern has been to collapse the ribs early. This teaches you to keep the tank full longer.</p>
-                <p><strong>What to listen for:</strong> Warmth. The [u] should feel round and easy. If it thins out, the ribs have probably dropped. Check with your hands.</p>
-
-                <h3>3. Octave slide on [i] to [a]</h3>
-                <p><strong>What it sounds like:</strong> Start on a comfortable pitch on "ee," slide up an octave while opening to "ah."</p>
-                <p><strong>What it's for:</strong> Practices the registration shift with a vowel change that supports it. The [i] keeps things narrow at the bottom, the [a] opens up space at the top.</p>
-                <p><strong>What to listen for:</strong> No grab at the top. If you feel a squeeze, you are closing down instead of opening up. Think of the "ah" as arriving at a wide, warm place.</p>
-
-                <h2>Repertoire Work</h2>
-
-                <h3>Somewhere Over the Rainbow</h3>
-                <p><strong>Your target sound:</strong> Warm and open on the octave leap. The brightness comes from the vowel, not from pressing.</p>
-                <ul>
-                    <li>Practice the octave leap ("Some-where") with the rib expansion from exercise 2. Keep the tank full through the leap.</li>
-                    <li>Speak the text of the bridge in rhythm before singing it. Notice where the character's energy peaks. It is not the highest note.</li>
-                    <li>Run the full song once per practice session for continuity. Trust what is working.</li>
-                </ul>
-
-                <h3>Come to My Garden</h3>
-                <p><strong>Current phase:</strong> Melody + Text + Rhythm</p>
-                <ul>
-                    <li>Focus on measures 16-24 this week. The registration shift at "and I will show you" is the same coordination as the Rainbow leap.</li>
-                    <li>Speak the text with character intention first. Who is Lily speaking to? What does she want?</li>
-                </ul>
-
-                <h2>Areas for Growth</h2>
-                <p>These are the functional edges we are actively building. They are not problems. They are the next level.</p>
-                <ul>
-                    <li><strong>Rib expansion through phrases:</strong> Your breath management is improving. The next step is maintaining expansion through longer phrases without thinking about it. The exercises above build this.</li>
-                    <li><strong>Registration shifts without grabbing:</strong> You can do this when you are thinking about it. The goal is for it to become automatic, especially under performance conditions.</li>
-                    <li><strong>Character intention on first attempts:</strong> You tend to sing the notes first and add character second. We are working on bringing the character from the very first note.</li>
-                </ul>
-
-                <h2>Practice Structure</h2>
-                <p>You have a jury in three weeks. Practice smart, not long.</p>
-                <ul>
-                    <li><strong>Warm up:</strong> 10 minutes. Lip trills, then sustained [u] with rib check.</li>
-                    <li><strong>Exercises:</strong> Octave slides, 5 minutes. Focus on ease, not volume.</li>
-                    <li><strong>Rep work:</strong> 20-30 minutes. Alternate between Rainbow and Garden. Do not run each piece more than twice in a row. Mix it up.</li>
-                    <li><strong>Cool down:</strong> Lip trills descending, gentle humming.</li>
-                    <li><strong>Stop when fatigue shows up.</strong> If the sound starts thinning or you feel tension creeping in, that is your signal.</li>
-                </ul>
-
-                <p class="plan-signoff">Prof. G</p>
-            </div>
-        </div>
+    <div class="history">
+      <h3>Lessons</h3>
+      <div class="lesson-list">
+      <button class="hist-row linked current" data-lesson="sep15"><span class="d">Sep 15</span><span><span class="dot t"></span>Debrief posted · <span class="dot s"></span><span id="hist-sep15-state">reflection due</span></span><span class="open-hint">Open pairing</span></button>
+      <button class="hist-row linked" data-lesson="sep8"><span class="d">Sep 8</span><span><span class="dot t"></span>Debrief posted · <span class="dot s"></span>reflection submitted</span><span class="open-hint">Open pairing</span></button>
+      <button class="hist-row linked" data-lesson="sep1"><span class="d">Sep 1</span><span><span class="dot t"></span>First lesson debrief · <span class="dot s"></span>reflection submitted</span><span class="open-hint">Open pairing</span></button>
+      </div>
     </div>
+  </section>
 
-    <!-- LESSON DEBRIEF VIEW -->
-    <div id="view-debrief" style="display: none;">
-        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
-        <h2>Lesson Debrief</h2>
-        <div class="dash-detail-wrap">
-            <div class="practice-plan-letter">
-                <p class="plan-date">Tuesday, April 1, 2026 &middot; 60 min</p>
+  <!-- ================= PRACTICE ================= -->
+  <section class="page" id="page-practice">
+    <h1>Practice</h1>
 
-                <h3>What We Worked On</h3>
-                <ul>
-                    <li>Somewhere Over the Rainbow — octave leap and bridge section</li>
-                    <li>Come to My Garden — measures 16-24, registration shift at "and I will show you"</li>
-                    <li>Breath management: rib expansion exercises, sustained vowel work</li>
-                </ul>
+    <div class="loop">
+      <!-- Teacher side: the plan as a living checklist -->
+      <div class="panel teacher">
+        <p class="eyebrow teacher">From Prof. G</p>
+        <h2>Current practice plan</h2>
+        <p class="meta">Based on your Sep 15 lesson</p>
 
-                <h3>Observations</h3>
-                <p><strong>Intention + Learning:</strong> Alex came in with a clear goal: the octave leap in Rainbow has been inconsistent in practice. Strong self-awareness about what is and is not working. Asked good questions about why the leap feels different on tired days versus fresh days.</p>
-                <p><strong>Expression:</strong> Character work in Garden is emerging. The text-first approach is connecting. Alex had a moment of genuine discovery when speaking Lily's text and realizing the emotional arc peaks before the melodic peak.</p>
-                <p><strong>Function:</strong> Rib expansion was collapsing mid-phrase, which was starving the registration shift of air support. Once we addressed the breath management, the leap in Rainbow cleaned up significantly. The same coordination transferred to Garden without additional instruction.</p>
-
-                <h3>Warmth + Brightness</h3>
-                <p>Warmth is strong and consistent in the lower range. Brightness on ascending phrases was coming from pressing rather than from vowel shaping. The [i] to [a] slide exercise helped Alex hear the difference between pressed brightness and resonant brightness.</p>
-
-                <h3>Breakthroughs</h3>
-                <p>The octave leap in Rainbow landed three times in a row with full rib expansion. Alex's reaction: "Oh, it is just... there." That is the feeling we are after. The registration shift in Garden at "and I will show you" also landed cleanly for the first time when approached with the same breath strategy.</p>
-
-                <h3>Areas for Growth</h3>
-                <p>Rib expansion is still in the associative phase: Alex can do it when thinking about it but it is not yet automatic. The grab at the top of ascending phrases is a habit that is loosening but not gone. Character intention tends to arrive after the first few notes rather than from the start.</p>
-                <p>Motor learning phase for breath management: late associative, approaching autonomous for comfortable range. Still cognitive for passages above the passaggio.</p>
-
-                <h3>What We Are Working Toward</h3>
-                <p>Automatic rib expansion through phrases. Registration shifts that feel like nothing happened. Character intention from the first note. These are the edges, and we are close.</p>
-
-                <p class="plan-signoff">Prof. G</p>
-            </div>
+        <h3>Exercises</h3>
+        <div class="check-item">
+          <input type="checkbox" id="ex1"><label for="ex1" style="font-weight: 500;">Marmalade descents, 5 minutes
+            <span class="why">Listen for the bright and buzzy staying present as you go down. If it goes smoky, smaller space.</span></label>
         </div>
-    </div>
-
-    <!-- REPERTOIRE VIEW -->
-    <div id="view-repertoire" style="display: none;">
-        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
-        <h2>Active Repertoire</h2>
-        <div class="dash-detail-wrap">
-            <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr><th>Piece</th><th>Learning Phase</th><th>Status</th><th>Due</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Somewhere Over the Rainbow</strong><br><span class="text-muted text-small">Harold Arlen</span></td>
-                        <td><select class="rep-select" onchange="demoPhaseChange(this)">
-                            <option>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option selected>Characterization Integration</option>
-                            <option>Memorization</option>
-                            <option>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option selected>In Progress</option>
-                            <option>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 25</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Come to My Garden</strong><br><span class="text-muted text-small">Lucy Simon</span></td>
-                        <td><select class="rep-select">
-                            <option>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option selected>Melody + Text + Rhythm</option>
-                            <option>Characterization Integration</option>
-                            <option>Memorization</option>
-                            <option>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option selected>In Progress</option>
-                            <option>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 25</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Caro mio ben</strong><br><span class="text-muted text-small">Tommaso Giordani</span></td>
-                        <td><select class="rep-select">
-                            <option>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option>Characterization Integration</option>
-                            <option selected>Memorization</option>
-                            <option>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option selected>In Progress</option>
-                            <option>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 25</td>
-                    </tr>
-                    <tr>
-                        <td><strong>I Feel the Earth Move</strong><br><span class="text-muted text-small">Carole King</span></td>
-                        <td><select class="rep-select">
-                            <option>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option>Characterization Integration</option>
-                            <option>Memorization</option>
-                            <option selected>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option>In Progress</option>
-                            <option selected>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 11</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Widmung</strong><br><span class="text-muted text-small">Robert Schumann</span></td>
-                        <td><select class="rep-select">
-                            <option selected>Translation + Characterization</option>
-                            <option>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option>Characterization Integration</option>
-                            <option>Memorization</option>
-                            <option>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option selected>Assigned</option>
-                            <option>In Progress</option>
-                            <option>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 25</td>
-                    </tr>
-                    <tr>
-                        <td><strong>She Used to Be Mine</strong><br><span class="text-muted text-small">Sara Bareilles</span></td>
-                        <td><select class="rep-select">
-                            <option>Translation + Characterization</option>
-                            <option selected>Text + Rhythm</option>
-                            <option>Melody + Text + Rhythm</option>
-                            <option>Characterization Integration</option>
-                            <option>Memorization</option>
-                            <option>Performance Ready</option>
-                        </select></td>
-                        <td><select class="rep-select">
-                            <option>Assigned</option>
-                            <option selected>In Progress</option>
-                            <option>Performance Ready</option>
-                            <option>Shelved</option>
-                        </select></td>
-                        <td>Apr 25</td>
-                    </tr>
-                </tbody>
-            </table>
-            </div>
-
-            <h3 style="margin-top: 2rem;">Previous Repertoire</h3>
-            <table>
-                <thead><tr><th>Piece</th><th>Status</th><th>Style</th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td>Think of Me <span class="text-muted">(Andrew Lloyd Webber)</span></td>
-                        <td><span class="tag">Shelved</span></td>
-                        <td class="text-muted">MT</td>
-                    </tr>
-                    <tr>
-                        <td>Voi che sapete <span class="text-muted">(W.A. Mozart)</span></td>
-                        <td><span class="tag">Shelved</span></td>
-                        <td class="text-muted">Classical</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 style="margin-top: 2rem;">Add a Piece</h3>
-            <form onsubmit="event.preventDefault(); demoSubmit();" style="border: 1px solid var(--border-color); border-radius: 2px; padding: 1.5rem; background: var(--bg-white);">
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" placeholder="Song or aria title">
-                </div>
-                <div class="dash-rep-grid">
-                    <div class="form-group">
-                        <label>Composer</label>
-                        <input type="text" placeholder="Composer name">
-                    </div>
-                    <div class="form-group">
-                        <label>Style</label>
-                        <select>
-                            <option value="">Select...</option>
-                            <option>Classical</option>
-                            <option>Musical Theater</option>
-                            <option>Pop/Rock</option>
-                            <option>Jazz</option>
-                            <option>Folk</option>
-                            <option>Art Song</option>
-                            <option>Other</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-small">Add to Repertoire</button>
-            </form>
+        <div class="check-item">
+          <input type="checkbox" id="ex2"><label for="ex2" style="font-weight: 500;">Open-open onsets on "ah," low F to middle C
+            <span class="why">Breathe, close, open. One clean pop, not a series of rattles.</span></label>
         </div>
-    </div>
-
-    <!-- REFLECTION VIEW -->
-    <div id="view-reflection" style="display: none;">
-        <button class="btn btn-secondary btn-small" onclick="showView('dashboard')" style="margin-bottom: 1rem;">Back to Dashboard</button>
-        <h1>Whole-Singer Reflection</h1>
-        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.75rem;">
-            Two ways to check in, at two different moments.
-            A <strong>Lesson Reflection</strong> is best right after your lesson, while it's fresh:
-            what did you take from it? A <strong>Practice Log</strong> is for the days in between:
-            what you practiced and how your voice is doing. There are no wrong answers.
-        </p>
-
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem;">
-            <button type="button" class="btn btn-primary" id="demo-mode-lr" onclick="demoReflectMode('lr')">Lesson Reflection</button>
-            <button type="button" class="btn btn-secondary" id="demo-mode-pl" onclick="demoReflectMode('pl')">Practice Log</button>
+        <div class="check-item">
+          <input type="checkbox" id="ex3"><label for="ex3" style="font-weight: 500;">Straw slides through the passaggio, 3 sets
+            <span class="why">Spigot on the whole way. Stop if the timbre brightens on its own, that is the tank running low.</span></label>
         </div>
-        <script>
-        function demoReflectMode(mode) {
-            document.getElementById('demo-lr-form').style.display = mode === 'lr' ? '' : 'none';
-            document.getElementById('demo-pl-form').style.display = mode === 'lr' ? 'none' : '';
-            document.getElementById('demo-mode-lr').className = mode === 'lr' ? 'btn btn-primary' : 'btn btn-secondary';
-            document.getElementById('demo-mode-pl').className = mode === 'lr' ? 'btn btn-secondary' : 'btn btn-primary';
-        }
-        </script>
 
-        <form id="demo-lr-form" onsubmit="event.preventDefault(); demoSubmit();">
-            <h2 class="form-section-heading">Lesson Reflection</h2>
-            <p class="form-section-note">Best filled out right after your lesson, while it's fresh. Lock it in.</p>
+        <h3>Repertoire</h3>
+        <div class="check-item">
+          <input type="checkbox" id="rep1"><label for="rep1" style="font-weight: 500;">"Deep River"
+            <span class="why">The low entrances with open-open onsets, then the first page in full.</span></label>
+        </div>
+        <div class="check-item">
+          <input type="checkbox" id="rep2"><label for="rep2" style="font-weight: 500;">"She Used to Be Mine"
+            <span class="why">Bridge on "loo" before words. Airflow leads the build.</span></label>
+        </div>
 
-            <div class="form-group">
-                <label>What did you take from your lesson?
-                    <span class="hint">The concepts, sensations, or moments you want to remember. What clicked?</span>
-                </label>
-                <textarea rows="4"></textarea>
+        <h3>Session shape</h3>
+        <p>30 to 40 minutes. Block the exercises this week, then one piece per day. Stop on the timbre shift.</p>
+
+        <details class="full-plan">
+          <summary>Read the full practice plan</summary>
+          <p>The same approved text you get in the debrief email, in full. The checklist above is the working
+            distillation; this is the complete plan with every exercise's purpose, what to listen for, and the
+            repertoire connections spelled out.</p>
+          <p><em>Marmalade descents.</em> Five-note descents on "my mama made marmalade," starting at middle C.
+            This keeps your speech-warmth in the sung line. Listen for the bright and buzzy staying present as
+            you descend. If the sound goes smoky, the space got too big for the pitch...</p>
+          <p class="meta">(Full plan text continues in the real portal.)</p>
+        </details>
+      </div>
+
+      <!-- Student side: the log -->
+      <div class="panel student">
+        <p class="eyebrow student">Your practice log</p>
+        <h2>Log voice use</h2>
+        <p class="meta">One quick entry per day you sang. Choir, rehearsals, and gigs count too.</p>
+
+        <form id="log-form">
+          <label id="day-label">When</label>
+          <div class="chip-set" id="day-set" role="radiogroup" aria-labelledby="day-label">
+            <button type="button" class="chip-opt on" data-day="Today">Today</button>
+            <button type="button" class="chip-opt" data-day="Yesterday">Yesterday</button>
+            <button type="button" class="chip-opt" data-day="Earlier">Earlier this week</button>
+          </div>
+
+          <label id="kind-label">What kind of singing</label>
+          <div class="chip-set" id="kind-set" role="radiogroup" aria-labelledby="kind-label">
+            <button type="button" class="chip-opt on" data-kind="Practice">Practice</button>
+            <button type="button" class="chip-opt" data-kind="Choir">Choir</button>
+            <button type="button" class="chip-opt" data-kind="Rehearsal">Rehearsal</button>
+            <button type="button" class="chip-opt" data-kind="Performance">Performance</button>
+            <button type="button" class="chip-opt" data-kind="Other singing">Other</button>
+          </div>
+
+          <div class="load-grid">
+            <div>
+              <label for="minutes">How long
+                <span class="hint">Minutes of actual singing.</span></label>
+              <input type="text" id="minutes" inputmode="numeric" placeholder="e.g. 15" style="max-width: 6em;">
             </div>
-
-            <h2 class="form-section-heading">Self-Perception</h2>
-
-            <div class="form-slider-group">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label>Artistic confidence</label>
-                    <div class="range-labels"><span>1 : Low</span><span>10 : High</span></div>
-                    <input type="range" min="1" max="10" value="7">
-                </div>
+            <div>
+              <label id="load-label">How did it sit in the voice?</label>
+              <div class="chip-set" id="load-set" role="radiogroup" aria-labelledby="load-label">
+                <button type="button" class="chip-opt" data-load="Easeful">Easeful</button>
+                <button type="button" class="chip-opt" data-load="Moderately taxing">Moderately taxing</button>
+                <button type="button" class="chip-opt" data-load="Taxing">Taxing</button>
+              </div>
             </div>
+          </div>
 
-            <div class="form-slider-group">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label>Connection to the art form</label>
-                    <div class="range-labels"><span>1 : Disconnected</span><span>10 : Deeply connected</span></div>
-                    <input type="range" min="1" max="10" value="8">
-                </div>
-            </div>
+          <label for="focus">What did you sing?
+            <span class="hint">Check exercises and repertoire on the plan and they appear here. Add anything else you sang, even if we did not cover it in lesson.</span></label>
+          <textarea id="focus" rows="2" placeholder="From the plan, from choir folders, from anywhere..."></textarea>
 
-            <h2 class="form-section-heading">Open</h2>
+          <label for="noticed">Anything you noticed? <span class="hint">Optional. Warmth, brightness, ease, a win, anything that shifted.</span></label>
+          <textarea id="noticed" rows="2"></textarea>
 
-            <div class="form-open-section">
-                <div class="form-group">
-                    <label>Questions or concerns for your next lesson</label>
-                    <textarea rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Wins or celebrations</label>
-                    <textarea rows="2"></textarea>
-                </div>
-            </div>
+          <label id="cond-label">Voice condition
+            <span class="hint">Rate each pair, 1 to 5 toward the easy side. Your condition score is the average of the three.</span></label>
+          <div id="cond-scales" aria-labelledby="cond-label"></div>
 
-            <div class="form-submit-area">
-                <button type="submit" class="btn btn-primary">Submit Lesson Reflection</button>
-                <span class="form-submit-note">Submitted reflections appear in your dashboard.</span>
-            </div>
+          <button type="submit" class="btn student-bg">Add to log</button>
         </form>
 
-        <form id="demo-pl-form" style="display: none;" onsubmit="event.preventDefault(); demoSubmit();">
-            <h2 class="form-section-heading">Practice Log</h2>
+        <div class="history">
+          <h3>This week</h3>
+          <p class="week-total" id="week-total">3 entries · 165 min of singing</p>
+          <div id="log-list">
+            <div class="hist-row"><span class="d">Thu</span><span>Choir · 60 min · easeful</span></div>
+            <div class="hist-row"><span class="d">Wed</span><span>Practice · 15 min · moderately taxing · marmalade descents, Deep River page 1 · condition 3.5/5</span></div>
+            <div class="hist-row"><span class="d">Tue</span><span>Rehearsal · 90 min · taxing · Guys and Dolls ensemble · condition 2.5/5</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            <div class="form-group">
-                <label>What did you focus on in practice?
-                    <span class="hint">What exercises, repertoire sections, or skills did you work on?</span>
-                </label>
-                <textarea rows="3"></textarea>
-            </div>
+  <!-- ================= REPERTOIRE ================= -->
+  <section class="page" id="page-repertoire">
+    <h1>Repertoire</h1>
 
-            <div class="form-group">
-                <label>What did you notice?
-                    <span class="hint">Self-listening observations: warmth, brightness, ease, effort, anything that shifted.</span>
-                </label>
-                <textarea rows="3"></textarea>
-            </div>
+    <div class="loop">
+      <!-- Piece list: neutral panel, the phase rails belong to the student -->
+      <div class="panel" style="border-top: 3px solid var(--line);">
+        <h2>Active pieces</h2>
+        
+        <p class="meta">Tap a segment on a piece's rail to update its learning phase.</p>
 
-            <div class="form-group">
-                <label>Fatigue notes
-                    <span class="hint">When or if fatigue set in during practice, how it felt.</span>
-                </label>
-                <textarea rows="2"></textarea>
-            </div>
+        <div class="rep-card">
+          <div class="rep-head"><strong>"Deep River"</strong><span class="rep-status ip">In progress</span></div>
+          <p class="rep-sub">H. T. Burleigh · due at jury · <a href="#" onclick="return false;">sheet music</a></p>
+          <div class="phase-rail interactive" role="group" aria-label="Learning phase, tap where you are"><button type="button" class="ph done" data-idx="0" aria-label="Translation + Characterization"></button><button type="button" class="ph done" data-idx="1" aria-label="Text + Rhythm"></button><button type="button" class="ph cur" data-idx="2" aria-label="Melody + Text + Rhythm"></button><button type="button" class="ph" data-idx="3" aria-label="Characterization Integration"></button><button type="button" class="ph" data-idx="4" aria-label="Memorization"></button><button type="button" class="ph" data-idx="5" aria-label="Performance Ready"></button></div>
+          <p class="rep-phase">Melody + Text + Rhythm · phase 3 of 6</p>
+        </div>
 
-            <h2 class="form-section-heading">How does your voice feel right now?</h2>
+        <div class="rep-card">
+          <div class="rep-head"><strong>"She Used to Be Mine"</strong><span class="rep-status ip">In progress</span></div>
+          <p class="rep-sub">Sara Bareilles, <em>Waitress</em> · due at jury · <a href="#" onclick="return false;">sheet music</a></p>
+          <div class="phase-rail interactive" role="group" aria-label="Learning phase, tap where you are"><button type="button" class="ph done" data-idx="0" aria-label="Translation + Characterization"></button><button type="button" class="ph done" data-idx="1" aria-label="Text + Rhythm"></button><button type="button" class="ph done" data-idx="2" aria-label="Melody + Text + Rhythm"></button><button type="button" class="ph cur" data-idx="3" aria-label="Characterization Integration"></button><button type="button" class="ph" data-idx="4" aria-label="Memorization"></button><button type="button" class="ph" data-idx="5" aria-label="Performance Ready"></button></div>
+          <p class="rep-phase">Characterization Integration · phase 4 of 6</p>
+        </div>
 
-            <div class="form-slider-group">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <div class="range-labels"><span>1 : Strained</span><span>10 : Great</span></div>
-                    <input type="range" min="1" max="10" value="7">
-                </div>
-            </div>
+        <div class="rep-card">
+          <div class="rep-head"><strong>"He Shall Feed His Flock"</strong><span class="rep-status as">Assigned</span></div>
+          <p class="rep-sub">Handel, <em>Messiah</em> · assigned Sep 15</p>
+          <div class="phase-rail interactive" role="group" aria-label="Learning phase, tap where you are"><button type="button" class="ph cur" data-idx="0" aria-label="Translation + Characterization"></button><button type="button" class="ph" data-idx="1" aria-label="Text + Rhythm"></button><button type="button" class="ph" data-idx="2" aria-label="Melody + Text + Rhythm"></button><button type="button" class="ph" data-idx="3" aria-label="Characterization Integration"></button><button type="button" class="ph" data-idx="4" aria-label="Memorization"></button><button type="button" class="ph" data-idx="5" aria-label="Performance Ready"></button></div>
+          <p class="rep-phase">Translation + Characterization · phase 1 of 6</p>
+        </div>
 
-            <div class="form-submit-area">
-                <button type="submit" class="btn btn-primary">Submit Practice Log</button>
-                <span class="form-submit-note">Submitted logs appear in your dashboard.</span>
-            </div>
+        <details class="full-plan">
+          <summary>Past repertoire</summary>
+          <p class="meta">"Simple Gifts" · performed, Spring showcase &nbsp;·&nbsp; "Somewhere Over the Rainbow" · shelved</p>
+        </details>
+      </div>
+
+      <!-- Student side: suggestions -->
+      <div class="panel student">
+        <p class="eyebrow student">Your voice in the rep list</p>
+        <h2>Suggest a piece</h2>
+        <p class="meta">What do you want to sing?</p>
+
+        <form id="suggest-form">
+          <label for="sug-title">Piece</label>
+          <input type="text" id="sug-title" placeholder='e.g. "Bring Him Home"'>
+
+          <label for="sug-source">Composer or show</label>
+          <input type="text" id="sug-source">
+
+          <label for="sug-why">Why this piece? <span class="hint">Optional.</span></label>
+          <textarea id="sug-why" rows="2"></textarea>
+
+          <button type="submit" class="btn student-bg">Send suggestion</button>
         </form>
+
+        <div class="history">
+          <h3>Your suggestions</h3>
+          <div id="sug-list">
+            <div class="hist-row"><span class="d">Sep 10</span><span>"Bring Him Home" (Les Misérables) · waiting for Prof. G</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ANALYTICS ================= -->
+  <section class="page" id="page-analytics">
+    <h1>Analytics</h1>
+
+    <div class="panel student" id="checkin-panel" style="margin-bottom: 1.25rem;">
+      <div class="checkin-head">
+        <div>
+          <p class="eyebrow student">Monthly voice check-in</p>
+          <h2>How is singing feeling this month?</h2>
+        </div>
+        <span class="checkin-badge" id="checkin-badge">September due</span>
+      </div>
+      <p class="meta">Once a month · about 5 minutes · 18 statements, rated 1 (totally disagree) to 6 (totally agree)</p>
+
+      <form id="checkin-form">
+        <div class="voses-head" aria-hidden="true">
+          <div class="voses-anchors"><span>Totally<br>disagree</span><span>Totally<br>agree</span></div>
+        </div>
+        <div id="voses-items"></div>
+        <p class="meta" style="margin: 0.9rem 0 0.75rem;">Singing Voice Function Self-Efficacy Scale
+          (Singing-VoSES), L&atilde;, Fiuza, Ram&iacute;rez &amp; Ardura, 2023.</p>
+        <button type="submit" class="btn student-bg">Submit September check-in</button>
+      </form>
+      <div class="submitted" id="checkin-done" hidden>
+        <p class="meta">September check-in submitted</p>
+        <p id="checkin-summary">Next check-in opens Oct 1. Your answers join the trend below.</p>
+      </div>
     </div>
 
+    <div class="loop" style="margin-bottom: 1.25rem;">
+      <div class="panel teacher">
+        <p class="eyebrow teacher">Semester goals</p>
+        <h2>Fall 2026</h2>
+        <p class="meta">Set Sep 1 with Prof. G</p>
+        <ul>
+          <li>Warmth back in the middle voice on sustained phrases.</li>
+          <li>Four pieces memorized for the Dec 11 jury.</li>
+          <li>Sing through the transitional region without resetting the breath.</li>
+        </ul>
+      </div>
+      <div class="panel" style="border-top: 3px solid var(--line);">
+        <h2>Juries</h2>
+        <div class="hist-row"><span class="d">Dec 11</span><span>Fall jury · scheduled</span></div>
+        <div class="hist-row"><span class="d">May 8</span><span>Spring jury · 3.4 of 4</span></div>
+        <p class="meta" style="margin-top: 0.6rem;">May 8 notes: Bright, present belt. Pace the breath earlier in ballads. Strong text ownership.</p>
+      </div>
+    </div>
+
+    <div class="panel teacher" style="border-top-color: var(--line); margin-bottom: 1.25rem;">
+      <h2>Check-in trend</h2>
+      <p class="meta">Average agreement by area (1 to 6), monthly since June</p>
+      <svg viewBox="0 0 560 150" width="100%" height="150" role="img"
+        aria-label="Monthly agreement trend by range: middle range steady near 5, lower range rising, higher range and transitions lowest but rising">
+        <line x1="0" y1="130" x2="560" y2="130" stroke="var(--line)"/>
+        <line x1="0" y1="75" x2="560" y2="75" stroke="var(--line)" stroke-dasharray="3 5"/>
+        <polyline fill="none" stroke="var(--student)" stroke-width="2.5" points="40,53 190,50 340,46 490,42"/>
+        <circle cx="490" cy="42" r="4" fill="var(--student)"/>
+        <text x="502" y="46" font-size="11.5" font-weight="600" fill="var(--student)">Middle</text>
+        <polyline fill="none" stroke="var(--range-low)" stroke-width="2.5" points="40,75 190,68 340,60 490,55"/>
+        <circle cx="490" cy="55" r="4" fill="var(--range-low)"/>
+        <text x="502" y="61" font-size="11.5" font-weight="600" fill="var(--range-low)">Lower</text>
+        <polyline fill="none" stroke="var(--teacher)" stroke-width="2.5" points="40,97 190,90 340,82 490,75"/>
+        <circle cx="490" cy="75" r="4" fill="var(--teacher)"/>
+        <text x="502" y="82" font-size="11.5" font-weight="600" fill="var(--teacher)">Higher +</text>
+        <text x="502" y="95" font-size="11.5" font-weight="600" fill="var(--teacher)">transitions</text>
+        <text x="40" y="144" font-size="10" fill="var(--muted)" text-anchor="middle">Jun</text>
+        <text x="190" y="144" font-size="10" fill="var(--muted)" text-anchor="middle">Jul</text>
+        <text x="340" y="144" font-size="10" fill="var(--muted)" text-anchor="middle">Aug</text>
+        <text x="490" y="144" font-size="10" fill="var(--muted)" text-anchor="middle">Sep</text>
+      </svg>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">3.2</div><div class="l">Average voice condition, last 4 weeks</div></div>
+      <div class="stat"><div class="n">165</div><div class="l">Singing minutes this week</div></div>
+      <div class="stat"><div class="n">3 / 3</div><div class="l">Lesson reflections submitted</div></div>
+    </div>
+
+    <div class="panel teacher" style="border-top-color: var(--line); margin-bottom: 1.25rem;">
+      <h2>Load and voice condition</h2>
+      <p class="meta">Daily, last two weeks. Singing minutes above; condition (1 to 5) below, one dot per logged day.
+        Condition: average of the easeful/effortful, stable/unstable, and flexible/rigid ratings.</p>
+      <svg viewBox="0 0 560 250" width="100%" height="250" role="img"
+        aria-label="Daily singing minutes as bars and daily voice condition as dots, September 1 to 14. The two heaviest days, 95 and 90 minutes, coincide with the lowest condition ratings of 2.">
+        <text x="0" y="14" font-size="11" font-weight="600" fill="var(--muted)">SINGING MINUTES</text>
+        <line x1="0" y1="110" x2="560" y2="110" stroke="var(--line)"/>
+        <rect x="28" y="84" width="24" height="26" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="66" y="76" width="24" height="34" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="142" y="80" width="24" height="30" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="180" y="72" width="24" height="38" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="218" y="29" width="24" height="81" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="256" y="97" width="24" height="13" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="294" y="84" width="24" height="26" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="332" y="76" width="24" height="34" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="370" y="80" width="24" height="30" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="446" y="89" width="24" height="21" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="484" y="34" width="24" height="76" rx="2" fill="var(--student)" opacity="0.35"/>
+        <rect x="522" y="72" width="24" height="38" rx="2" fill="var(--student)" opacity="0.35"/>
+        <text x="230" y="25" font-size="9" fill="var(--ink)" text-anchor="middle">95</text><text x="496" y="30" font-size="9" fill="var(--ink)" text-anchor="middle">90</text>
+        <text x="0" y="142" font-size="11" font-weight="600" fill="var(--muted)">VOICE CONDITION (1 TO 5)</text>
+        <line x1="0" y1="225" x2="560" y2="225" stroke="var(--line)"/>
+        <line x1="0" y1="191" x2="560" y2="191" stroke="var(--line)" stroke-dasharray="3 5"/>
+        <text x="556" y="195" font-size="9" fill="var(--muted)" text-anchor="end">3</text>
+        <circle cx="40" cy="182" r="3.5" fill="var(--ink)"/>
+        <circle cx="78" cy="182" r="3.5" fill="var(--ink)"/>
+        <circle cx="154" cy="191" r="3.5" fill="var(--ink)"/>
+        <circle cx="192" cy="182" r="3.5" fill="var(--ink)"/>
+        <circle cx="230" cy="208" r="3.5" fill="var(--ink)"/>
+        <circle cx="268" cy="200" r="3.5" fill="var(--ink)"/>
+        <circle cx="306" cy="191" r="3.5" fill="var(--ink)"/>
+        <circle cx="344" cy="182" r="3.5" fill="var(--ink)"/>
+        <circle cx="382" cy="182" r="3.5" fill="var(--ink)"/>
+        <circle cx="458" cy="182" r="3.5" fill="var(--ink)"/>
+        <circle cx="496" cy="208" r="3.5" fill="var(--ink)"/>
+        <circle cx="534" cy="191" r="3.5" fill="var(--ink)"/>
+        <text x="40" y="242" font-size="10" fill="var(--muted)" text-anchor="middle">Sep 1</text>
+        <text x="268" y="242" font-size="10" fill="var(--muted)" text-anchor="middle">Sep 7</text>
+        <text x="534" y="242" font-size="10" fill="var(--muted)" text-anchor="middle">Sep 14</text>
+      </svg>
+    </div>
+
+    <div class="panel teacher" style="border-top-color: var(--line); margin-bottom: 1.25rem;">
+      <h2>Condition by singing time</h2>
+      <p class="meta">Each dot is one logged day, all of September</p>
+      <svg viewBox="0 0 560 205" width="100%" height="205" role="img"
+        aria-label="Scatter of daily voice condition against minutes sung that day. Days up to about 50 minutes cluster at condition 3 to 4; days over 75 minutes sit at condition 2 to 2.5.">
+        <line x1="40" y1="170" x2="530" y2="170" stroke="var(--line)"/>
+        <line x1="40" y1="30" x2="40" y2="170" stroke="var(--line)"/>
+        <line x1="40" y1="100" x2="530" y2="100" stroke="var(--line)" stroke-dasharray="3 5"/>
+        <text x="34" y="174" font-size="9" fill="var(--muted)" text-anchor="end">1</text>
+        <text x="34" y="104" font-size="9" fill="var(--muted)" text-anchor="end">3</text>
+        <text x="34" y="34" font-size="9" fill="var(--muted)" text-anchor="end">5</text>
+        <circle cx="184" cy="82" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="232" cy="82" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="208" cy="100" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="256" cy="82" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="496" cy="135" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="112" cy="118" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="184" cy="100" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="232" cy="82" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="208" cy="82" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="160" cy="82" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="472" cy="135" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="256" cy="100" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="136" cy="65" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="280" cy="100" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="328" cy="100" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="400" cy="118" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="232" cy="65" r="4" fill="var(--student)" opacity="0.75"/>
+        <circle cx="184" cy="65" r="4" fill="var(--student)" opacity="0.75"/>
+        <text x="88" y="186" font-size="10" fill="var(--muted)" text-anchor="middle">10</text>
+        <text x="184" y="186" font-size="10" fill="var(--muted)" text-anchor="middle">30</text>
+        <text x="280" y="186" font-size="10" fill="var(--muted)" text-anchor="middle">50</text>
+        <text x="376" y="186" font-size="10" fill="var(--muted)" text-anchor="middle">70</text>
+        <text x="472" y="186" font-size="10" fill="var(--muted)" text-anchor="middle">90</text>
+        <text x="285" y="202" font-size="10" fill="var(--muted)" text-anchor="middle">Minutes sung that day</text>
+        <text x="12" y="100" font-size="10" fill="var(--muted)" text-anchor="middle" transform="rotate(-90 12 100)">Condition</text>
+      </svg>
+    </div>
+  </section>
 </main>
 
-<footer>
-    <div class="container">
-        <p>Kayla Gautereaux — Voice Studio</p>
-    </div>
-</footer>
+<button class="fab" id="issue-fab" type="button">Report an issue</button>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
-    function showView(view) {
-        document.querySelectorAll('[id^="view-"]').forEach(el => el.style.display = 'none');
-        document.getElementById('view-' + view).style.display = 'block';
+  // Tab routing (nav tabs + dashboard cards)
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', () => showPage(el.dataset.page));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') showPage(el.dataset.page); });
+  });
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+    window.scrollTo({ top: 0 });
+  }
 
-        document.querySelectorAll('nav .nav-links a').forEach(a => a.classList.remove('active'));
-        const btn = document.getElementById('nav-' + view);
-        if (btn) btn.classList.add('active');
-
-        window.scrollTo(0, 0);
-    }
-
-    function demoSubmit() {
-        alert('This is a demo. In the real portal, your reflection would be saved and appear in your dashboard.');
-    }
-
-    function demoPhaseChange(el) {
-        // Visual feedback that the change "saved"
-        el.style.borderColor = 'var(--success-color)';
-        setTimeout(() => { el.style.borderColor = ''; }, 1000);
-    }
-
-    // Nav clicks
-    document.getElementById('nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); showView('dashboard'); });
-    document.getElementById('nav-plan').addEventListener('click', (e) => { e.preventDefault(); showView('plan'); });
-    document.getElementById('nav-debrief').addEventListener('click', (e) => { e.preventDefault(); showView('debrief'); });
-    document.getElementById('nav-repertoire').addEventListener('click', (e) => { e.preventDefault(); showView('repertoire'); });
-    document.getElementById('nav-reflection').addEventListener('click', (e) => { e.preventDefault(); showView('reflection'); });
-
-    // Card clicks on dashboard
-    document.querySelectorAll('.dash-card').forEach(card => {
-        card.style.cursor = 'pointer';
+  // Lesson selection (picker chips and history rows share this)
+  function selectLesson(which) {
+    ['sep15', 'sep8', 'sep1'].forEach(k => {
+      document.getElementById('debrief-' + k).hidden = (k !== which);
+      document.getElementById('reflect-' + k).hidden = (k !== which);
     });
-
-    // Range sliders
-    document.querySelectorAll('input[type="range"]').forEach(input => {
-        const display = input.nextElementSibling;
-        if (display && display.classList.contains('range-value')) {
-            input.addEventListener('input', () => { display.textContent = input.value; });
-        }
+    document.querySelectorAll('button.hist-row.linked').forEach(b =>
+      b.classList.toggle('current', b.dataset.lesson === which));
+  }
+  document.querySelectorAll('button.hist-row.linked').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectLesson(btn.dataset.lesson);
+      document.querySelector('#page-lesson .loop').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+  });
+
+  // Reflection submit (in-memory only)
+  document.getElementById('reflection-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const takeaways = document.getElementById('takeaways').value.trim() || '(left blank in the demo)';
+    const risk = document.getElementById('risk').value.trim();
+    const q = document.getElementById('questions').value.trim();
+    document.getElementById('reflect-sep15').innerHTML =
+      '<div class="submitted"><p class="meta">Submitted just now</p>' +
+      '<p><strong>Takeaways:</strong> ' + escapeHtml(takeaways) + '</p>' +
+      (risk ? '<p><strong>Risk taken:</strong> ' + escapeHtml(risk) + '</p>' : '') +
+      (q ? '<p><strong>Questions or goals:</strong> ' + escapeHtml(q) + '</p>' : '') + '</div>';
+    document.getElementById('hist-sep15-state').textContent = 'reflection submitted';
+    const dashState = document.getElementById('dash-lr-state');
+    dashState.textContent = 'Reflection submitted';
+    dashState.classList.remove('due'); dashState.classList.add('done');
+  });
+
+  // Plan checkboxes feed the log's focus field
+  const exLabels = { ex1: 'Marmalade descents', ex2: 'Open-open onsets', ex3: 'Straw slides',
+                     rep1: 'Deep River', rep2: 'She Used to Be Mine' };
+  const manualFocus = { value: '' };
+  const focusEl = document.getElementById('focus');
+  focusEl.addEventListener('input', () => { manualFocus.value = focusEl.value; });
+  const planIds = ['ex1', 'ex2', 'ex3', 'rep1', 'rep2'];
+  planIds.forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      const checked = planIds.filter(i => document.getElementById(i).checked).map(i => exLabels[i]);
+      const manual = manualFocus.value.trim();
+      focusEl.value = [checked.join(', '), manual].filter(Boolean).join(manual && checked.length ? ' · ' : '');
+    });
+  });
+
+  // Single-select chip groups: when, kind of singing, how it sat in the voice.
+  ['#day-set', '#kind-set', '#load-set'].forEach(sel => {
+    document.querySelectorAll(sel + ' .chip-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll(sel + ' .chip-opt').forEach(b => b.classList.toggle('on', b === btn));
+      });
+    });
+  });
+
+  // Voice condition: three 5-point bipolar scales, negative anchor left.
+  const COND_PAIRS = [['Effortful', 'Easeful'], ['Unstable', 'Stable'], ['Rigid', 'Flexible']];
+  const condAnswers = [0, 0, 0];
+  const condWrap = document.getElementById('cond-scales');
+  COND_PAIRS.forEach(([neg, pos], i) => {
+    const row = document.createElement('div');
+    row.className = 'bi-row';
+    const left = document.createElement('span');
+    left.className = 'bi-anchor left';
+    left.textContent = neg;
+    const scale = document.createElement('div');
+    scale.className = 'scale-6';
+    scale.setAttribute('role', 'radiogroup');
+    scale.setAttribute('aria-label', neg + ' 1 to ' + pos + ' 5');
+    for (let v = 1; v <= 5; v++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 's6';
+      b.textContent = v;
+      b.setAttribute('aria-label', neg + '/' + pos + ', rating ' + v + ' of 5');
+      b.addEventListener('click', () => {
+        condAnswers[i] = v;
+        [...scale.children].forEach((sb, j) => sb.classList.toggle('on', j === v - 1));
+      });
+      scale.appendChild(b);
+    }
+    const right = document.createElement('span');
+    right.className = 'bi-anchor right';
+    right.textContent = pos;
+    row.appendChild(left);
+    row.appendChild(scale);
+    row.appendChild(right);
+    condWrap.appendChild(row);
+  });
+
+  // Weekly totals (in-memory only)
+  let weekEntries = 3, weekMinutes = 165;
+  function bumpWeekTotal(minutes) {
+    weekEntries += 1;
+    weekMinutes += minutes;
+    document.getElementById('week-total').textContent =
+      weekEntries + ' entries · ' + weekMinutes + ' min of singing';
+    document.getElementById('dash-pl-state').textContent = weekEntries + ' logs this week';
+  }
+
+  // Log submit (in-memory only)
+  document.getElementById('log-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const focus = focusEl.value.trim();
+    const minutes = document.getElementById('minutes').value.trim();
+    const day = document.querySelector('#day-set .chip-opt.on');
+    const kind = document.querySelector('#kind-set .chip-opt.on');
+    const load = document.querySelector('#load-set .chip-opt.on');
+    const bits = [kind ? kind.dataset.kind : 'Singing'];
+    if (minutes) bits.push(escapeHtml(minutes) + ' min');
+    if (load) bits.push(load.dataset.load.toLowerCase());
+    if (focus) bits.push(escapeHtml(focus));
+    const condRated = condAnswers.filter(v => v > 0);
+    if (condRated.length === 3) {
+      const condMean = (condRated.reduce((a, b) => a + b, 0) / 3).toFixed(1);
+      bits.push('condition ' + condMean + '/5');
+    }
+    const dayLabel = day && day.dataset.day === 'Yesterday' ? 'Wed'
+                   : day && day.dataset.day === 'Earlier' ? 'Mon' : 'Today';
+    const row = document.createElement('div');
+    row.className = 'hist-row';
+    row.innerHTML = '<span class="d">' + dayLabel + '</span><span>' + bits.join(' · ') + '</span>';
+    const list = document.getElementById('log-list');
+    list.insertBefore(row, list.firstChild);
+    bumpWeekTotal(parseInt(minutes, 10) || 0);
+    document.getElementById('log-form').reset();
+    manualFocus.value = '';
+    condAnswers.fill(0);
+    document.querySelectorAll('#cond-scales .s6.on').forEach(b => b.classList.remove('on'));
+    planIds.forEach(i => document.getElementById(i).checked = false);
+    document.querySelectorAll('#load-set .chip-opt.on').forEach(b => b.classList.remove('on'));
+    // Reset the defaults: Today, Practice.
+    document.querySelectorAll('#day-set .chip-opt').forEach(b => b.classList.toggle('on', b.dataset.day === 'Today'));
+    document.querySelectorAll('#kind-set .chip-opt').forEach(b => b.classList.toggle('on', b.dataset.kind === 'Practice'));
+  });
+
+  // Learning-phase rails: student-controlled. Tap a segment to set your phase.
+  const PHASES = ['Translation + Characterization', 'Text + Rhythm', 'Melody + Text + Rhythm',
+                  'Characterization Integration', 'Memorization', 'Performance Ready'];
+  document.querySelectorAll('.phase-rail.interactive').forEach(rail => {
+    const segs = [...rail.querySelectorAll('.ph')];
+    const label = rail.nextElementSibling;
+    segs.forEach((seg, i) => {
+      seg.addEventListener('click', () => {
+        segs.forEach((s2, j) => {
+          s2.classList.toggle('done', j < i);
+          s2.classList.toggle('cur', j === i);
+        });
+        label.textContent = PHASES[i] + ' · phase ' + (i + 1) + ' of 6';
+        showToast('Saved: ' + PHASES[i]);
+      });
+    });
+  });
+
+  // Monthly check-in: the published Singing-VoSES items (Lã et al., 2023),
+  // 6-point agreement scale. Answers stored in-memory only in the prototype.
+  const VOSES_ITEMS = [
+    'I can easily glide from higher to lower range.',
+    'I can sing comfortably in my middle range.',
+    'I can sing softly in my lower range.',
+    'I can sing softly in my higher range.',
+    'I can sing loudly in my lower range.',
+    'I can sing in tune in my higher range.',
+    'I can sing in tune in my lower range.',
+    'I can sing loudly in my higher range.',
+    'I can sing softly in my middle range.',
+    'I can sing in tune in my middle range.',
+    'I can sing loudly in my middle range.',
+    'I can sustain a long phrase or note in tune in my higher range.',
+    'I can sustain a long phrase or note in tune in my middle range.',
+    'I can sing comfortably in my lower range.',
+    'I can sing comfortably in my higher range.',
+    'I can easily glide from lower to higher range.',
+    'I can sing through the transitional regions of my voice with ease.',
+    'I can sustain a long phrase or note in tune in my lower range.',
+  ];
+  // Factor assignments from Table 2 of Lã et al. (2023). Item numbers are 1-based.
+  const VOSES_DIMS = {
+    'Higher range and transitions': [1, 4, 6, 8, 12, 15, 16, 17],
+    'Middle range': [2, 9, 10, 11, 13],
+    'Lower range': [3, 5, 7, 14, 18],
+  };
+  const vosesAnswers = new Array(VOSES_ITEMS.length).fill(0);
+  const vosesWrap = document.getElementById('voses-items');
+  VOSES_ITEMS.forEach((text, i) => {
+    const row = document.createElement('div');
+    row.className = 'voses-row';
+    const label = document.createElement('span');
+    label.textContent = (i + 1) + '. ' + text;
+    const scale = document.createElement('div');
+    scale.className = 'scale-6';
+    scale.setAttribute('role', 'radiogroup');
+    scale.setAttribute('aria-label', 'Item ' + (i + 1) + ': 1 totally disagree to 6 totally agree');
+    for (let v = 1; v <= 6; v++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 's6';
+      b.textContent = v;
+      b.setAttribute('aria-label', 'Item ' + (i + 1) + ', rating ' + v);
+      b.addEventListener('click', () => {
+        vosesAnswers[i] = v;
+        [...scale.children].forEach((sb, j) => sb.classList.toggle('on', j === v - 1));
+      });
+      scale.appendChild(b);
+    }
+    row.appendChild(label);
+    row.appendChild(scale);
+    vosesWrap.appendChild(row);
+  });
+
+  document.getElementById('checkin-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const answered = vosesAnswers.filter(v => v > 0);
+    if (answered.length < VOSES_ITEMS.length) {
+      showToast('Answered ' + answered.length + ' of 18. All 18 make the trend meaningful.');
+      return;
+    }
+    const parts = Object.entries(VOSES_DIMS).map(([name, items]) => {
+      const m = items.reduce((a, n) => a + vosesAnswers[n - 1], 0) / items.length;
+      return name + ' ' + m.toFixed(1);
+    });
+    document.getElementById('checkin-form').hidden = true;
+    document.getElementById('checkin-done').hidden = false;
+    document.getElementById('checkin-summary').textContent =
+      parts.join(' · ') + ' (of 6). Next check-in opens Oct 1; your scores join the trend below.';
+    document.getElementById('checkin-badge').textContent = 'Done for September';
+    const dashCk = document.getElementById('dash-ck-state');
+    if (dashCk) { dashCk.textContent = 'Check-in done'; dashCk.classList.remove('due'); dashCk.classList.add('done'); }
+    document.getElementById('checkin-dot').remove();
+    showToast('Check-in saved');
+  });
+
+  // Repertoire suggestion submit (in-memory only)
+  document.getElementById('suggest-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = document.getElementById('sug-title').value.trim();
+    if (!title) return;
+    const source = document.getElementById('sug-source').value.trim();
+    const row = document.createElement('div');
+    row.className = 'hist-row';
+    row.innerHTML = '<span class="d">Today</span><span>"' + escapeHtml(title) + '"' +
+      (source ? ' (' + escapeHtml(source) + ')' : '') + ' · waiting for Prof. G</span>';
+    const list = document.getElementById('sug-list');
+    list.insertBefore(row, list.firstChild);
+    document.getElementById('suggest-form').reset();
+    showToast('Suggestion sent to Prof. G');
+  });
+
+  // Issue button
+  const toast = document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+  document.getElementById('issue-fab').addEventListener('click', () => {
+    showToast('In the real portal this opens the issue report form.');
+  });
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
 </script>
 
-<script>
-// Demo version of the feedback widget (no Supabase submission)
-(function() {
-    const widgetHTML = `
-        <button class="feedback-fab" id="feedback-fab" title="Report an issue" aria-label="Report an issue">&#9873;</button>
-        <div class="feedback-panel" id="feedback-panel">
-            <h3>Something seem off?</h3>
-            <p>If anything in your portal looks wrong, doesn't match what happened in your lesson, or feels confusing, let Prof. G know here.</p>
-            <textarea id="feedback-message" placeholder="What seems off?"></textarea>
-            <button class="btn btn-primary btn-small" id="feedback-submit">Send Feedback</button>
-        </div>
-    `;
-    const container = document.createElement('div');
-    container.innerHTML = widgetHTML;
-    document.body.appendChild(container);
-
-    const fab = document.getElementById('feedback-fab');
-    const panel = document.getElementById('feedback-panel');
-    let isOpen = false;
-
-    fab.addEventListener('click', () => {
-        isOpen = !isOpen;
-        fab.classList.toggle('open', isOpen);
-        panel.classList.toggle('visible', isOpen);
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isOpen) {
-            isOpen = false;
-            fab.classList.remove('open');
-            panel.classList.remove('visible');
-        }
-    });
-
-    document.getElementById('feedback-submit').addEventListener('click', () => {
-        const msg = document.getElementById('feedback-message').value.trim();
-        if (!msg) return;
-        panel.innerHTML = `
-            <div class="feedback-success">
-                Sent. Prof. G will see this.<br>
-                <span style="font-size: 12px; color: var(--text-muted); font-weight: 400;">This is a demo. In the real portal, your feedback would be saved.</span>
-            </div>
-        `;
-        setTimeout(() => {
-            isOpen = false;
-            fab.classList.remove('open');
-            panel.classList.remove('visible');
-            panel.innerHTML = `
-                <h3>Something seem off?</h3>
-                <p>If anything in your portal looks wrong, doesn't match what happened in your lesson, or feels confusing, let Prof. G know here.</p>
-                <textarea id="feedback-message" placeholder="What seems off?"></textarea>
-                <button class="btn btn-primary btn-small" id="feedback-submit" onclick="document.getElementById('feedback-submit').click()">Send Feedback</button>
-            `;
-        }, 2500);
-    });
-})();
-</script>
 </body>
 </html>

@@ -261,6 +261,10 @@
 
   <section class="page active" id="page-dashboard">
     <h1 id="welcome-h1">Welcome</h1>
+    <div id="ann-strip" hidden style="background: var(--teacher-soft); border-radius: 6px; padding: 0.85rem 1.1rem; margin-bottom: 1.25rem;">
+      <p class="eyebrow teacher" style="margin-bottom: 0.3rem;">From Prof. G</p>
+      <div id="ann-items"></div>
+    </div>
     <div class="cards">
       <div class="card" data-page="lesson" tabindex="0" role="button" aria-label="Open Lesson">
         <p class="eyebrow teacher">Lesson loop</p>
@@ -549,6 +553,7 @@ async function initApp() {
   await loadAll();
   renderAll();
   document.getElementById('main').hidden = false;
+  markThreadsRead();
 
   sb.auth.onAuthStateChange((event) => {
     if (event === 'SIGNED_OUT') window.location.href = 'login.html';
@@ -557,7 +562,7 @@ async function initApp() {
 
 async function loadAll() {
   const sid = dataStudentId();
-  const [student, lessons, plans, reflections, diary, checkins, rep, jury] = await Promise.all([
+  const [student, lessons, plans, reflections, diary, checkins, rep, jury, ann, threads] = await Promise.all([
     sb.from('students').select('*').eq('id', sid).single(),
     sb.from('lesson_logs')
       .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, motor_learning_phase, breakthroughs, plan_for_next_lesson')
@@ -571,6 +576,8 @@ async function loadAll() {
     sb.from('voses_checkins').select('*').eq('student_id', sid).order('month'),
     sb.from('repertoire').select('*').eq('student_id', sid).order('timeline'),
     sb.from('jury_feedback').select('*').eq('student_id', sid).order('date', { ascending: false }),
+    sb.from('studio_announcements').select('*').order('created_at', { ascending: false }).limit(5),
+    sb.from('thread_replies').select('*').eq('student_id', sid).order('created_at'),
   ]);
   D = {
     student: student.data,
@@ -582,6 +589,8 @@ async function loadAll() {
     rep: (rep.data || []).filter(r => ['assigned', 'in_progress', 'performance_ready'].includes(r.status)),
     pastRep: (rep.data || []).filter(r => r.status === 'shelved'),
     jury: jury.data || [],
+    ann: (ann.data || []).filter(x => !x.expires_at || x.expires_at >= new Date().toISOString().slice(0, 10)),
+    threads: threads.data || [],
   };
   D.selectedLesson = D.lessons.length ? D.lessons[0].id : null;
 }
@@ -602,6 +611,61 @@ document.getElementById('signout-btn').addEventListener('click', async () => {
   await sb.auth.signOut();
   window.location.href = 'login.html';
 });
+
+// ============ THREADS ============
+function threadReplies(anchorType, anchorId) {
+  return (D.threads || []).filter(t => t.anchor_type === anchorType && t.anchor_id === anchorId);
+}
+function threadHtml(anchorType, anchorId) {
+  const replies = threadReplies(anchorType, anchorId);
+  if (!replies.length && readOnly()) return '';
+  let html = '<div class="thread-wrap" data-anchor-type="' + anchorType + '" data-anchor-id="' + anchorId + '"' +
+    ' style="border-top: 1px solid var(--line); margin-top: 0.8rem; padding-top: 0.8rem;">';
+  replies.forEach(r => {
+    const mine = r.author === 'student';
+    html += '<div style="border-left: 3px solid var(--' + (mine ? 'student' : 'teacher') + '-soft); padding: 0.1rem 0 0.1rem 0.85rem; margin-bottom: 0.7rem;">' +
+      '<p class="meta" style="margin: 0 0 0.2rem; color: var(--' + (mine ? 'student' : 'teacher') + ');">' +
+      (mine ? 'You' : 'Prof. G') + ' · ' + fmtDate(String(r.created_at).slice(0, 10)) + '</p>' +
+      '<p style="margin: 0; font-size: 14px;">' + escapeHtml(r.body) + '</p></div>';
+  });
+  if (!readOnly() && replies.length) {
+    html += '<form class="thread-reply-form" style="display: flex; gap: 0.6rem; align-items: flex-start;">' +
+      '<textarea rows="1" placeholder="Reply to Prof. G..." style="flex: 1; margin-bottom: 0;"></textarea>' +
+      '<button type="submit" class="btn student-bg" style="font-size: 13px; padding: 0.45rem 0.9rem;">Reply</button></form>' +
+      '<p class="meta" style="margin: 0.4rem 0 0;">Prof. G sees replies on her next portal visit.</p>';
+  }
+  return html + '</div>';
+}
+function wireThreadForms(container) {
+  container.querySelectorAll('.thread-reply-form').forEach(form => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (readOnly()) { showToast('Read-only view: submissions are disabled.'); return; }
+      const ta = form.querySelector('textarea');
+      const text = ta.value.trim();
+      if (!text) return;
+      const wrap = form.closest('.thread-wrap');
+      const { error } = await sb.from('thread_replies').insert({
+        student_id: currentUser.id,
+        anchor_type: wrap.dataset.anchorType,
+        anchor_id: wrap.dataset.anchorId,
+        author: 'student',
+        body: text,
+      });
+      if (error) { showToast('Error: ' + error.message); return; }
+      showToast('Reply sent');
+      await loadAll();
+      renderAll();
+    });
+  });
+}
+async function markThreadsRead() {
+  if (readOnly()) return;
+  const unread = (D.threads || []).filter(t => t.author === 'teacher' && !t.read_by_student);
+  if (!unread.length) return;
+  await sb.from('thread_replies').update({ read_by_student: true })
+    .eq('student_id', currentUser.id).eq('author', 'teacher').eq('read_by_student', false);
+}
 
 // ============ HELPERS: reflection-to-lesson pairing ============
 function reflectionForLesson(lesson) {
@@ -626,6 +690,14 @@ function renderAll() {
 function renderDashboard() {
   document.getElementById('welcome-h1').textContent =
     'Welcome, ' + ((D.student && D.student.name) || '').split(' ')[0];
+
+  const strip = document.getElementById('ann-strip');
+  const anns = (D.ann || []).slice(0, 3);
+  strip.hidden = anns.length === 0;
+  document.getElementById('ann-items').innerHTML = anns.map(x =>
+    '<p style="margin: 0 0 0.35rem; font-size: 14px;"><span style="color: var(--teacher); font-variant-numeric: tabular-nums; font-size: 12.5px;">' +
+    fmtDate(String(x.created_at).slice(0, 10)) + '</span> &nbsp;' +
+    escapeHtml(x.body || x.message || x.content || x.title || '') + '</p>').join('');
 
   const latest = D.lessons[0];
   document.getElementById('dash-lesson-date').textContent = latest ? fmtDate(latest.date, { weekday: 'short', month: 'short', day: 'numeric' }) : 'No lessons yet';
@@ -729,7 +801,9 @@ function renderReflectPanel(lesson) {
       ${existing.lesson_takeaways ? '<p><strong>Takeaways:</strong> ' + escapeHtml(existing.lesson_takeaways) + '</p>' : ''}
       ${existing.risk_taken ? '<p><strong>Risk taken:</strong> ' + escapeHtml(existing.risk_taken) + '</p>' : ''}
       ${existing.questions ? '<p><strong>Questions or goals:</strong> ' + escapeHtml(existing.questions) + '</p>' : ''}
+      ${threadHtml('reflection', existing.id)}
     </div>`;
+    wireThreadForms(panel);
     return;
   }
   const isLatest = lesson.id === D.lessons[0].id;
@@ -939,8 +1013,10 @@ function renderDiaryList() {
     if (e.focus) bits.push(escapeHtml(e.focus));
     const c = entryCondition(e);
     if (c) bits.push('condition ' + c.toFixed(1) + '/5');
-    return `<div class="hist-row"><span class="d">${fmtDate(e.log_date)}</span><span>${bits.join(' · ')}</span></div>`;
+    const thread = threadHtml('voice_use_log', e.id);
+    return `<div class="hist-row" style="${thread ? 'display: block;' : ''}"><span class="d">${fmtDate(e.log_date)}</span><span>${bits.join(' · ')}</span>${thread}</div>`;
   }).join('') : '<p class="meta">No entries yet.</p>';
+  wireThreadForms(list);
 }
 
 // ---- Repertoire ----
@@ -1076,6 +1152,14 @@ function renderCheckin() {
     document.getElementById('checkin-summary').textContent =
       'Higher range and transitions ' + row.mean_higher + ' · Middle range ' + row.mean_middle +
       ' · Lower range ' + row.mean_lower + ' (of 6).';
+    const done = document.getElementById('checkin-done');
+    const old = done.querySelector('.thread-wrap');
+    if (old) old.remove();
+    const th = threadHtml('voses_checkin', row.id);
+    if (th) {
+      done.insertAdjacentHTML('beforeend', th);
+      wireThreadForms(done);
+    }
     return;
   }
   const wrap = document.getElementById('voses-items');

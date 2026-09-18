@@ -354,6 +354,12 @@
   <section class="page active" id="page-dashboard">
     <h1>Welcome, Riley</h1>
 
+    <div style="background: var(--teacher-soft); border-radius: 6px; padding: 0.85rem 1.1rem; margin-bottom: 1.25rem;">
+      <p class="eyebrow teacher" style="margin-bottom: 0.3rem;">From Prof. G</p>
+      <p style="margin: 0 0 0.35rem; font-size: 14px;"><span style="color: var(--teacher); font-variant-numeric: tabular-nums; font-size: 12.5px;">Sep 14</span> &nbsp;NATS student auditions open Oct 1. Tell me by Friday if you want to enter.</p>
+      <p style="margin: 0; font-size: 14px;"><span style="color: var(--teacher); font-variant-numeric: tabular-nums; font-size: 12.5px;">Sep 10</span> &nbsp;Studio class Sep 26, 4:00, T405. Bring one piece in progress, any phase.</p>
+    </div>
+
     <div class="cards">
       <div class="card" data-page="lesson" tabindex="0" role="button" aria-label="Open the Lesson loop">
         <p class="eyebrow teacher">Lesson loop</p>
@@ -492,6 +498,18 @@
             <p><strong>Takeaways:</strong> The hose picture finally separated two things I always mixed up. Squeezing my throat for brightness is the kink. The narrowing that works is way downstream, tongue and space. I could feel the difference on the marmalade descents.</p>
             <p><strong>Risk taken:</strong> I let the cracky sound happen on the slides instead of smoothing it over, and stayed with it long enough to hear where it lives.</p>
             <p><strong>Questions or goals:</strong> How do I find the narrowing on an EE vowel without spreading?</p>
+            <div style="border-top: 1px solid var(--line); margin-top: 0.8rem; padding-top: 0.8rem;">
+              <div style="border-left: 3px solid var(--teacher-soft); padding: 0.1rem 0 0.1rem 0.85rem; margin-bottom: 0.7rem;">
+                <p class="meta" style="margin: 0 0 0.2rem; color: var(--teacher);">Prof. G · Wed 9:12 AM</p>
+                <p style="margin: 0;">Think NG placement on the EE, then release the tongue tip only. We will drill it Thursday; bring the marmalade descents into EE and notice where the spread urge starts.</p>
+              </div>
+              <form id="thread-reply-form" style="display: flex; gap: 0.6rem; align-items: flex-start;">
+                <textarea id="thread-reply-text" rows="1" placeholder="Reply to Prof. G..." style="flex: 1; margin-bottom: 0;"></textarea>
+                <button type="submit" class="btn student-bg" style="font-size: 13px; padding: 0.45rem 0.9rem;">Reply</button>
+              </form>
+              <p class="meta" style="margin: 0.4rem 0 0;">Prof. G sees replies on her next portal visit.</p>
+              <div id="thread-replies"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -760,12 +778,6 @@
         <text x="340" y="144" font-size="10" fill="var(--muted)" text-anchor="middle">Aug</text>
         <text x="490" y="144" font-size="10" fill="var(--muted)" text-anchor="middle">Sep</text>
       </svg>
-    </div>
-
-    <div class="panel" style="border-top: 3px solid var(--line); margin-top: 1.25rem;">
-      <h2>Your studio record</h2>
-      <p class="meta">A single document with every debrief, practice plan, reflection, log entry, check-in, and jury comment. Yours to keep, anytime.</p>
-      <button class="btn student-bg" id="export-btn" type="button">Download my studio record</button>
     </div>
 
     <div class="stats">
@@ -1137,19 +1149,25 @@
     showToast('In the real portal this opens the issue report form.');
   });
 
-  
-  document.getElementById('export-btn').addEventListener('click', () => {
-    const doc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Riley Okafor — Studio Record</title>' +
-      '<style>body{font-family:Georgia,serif;max-width:720px;margin:0 auto;padding:3rem 1.5rem;line-height:1.6;color:#2d2a2c}h2{color:#6c495b}</style></head><body>' +
-      '<h1>Riley Okafor — Studio Record</h1><p>Sample export from the demo portal. In the real portal this document contains every lesson debrief, practice plan, reflection, diary entry, monthly check-in, repertoire item, and jury comment on record.</p>' +
-      '</body></html>';
-    const blob = new Blob([doc], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'Riley-Okafor-studio-record.html';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showToast('Sample record downloaded');
+  document.getElementById('thread-reply-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const ta = document.getElementById('thread-reply-text');
+    const text = ta.value.trim();
+    if (!text) return;
+    const wrap = document.getElementById('thread-replies');
+    const div = document.createElement('div');
+    div.style.cssText = 'border-left: 3px solid var(--student-soft); padding: 0.1rem 0 0.1rem 0.85rem; margin-top: 0.7rem;';
+    const meta = document.createElement('p');
+    meta.className = 'meta';
+    meta.style.cssText = 'margin: 0 0 0.2rem; color: var(--student);';
+    meta.textContent = 'You · just now';
+    const p = document.createElement('p');
+    p.style.margin = '0';
+    p.textContent = text;
+    div.appendChild(meta); div.appendChild(p);
+    wrap.appendChild(div);
+    ta.value = '';
+    showToast('Reply sent');
   });
 
   function escapeHtml(s) {

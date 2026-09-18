@@ -1028,11 +1028,10 @@
         <div class="teacher-nav">
             <span class="nav-brand">Voice Studio</span>
             <div class="teacher-nav-links">
-                <button class="nav-item active" data-nav="studio">Studio</button>
-                <button class="nav-item" data-nav="students">Students</button>
-                <button class="nav-item" data-nav="repertoire">Repertoire</button>
+                <button class="nav-item active" data-nav="today">Today</button>
+                <button class="nav-item" data-nav="inbox">Inbox<span id="inbox-badge" style="display: none; min-width: 18px; height: 18px; border-radius: 999px; background: var(--accent-color); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; margin-left: 5px; padding: 0 4px; display: none;"></span></button>
+                <button class="nav-item" data-nav="studio">Students</button>
                 <button class="nav-item" data-nav="announcements">Announcements</button>
-                <button class="nav-item" data-nav="events">Events</button>
             </div>
         </div>
         <button class="nav-signout" onclick="signOut()">Sign Out</button>
@@ -1064,6 +1063,21 @@
 </div>
 
 <!-- STUDIO -->
+<div id="page-today" style="display: none;">
+    <div class="teacher-header">
+        <h1 id="today-greeting">Today</h1>
+        <div class="teacher-date" id="today-date"></div>
+    </div>
+    <div id="today-content"></div>
+</div>
+
+<div id="page-inbox" style="display: none;">
+    <div class="teacher-header">
+        <h1>Inbox</h1>
+    </div>
+    <div id="inbox-content"></div>
+</div>
+
 <div id="page-studio" style="display: none;">
     <div class="teacher-header">
         <h1 id="studio-greeting">Studio</h1>
@@ -1223,7 +1237,7 @@ async function initApp() {
             showLogin();
             return;
         }
-        navigateTo('studio');
+        navigateTo('today');
     } else {
         showLogin();
     }
@@ -1231,7 +1245,7 @@ async function initApp() {
     sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
             currentUser = session.user;
-            navigateTo('studio');
+            navigateTo('today');
         } else if (event === 'SIGNED_OUT') {
             currentUser = null;
             studentsCache = null;
@@ -1272,7 +1286,7 @@ async function signOut() {
 // PAGE SWITCHING
 // ============================================================
 
-const PAGE_IDS = ['studio', 'students', 'repertoire', 'announcements', 'events'];
+const PAGE_IDS = ['today', 'inbox', 'studio', 'students', 'repertoire', 'announcements', 'events'];
 
 function showLogin() {
     document.getElementById('main-nav').style.display = 'none';
@@ -1296,6 +1310,8 @@ function navigateTo(page) {
 
     // Load data for the page
     const loaders = {
+        today: renderTodayPage,
+        inbox: renderInbox,
         studio: renderStudio,
         students: renderStudents,
         repertoire: renderRepertoire,
@@ -1502,8 +1518,351 @@ function inlineFormat(text) {
 // STUDIO VIEW (prioritized action list)
 // ============================================================
 
+// ============================================================
+// TODAY
+// ============================================================
+
+function wireHubActions() {
+    const container = document.getElementById('studio-content');
+    if (container.dataset.hubWired) return;
+    container.dataset.hubWired = '1';
+    container.addEventListener('click', async e => {
+        const t = e.target;
+        if (t.classList.contains('plan-start')) {
+            const { error } = await sb.from('jury_plans').insert({
+                student_id: t.dataset.studentId, program_key: t.dataset.pk,
+                semester: 'Fall 2026', status: 'planning',
+            });
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Jury plan started');
+            renderStudio();
+        } else if (t.classList.contains('slot-assign')) {
+            const title = prompt('Piece title for "' + t.dataset.slot + '":');
+            if (!title) return;
+            const composer = prompt('Composer or show (optional):') || null;
+            const { error } = await sb.from('jury_selections').insert({
+                jury_plan_id: t.dataset.planId, requirement_slot: t.dataset.slot,
+                title: title.trim(), composer, status: 'accepted', proposed_by: 'teacher',
+            });
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Assigned');
+            renderStudio();
+        } else if (t.classList.contains('slot-change')) {
+            const title = prompt('New piece title (replaces the current one):');
+            if (!title) return;
+            const composer = prompt('Composer or show (optional):') || null;
+            const { error } = await sb.from('jury_selections')
+                .update({ title: title.trim(), composer }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Changed');
+            renderStudio();
+        } else if (t.classList.contains('slot-clear')) {
+            const { error } = await sb.from('jury_selections')
+                .update({ status: 'dropped' }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Slot cleared');
+            renderStudio();
+        } else if (t.classList.contains('slot-accept')) {
+            const slot = prompt('Which slot does this piece fill?');
+            if (!slot) return;
+            const { error } = await sb.from('jury_selections')
+                .update({ status: 'accepted', requirement_slot: slot.trim() }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Accepted into slot');
+            renderStudio();
+        } else if (t.classList.contains('goals-save')) {
+            const ta = container.querySelector('textarea.goals-text[data-student-id="' + t.dataset.studentId + '"]');
+            const { error } = await sb.from('students')
+                .update({ goals: ta.value }).eq('id', t.dataset.studentId);
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            studentsCache = null;
+            showToast('Goals saved to their Analytics page');
+        }
+    });
+}
+
+async function renderTodayPage() {
+    const container = document.getElementById('today-content');
+    container.innerHTML = '<p class="loading-text">Loading...</p>';
+    document.getElementById('today-greeting').textContent = getGreeting();
+    document.getElementById('today-date').textContent = formatDate(todayStr());
+
+    const students = await getStudents();
+    const nameOf = id => { const st = students.find(x => x.id === id); return st ? st.name : null; };
+    const today = todayStr();
+
+    const [draftsRes, briefsRes, reflRes, diaryRes] = await Promise.all([
+        sb.from('lesson_logs').select('id, student_id, date, approved').eq('approved', false).order('date', { ascending: false }).limit(20),
+        sb.from('pre_lesson_briefs').select('id, student_id, date').eq('date', today),
+        sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').order('date_submitted', { ascending: false }).limit(40),
+        sb.from('voice_use_logs').select('*').gte('log_date', addDaysStr(today, -6)),
+    ]);
+    const drafts = (draftsRes.data || []).filter(l => nameOf(l.student_id));
+    const briefs = briefsRes.data || [];
+    const latestRefl = {};
+    (reflRes.data || []).forEach(r => { if (!latestRefl[r.student_id]) latestRefl[r.student_id] = r; });
+    const diary = {};
+    (diaryRes.data || []).forEach(e => {
+        const d = diary[e.student_id] = diary[e.student_id] || { n: 0, min: 0, conds: [], flags: [] };
+        d.n++; d.min += e.minutes || 0;
+        const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+        const c = cv.every(v => v) ? cv.reduce((x, y) => x + y, 0) / 3 : null;
+        if (c) d.conds.push(c);
+        if (e.minutes >= 90 && c && c <= 2.5) d.flags.push(e.log_date + ': ' + e.minutes + ' min with condition ' + c.toFixed(1) + '/5');
+    });
+    Object.values(diary).forEach(d => {
+        d.avg = d.conds.length ? d.conds.reduce((x, y) => x + y, 0) / d.conds.length : null;
+        if (d.avg && d.avg <= 2.5) d.flags.unshift('Average condition ' + d.avg.toFixed(1) + '/5 this week');
+    });
+
+    let html = '';
+
+    html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.5rem;">Needs review</h2>';
+    if (drafts.length) {
+        drafts.forEach(l => {
+            html += '<div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-top: 1px solid var(--border-color); font-size: 14px;">';
+            html += '<strong>' + escapeHtml(nameOf(l.student_id)) + '</strong><span class="text-muted">' + escapeHtml(formatShortDate(l.date)) + ' lesson log</span>';
+            html += '<button class="btn-studio-action" style="margin-left: auto;" data-action-type="review-log" data-action-id="' + l.id + '" data-student-id="' + l.student_id + '">Review + Approve</button></div>';
+        });
+    } else {
+        html += '<p class="text-muted" style="font-size: 13.5px;">Nothing waiting.</p>';
+    }
+    html += '</div>';
+
+    html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.5rem;">Today\'s lessons</h2>';
+    if (briefs.length) {
+        briefs.forEach(b => {
+            const name = nameOf(b.student_id);
+            if (!name) return;
+            const refl = latestRefl[b.student_id];
+            const dg = diary[b.student_id];
+            html += '<div style="padding: 0.6rem 0; border-top: 1px solid var(--border-color);">';
+            html += '<strong>' + escapeHtml(name) + '</strong> ';
+            html += '<button class="btn-studio-action" style="float: right;" data-action-type="view-forecast" data-action-id="' + b.id + '" data-student-id="' + b.student_id + '">Open forecast</button>';
+            if (dg) html += '<span style="display: block; font-size: 12.5px; color: var(--text-muted);">' + dg.n + (dg.n === 1 ? ' log' : ' logs') + ' · ' + dg.min + ' min' + (dg.avg ? ' · condition ' + dg.avg.toFixed(1) + '/5' : '') + '</span>';
+            if (refl && refl.questions) html += '<p style="font-size: 13px; margin: 0.3rem 0 0;"><strong>They ask:</strong> ' + escapeHtml(refl.questions) + '</p>';
+            if (dg) dg.flags.forEach(f => { html += '<p style="font-size: 13px; margin: 0.2rem 0 0; color: #a04545;"><strong>Flag:</strong> ' + escapeHtml(f) + '</p>'; });
+            html += '</div>';
+        });
+    } else {
+        html += '<p class="text-muted" style="font-size: 13.5px;">No forecasts generated today. Forecasts generate at 7:00 AM on lesson days.</p>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.querySelectorAll('.btn-studio-action').forEach(btn => {
+        btn.addEventListener('click', () => handleStudioAction(btn.dataset.actionType, btn.dataset.actionId, btn.dataset.studentId));
+    });
+}
+
+function addDaysStr(dateStr, days) {
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    return d.toLocaleDateString('en-CA');
+}
+
+// ============================================================
+// INBOX
+// ============================================================
+
+async function renderInbox() {
+    const container = document.getElementById('inbox-content');
+    container.innerHTML = '<p class="loading-text">Loading inbox...</p>';
+    const students = await getStudents();
+    const nameOf = id => { const st = students.find(x => x.id === id); return st ? st.name : null; };
+    const since = addDaysStr(todayStr(), -14);
+
+    const [reflRes, diaryRes, ckRes, repRes, thrRes] = await Promise.all([
+        sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').gte('date_submitted', since).order('date_submitted', { ascending: false }),
+        sb.from('voice_use_logs').select('*').gte('log_date', since).order('log_date', { ascending: false }).limit(120),
+        sb.from('voses_checkins').select('*').gte('month', since.slice(0, 7) + '-01'),
+        sb.from('repertoire').select('*').gte('created_at', since).order('created_at', { ascending: false }),
+        sb.from('thread_replies').select('*').order('created_at'),
+    ]);
+    const threads = thrRes.data || [];
+    const repliesFor = (t, id) => threads.filter(x => x.anchor_type === t && x.anchor_id === id);
+
+    const items = [];
+    (reflRes.data || []).forEach(r => {
+        if (!nameOf(r.student_id)) return;
+        items.push({ kind: 'Reflection', type: 'reflection', id: r.id, sid: r.student_id,
+            date: String(r.date_submitted).slice(0, 10),
+            sum: r.questions || r.lesson_takeaways || 'Reflection submitted',
+            body: ['lesson_takeaways', 'risk_taken', 'questions'].filter(f => r[f]).map(f =>
+                '<p><strong>' + { lesson_takeaways: 'Takeaways', risk_taken: 'Risk taken', questions: 'Questions or goals' }[f] + ':</strong> ' + escapeHtml(r[f]) + '</p>').join('') });
+    });
+    (diaryRes.data || []).forEach(e => {
+        if (!nameOf(e.student_id)) return;
+        const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+        const c = cv.every(v => v) ? (cv.reduce((x, y) => x + y, 0) / 3) : null;
+        const flagged = e.minutes >= 90 && c && c <= 2.5;
+        if (!e.notes && !flagged) return;
+        const parts = [e.kind, e.minutes ? e.minutes + ' min' : null, c ? 'condition ' + c.toFixed(1) + '/5' : null].filter(Boolean).join(' · ');
+        items.push({ kind: 'Practice log', type: 'voice_use_log', id: e.id, sid: e.student_id,
+            date: e.log_date, sum: parts + (e.notes ? ' (' + e.notes + ')' : ''), flagged,
+            body: '<p>' + escapeHtml(parts) + '</p>' + (e.focus ? '<p><strong>Sang:</strong> ' + escapeHtml(e.focus) + '</p>' : '') + (e.notes ? '<p>' + escapeHtml(e.notes) + '</p>' : '') });
+    });
+    (ckRes.data || []).forEach(c => {
+        if (!nameOf(c.student_id)) return;
+        const sum = 'Singing-VoSES: higher + transitions ' + c.mean_higher + ' · middle ' + c.mean_middle + ' · lower ' + c.mean_lower;
+        items.push({ kind: 'Check-in', type: 'voses_checkin', id: c.id, sid: c.student_id,
+            date: String(c.month).slice(0, 10), sum, body: '<p>' + escapeHtml(sum) + ' (of 6)</p>' });
+    });
+    (repRes.data || []).forEach(r => {
+        if (!nameOf(r.student_id)) return;
+        items.push({ kind: 'Repertoire', type: 'repertoire', id: r.id, sid: r.student_id,
+            date: String(r.created_at).slice(0, 10),
+            sum: 'Added "' + r.title + '"' + (r.composer ? ' (' + r.composer + ')' : ''),
+            body: '<p>"' + escapeHtml(r.title) + '"' + (r.composer ? ' (' + escapeHtml(r.composer) + ')' : '') + '</p>' });
+    });
+
+    items.forEach(it => {
+        const reps = repliesFor(it.type, it.id);
+        it.replies = reps;
+        it.lastDate = reps.length ? String(reps[reps.length - 1].created_at).slice(0, 10) : it.date;
+        it.unanswered = !reps.some(r => r.author === 'teacher');
+        it.unreadStudent = reps.some(r => r.author === 'student' && !r.read_by_teacher);
+    });
+    items.sort((a, b) => b.lastDate < a.lastDate ? -1 : 1).reverse();
+    items.sort((a, b) => (b.unanswered || b.unreadStudent ? 1 : 0) - (a.unanswered || a.unreadStudent ? 1 : 0));
+
+    let html = '';
+    if (!items.length) html = '<p class="text-muted">No activity in the last two weeks.</p>';
+    items.forEach((it, idx) => {
+        const dot = (it.unanswered || it.unreadStudent)
+            ? '<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-color); flex-shrink: 0;"></span>'
+            : '<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--border-color); flex-shrink: 0;"></span>';
+        html += '<div class="card" style="margin-bottom: 0.7rem; padding: 0;">';
+        html += '<button class="inbox-head" data-idx="' + idx + '" style="width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;">';
+        html += dot;
+        html += '<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; color: var(--text-muted);">' + it.kind + '</span>';
+        html += '<strong>' + escapeHtml(nameOf(it.sid)) + '</strong>';
+        html += '<span style="color: var(--text-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">' + escapeHtml(String(it.sum).slice(0, 90)) + '</span>';
+        html += '<span style="color: var(--text-muted); font-size: 12px; white-space: nowrap;">' + escapeHtml(formatShortDate(it.lastDate)) + '</span>';
+        html += '</button>';
+        html += '<div class="inbox-body" id="inbox-body-' + idx + '" style="display: none; border-top: 1px solid var(--border-color); padding: 1rem; font-size: 14px;">';
+        html += it.body;
+        html += '<div class="inbox-replies">';
+        it.replies.forEach(r => {
+            const mine = r.author === 'teacher';
+            html += '<div style="border-left: 3px solid var(--border-color); padding: 0.15rem 0 0.15rem 0.85rem; margin: 0.6rem 0;">';
+            html += '<p class="text-muted" style="font-size: 12px; margin: 0 0 0.15rem;">' + (mine ? 'You' : escapeHtml((nameOf(it.sid) || '').split(' ')[0])) + ' · ' + escapeHtml(formatShortDate(String(r.created_at).slice(0, 10))) + '</p>';
+            html += '<p style="margin: 0;">' + escapeHtml(r.body) + '</p></div>';
+        });
+        html += '</div>';
+        html += '<div style="display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.6rem;">';
+        html += '<textarea class="inbox-reply-text" rows="1" style="flex: 1; font: inherit; font-size: 14px; padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Reply..."></textarea>';
+        html += '<button class="btn-studio-action inbox-reply-btn" data-idx="' + idx + '">Reply</button></div>';
+        html += '<p class="text-muted" style="font-size: 12px; margin: 0.4rem 0 0;">Appears in their portal next to this item; they can reply back here.</p>';
+        html += '</div></div>';
+    });
+    container.innerHTML = html;
+    window.__inboxItems = items;
+
+    container.querySelectorAll('.inbox-head').forEach(h => {
+        h.addEventListener('click', async () => {
+            const idx = h.dataset.idx;
+            const body = document.getElementById('inbox-body-' + idx);
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+            const it = window.__inboxItems[idx];
+            if (it.unreadStudent) {
+                await sb.from('thread_replies').update({ read_by_teacher: true })
+                    .eq('anchor_type', it.type).eq('anchor_id', it.id).eq('author', 'student');
+                it.unreadStudent = false;
+                updateInboxBadge();
+            }
+        });
+    });
+    container.querySelectorAll('.inbox-reply-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const idx = btn.dataset.idx;
+            const it = window.__inboxItems[idx];
+            const ta = btn.parentNode.querySelector('.inbox-reply-text');
+            const text = ta.value.trim();
+            if (!text) return;
+            btn.disabled = true;
+            const { error } = await sb.from('thread_replies').insert({
+                student_id: it.sid, anchor_type: it.type, anchor_id: it.id,
+                author: 'teacher', body: text, read_by_teacher: true,
+            });
+            btn.disabled = false;
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Reply sent');
+            renderInbox();
+        });
+    });
+    updateInboxBadge();
+}
+
+async function updateInboxBadge() {
+    try {
+        const { data } = await sb.from('thread_replies').select('id')
+            .eq('author', 'student').eq('read_by_teacher', false);
+        const n = (data || []).length;
+        const b = document.getElementById('inbox-badge');
+        if (!b) return;
+        b.style.display = n ? 'inline-block' : 'none';
+        b.textContent = n;
+    } catch (e) { /* table may not exist yet */ }
+}
+
+// ---- Students hub helpers: jury slots, charts, goals ----
+const JURY_SLOTS = {
+    MFA_MT_Vocal_Pedagogy: ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song'],
+    MM_Vocal_Pedagogy: ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4'],
+    BFA_MT_Year1: ['Legit selection', '32-bar cut', 'Additional selection'],
+    BFA_MT_Sophomore: ['Legit selection', '32-bar cut', 'Additional selection', 'Wildcard'],
+    BFA_MT_Junior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
+    BFA_MT_Senior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
+};
+function programKeyFor(student) {
+    const p = (student.degree_program || '').toLowerCase();
+    if (p.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
+    if (p.includes('mm')) return 'MM_Vocal_Pedagogy';
+    if (p.includes('bfa')) return 'BFA_MT_Junior';
+    return null;
+}
+const REP_PHASES = [
+    ['translation_characterization', 'Translation + Characterization'],
+    ['text_rhythm', 'Text + Rhythm'],
+    ['melody_text_rhythm', 'Melody + Text + Rhythm'],
+    ['characterization_integration', 'Characterization Integration'],
+    ['memorization', 'Memorization'],
+    ['performance_ready', 'Performance Ready'],
+];
+function hubMiniRail(phaseIdx) {
+    let out = '<span style="display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem;">';
+    for (let i = 0; i < 6; i++) {
+        const bg = i < phaseIdx ? 'var(--accent-color)' : (i === phaseIdx ? 'var(--accent-color); opacity: 0.45' : 'var(--border-color)');
+        out += '<span style="width: 12px; height: 6px; border-radius: 3px; background: ' + bg + ';"></span>';
+    }
+    return out + '</span>';
+}
+function hubStrips(mins, cond) {
+    const xs = i => 40 + i * 38;
+    const maxM = Math.max(60, ...mins);
+    let svg = '<svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="Daily minutes and condition, two weeks">';
+    svg += '<text x="0" y="14" font-size="11" font-weight="600" fill="var(--text-muted)">SINGING MINUTES</text>';
+    svg += '<line x1="0" y1="110" x2="560" y2="110" stroke="var(--border-color)"/>';
+    mins.forEach((m, i) => {
+        if (!m) return;
+        const bh = Math.round(m / maxM * 88);
+        svg += '<rect x="' + (xs(i) - 12) + '" y="' + (110 - bh) + '" width="24" height="' + bh + '" rx="2" fill="var(--accent-color)" opacity="0.3"/>';
+        svg += '<text x="' + xs(i) + '" y="' + (110 - bh - 4) + '" font-size="8.5" fill="var(--text-muted)" text-anchor="middle">' + m + '</text>';
+    });
+    svg += '<text x="0" y="142" font-size="11" font-weight="600" fill="var(--text-muted)">VOICE CONDITION (1 TO 5)</text>';
+    svg += '<line x1="0" y1="225" x2="560" y2="225" stroke="var(--border-color)"/>';
+    svg += '<line x1="0" y1="191" x2="560" y2="191" stroke="var(--border-color)" stroke-dasharray="3 5"/>';
+    cond.forEach((c, i) => {
+        if (c == null) return;
+        svg += '<circle cx="' + xs(i) + '" cy="' + Math.round(225 - (c - 1) * 17) + '" r="3.5" fill="var(--primary-color)"/>';
+    });
+    return svg + '</svg>';
+}
+
 async function renderStudio() {
     const container = document.getElementById('studio-content');
+    wireHubActions();
     container.innerHTML = '<p class="loading-text">Loading studio...</p>';
 
     // Greeting
@@ -1533,7 +1892,8 @@ async function renderStudio() {
             sb.from('jury_plans').select('*'),
             sb.from('jury_selections').select('*'),
             sb.from('voice_use_logs').select('*').order('log_date', { ascending: false }).limit(600),
-            sb.from('voses_checkins').select('student_id, month')
+            sb.from('voses_checkins').select('*'),
+            sb.from('repertoire').select('*')
         ]);
         allLogs = results[0].data || [];
         allPlans = results[1].data || [];
@@ -1544,6 +1904,10 @@ async function renderStudio() {
         allJurySelections = results[6].data || [];
         var allDiary = results[7].data || [];
         var allCheckins = results[8].data || [];
+        var studentsRepCache = {};
+        (results[9].data || []).forEach(r => {
+            (studentsRepCache[r.student_id] = studentsRepCache[r.student_id] || []).push(r);
+        });
     } catch (err) {
         console.error('[Studio] fetch error:', err);
         container.innerHTML = '<p class="text-muted">Error loading studio data.</p>';
@@ -1818,6 +2182,72 @@ async function renderStudio() {
         // 7. Forecast
         html += renderWorkflowStep(st.hasForecastSinceLesson, 'Forecast', st.hasForecastSinceLesson ? ('Generated ' + formatShortDate(st.latestBrief.date)) : 'Not yet generated', st.hasForecastSinceLesson ? { label: 'View', type: 'view-forecast', id: st.latestBrief.id } : null);
 
+        html += '</div>';
+
+        // ---- Jury slots (fall plan; from jury_plans + jury_selections) ----
+        const plan = allJuryPlans.find(p => p.student_id === s.id && p.semester === 'Fall 2026');
+        html += '<div class="studio-section"><div class="section-label">Jury Slots — Fall 2026</div>';
+        if (plan) {
+            const slots = JURY_SLOTS[plan.program_key] || ['Selection 1', 'Selection 2', 'Selection 3'];
+            const sels = allJurySelections.filter(x => x.jury_plan_id === plan.id);
+            const filled = slots.filter(sl => sels.some(x => x.requirement_slot === sl && x.status === 'accepted')).length;
+            html += '<p style="font-size: 13px; margin: 0 0 0.5rem;"><strong>' + filled + ' of ' + slots.length + ' slots filled</strong> · ' + escapeHtml(plan.program_key.replace(/_/g, ' ')) + (plan.jury_date ? ' · jury ' + formatShortDate(plan.jury_date) : '') + '</p>';
+            slots.forEach(sl => {
+                const sel = sels.find(x => x.requirement_slot === sl && x.status === 'accepted');
+                html += '<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0.7rem; border: 1px ' + (sel ? 'solid' : 'dashed') + ' var(--border-color); border-radius: 5px; margin-bottom: 0.35rem; font-size: 13px; flex-wrap: wrap;">';
+                html += '<span style="color: var(--text-muted); flex: 1 1 180px;">' + escapeHtml(sl) + '</span>';
+                if (sel) {
+                    const rep = studentsRepCache[s.id] && studentsRepCache[s.id].find(r => r.title && sel.title && r.title.toLowerCase() === sel.title.toLowerCase());
+                    const phaseIdx = rep ? Math.max(0, REP_PHASES.findIndex(p => p[0] === rep.learning_phase)) : null;
+                    html += '<strong>"' + escapeHtml(sel.title) + '"' + (sel.composer ? ' (' + escapeHtml(sel.composer) + ')' : '') + '</strong>';
+                    if (phaseIdx != null) html += hubMiniRail(phaseIdx) + '<span style="font-size: 12px; color: var(--text-muted);">' + REP_PHASES[phaseIdx][1] + '</span>';
+                    html += '<button class="btn-studio-action slot-change" data-sel-id="' + sel.id + '">Change</button>';
+                    html += '<button class="btn-studio-action slot-clear" data-sel-id="' + sel.id + '">Clear</button>';
+                } else {
+                    html += '<button class="btn-studio-action slot-assign" data-plan-id="' + plan.id + '" data-slot="' + escapeHtml(sl) + '">Assign piece</button>';
+                }
+                html += '</div>';
+            });
+            const pool = sels.filter(x => x.status === 'proposed');
+            if (pool.length) {
+                html += '<p style="font-size: 12.5px; color: var(--text-muted); margin: 0.4rem 0 0;">Proposed: ' + pool.map(x =>
+                    '"' + escapeHtml(x.title) + '" <button class="btn-studio-action slot-accept" data-sel-id="' + x.id + '" data-plan-id="' + plan.id + '" style="font-size: 11px; padding: 0.15rem 0.5rem;">Accept into slot</button>').join(' · ') + '</p>';
+            }
+        } else {
+            const pk = programKeyFor(s);
+            html += pk
+                ? '<button class="btn-studio-action plan-start" data-student-id="' + s.id + '" data-pk="' + pk + '">Start Fall 2026 jury plan (' + pk.replace(/_/g, ' ') + ')</button>'
+                : '<p class="text-muted" style="font-size: 13px;">No jury requirements mapped for ' + escapeHtml(s.degree_program || 'this program') + '.</p>';
+        }
+        html += '</div>';
+
+        // ---- Analytics (daily strips from the diary; VoSES month means) ----
+        const myDiary = allDiary.filter(e => e.student_id === s.id && e.log_date >= addDaysStr(today, -13));
+        if (myDiary.length) {
+            const dayIdx = {};
+            for (let i = 0; i < 14; i++) dayIdx[addDaysStr(today, i - 13)] = i;
+            const mins = new Array(14).fill(0);
+            const conds = new Array(14).fill(null);
+            myDiary.forEach(e => {
+                const i = dayIdx[e.log_date];
+                if (i == null) return;
+                mins[i] += e.minutes || 0;
+                const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+                if (cv.every(v => v)) conds[i] = cv.reduce((x, y) => x + y, 0) / 3;
+            });
+            html += '<div class="studio-section"><div class="section-label">Analytics</div>' + hubStrips(mins, conds);
+            const myCk = allCheckins.filter(c => c.student_id === s.id).sort((a2, b2) => String(a2.month) < String(b2.month) ? -1 : 1);
+            if (myCk.length) {
+                const last = myCk[myCk.length - 1];
+                html += '<p style="font-size: 13px; margin: 0.5rem 0 0;"><strong>Singing-VoSES ' + escapeHtml(String(last.month).slice(0, 7)) + ':</strong> higher + transitions ' + last.mean_higher + ' · middle ' + last.mean_middle + ' · lower ' + last.mean_lower + ' (of 6)</p>';
+            }
+            html += '</div>';
+        }
+
+        // ---- Semester goals (editable) ----
+        html += '<div class="studio-section"><div class="section-label">Semester Goals</div>';
+        html += '<textarea class="goals-text" data-student-id="' + s.id + '" rows="3" style="width: 100%; font: inherit; font-size: 13.5px; padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 4px;">' + escapeHtml(s.goals || '') + '</textarea>';
+        html += '<button class="btn-studio-action goals-save" data-student-id="' + s.id + '" style="margin-top: 0.4rem;">Save goals</button>';
         html += '</div>';
 
         // Studio class

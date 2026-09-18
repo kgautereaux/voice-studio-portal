@@ -1,2090 +1,810 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Teacher Portal Demo : Voice Studio</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <style>
-        /* ============================================================
-           Teacher Portal Styles (mirrored from teacher.html)
-           ============================================================ */
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teacher Demo — Voice Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ground: #faf9f7;
+    --surface: #ffffff;
+    --ink: #2d2a2c;
+    --muted: #8a8286;
+    --line: #e8e3e0;
+    --teacher: #6c495b;
+    --teacher-soft: #f3ecf0;
+    --student: #5f7055;
+    --student-soft: #eef1ea;
+    --good: #4a7c59;
+    --warn: #a04545;
+    --chip: #f1edea;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1e1a1d; --surface: #282329; --ink: #ece7e9; --muted: #a49aa0;
+      --line: #3a333a; --teacher: #c9a0b6; --teacher-soft: #382e35;
+      --student: #a9bb9b; --student-soft: #2e352b; --good: #8fc09b;
+      --warn: #d08585; --chip: #332d33;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1e1a1d; --surface: #282329; --ink: #ece7e9; --muted: #a49aa0;
+    --line: #3a333a; --teacher: #c9a0b6; --teacher-soft: #382e35;
+    --student: #a9bb9b; --student-soft: #2e352b; --good: #8fc09b;
+    --warn: #d08585; --chip: #332d33;
+  }
 
-        /* Nav overrides for teacher portal */
-        .teacher-nav {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .teacher-nav-links {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        .nav-item {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            cursor: pointer;
-            color: var(--text-muted);
-            padding: 0.4rem 0.75rem;
-            border-radius: var(--radius);
-            transition: all var(--transition);
-            border: none;
-            background: none;
-            font-family: inherit;
-        }
-        .nav-item:hover {
-            color: var(--text-color);
-            background: var(--bg-warm);
-        }
-        .nav-item.active {
-            color: var(--primary-color);
-            background: rgba(108, 73, 91, 0.08);
-            font-weight: 500;
-        }
-        .nav-brand {
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--primary-color);
-            letter-spacing: 0.02em;
-            margin-right: 0.5rem;
-        }
-        .demo-badge {
-            display: inline-block;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 0.15rem 0.5rem;
-            border-radius: 3px;
-            background: rgba(108, 73, 91, 0.12);
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-        }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif; font-size: 15px; line-height: 1.6;
+  }
+  * { box-sizing: border-box; }
 
-        /* Demo banner */
-        .demo-banner {
-            background: rgba(108, 73, 91, 0.06);
-            border-bottom: 1px solid rgba(108, 73, 91, 0.12);
-            text-align: center;
-            padding: 0.6rem 1rem;
-            font-size: 13px;
-            color: var(--text-muted);
-            letter-spacing: 0.01em;
-        }
+  .proto-banner {
+    background: var(--teacher); color: var(--ground); text-align: center;
+    font-size: 12.5px; letter-spacing: 0.04em; padding: 0.45rem 1rem;
+  }
+  .proto-banner strong { letter-spacing: 0.08em; text-transform: uppercase; }
 
-        /* Header block */
-        .teacher-header {
-            padding: 1.5rem 0 1rem;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-        }
-        .teacher-header h1 {
-            font-size: 1.6rem;
-            font-weight: 300;
-            margin-bottom: 0.25rem;
-        }
-        .teacher-date {
-            font-size: 13px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+  nav { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50; }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 1.25rem;
+    display: flex; align-items: center; gap: 1.5rem; height: 58px;
+  }
+  .wordmark { font-weight: 700; letter-spacing: 0.14em; font-size: 13px; text-transform: uppercase; white-space: nowrap; }
+  .tabs { display: flex; gap: 0.25rem; flex: 1; }
+  .tab {
+    border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 500;
+    padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--teacher); border-radius: 4px 4px 0 0; }
+  .badge {
+    display: inline-block; min-width: 18px; height: 18px; border-radius: 999px;
+    background: var(--teacher); color: var(--ground); font-size: 11px; font-weight: 700;
+    line-height: 18px; text-align: center; margin-left: 5px; padding: 0 4px; vertical-align: 1px;
+  }
+  .who-chip {
+    background: var(--chip); border-radius: 999px; font-size: 12.5px;
+    padding: 0.3rem 0.85rem; color: var(--muted); white-space: nowrap;
+  }
+  @media (max-width: 700px) {
+    .nav-inner { gap: 0.7rem; padding: 0 0.9rem; overflow-x: auto; }
+    .who-chip { display: none; }
+  }
 
-        /* Section labels */
-        .section-label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-            margin-top: 1.5rem;
-        }
-        .section-label:first-child {
-            margin-top: 0;
-        }
+  main { max-width: 1100px; margin: 0 auto; padding: 2.25rem 1.25rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h1 { font-size: 1.7rem; font-weight: 600; margin: 0 0 1.5rem; }
 
-        /* Card system */
-        .card {
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            border-radius: var(--radius-lg);
-            margin-bottom: 1rem;
-            background: #fff;
-            overflow: hidden;
-            transition: box-shadow var(--transition);
-        }
-        .card:hover {
-            box-shadow: var(--shadow-card);
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            transition: background var(--transition);
-        }
-        .card-header:hover {
-            background: var(--bg-warm);
-        }
-        .card-name {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-        .card-meta {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .card-body {
-            display: none;
-            padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .card.expanded .card-body {
-            display: block;
-        }
-        .card-chevron {
-            font-size: 12px;
-            color: var(--text-muted);
-            transition: transform var(--transition);
-            flex-shrink: 0;
-        }
-        .card.expanded .card-chevron {
-            transform: rotate(180deg);
-        }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.3rem 1.5rem; margin-bottom: 1.25rem; }
+  .panel h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.2rem; }
+  .panel .meta { font-size: 12.5px; color: var(--muted); margin: 0 0 0.9rem; font-variant-numeric: tabular-nums; }
+  .panel h3 { font-size: 13px; font-weight: 600; margin: 1.1rem 0 0.4rem; }
+  .panel p { margin: 0 0 0.6rem; font-size: 14px; }
 
-        /* Flag tags */
-        .flag-tags {
-            display: flex;
-            gap: 0.5rem;
-            margin-left: 1rem;
-            flex-wrap: wrap;
-        }
-        .flag-tag {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.15rem 0.5rem;
-            border-radius: 3px;
-            background: rgba(156, 92, 92, 0.1);
-            color: #8b4040;
-        }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.35rem; }
+  .eyebrow.teacher { color: var(--teacher); }
+  .eyebrow.student { color: var(--student); }
 
-        /* Brief content styling */
-        .brief-content h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 1.25rem 0 0.5rem;
-            padding-bottom: 0.25rem;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--primary-color);
-        }
-        .brief-content h3 {
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin: 1rem 0 0.35rem;
-            color: var(--text-color);
-        }
-        .brief-content p,
-        .brief-content li {
-            font-size: 14px;
-            line-height: 1.7;
-            color: var(--text-color);
-        }
-        .brief-content ul, .brief-content ol {
-            padding-left: 1.25rem;
-            margin: 0.5rem 0;
-        }
-        .brief-content li {
-            margin-bottom: 0.35rem;
-        }
-        .brief-content strong {
-            color: var(--primary-color);
-        }
-        .brief-content hr {
-            border: none;
-            border-top: 1px solid var(--border-color);
-            margin: 1rem 0;
-        }
-        .brief-content code {
-            background: var(--bg-warm);
-            padding: 0.1rem 0.35rem;
-            border-radius: 3px;
-            font-size: 13px;
-        }
+  .lesson-card { border-top: 3px solid var(--teacher); }
+  .lesson-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; }
+  .lesson-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+  .snap { font-size: 12.5px; color: var(--muted); }
+  .flag { color: var(--warn); font-weight: 600; }
+  .ask { background: var(--student-soft); border-radius: 5px; padding: 0.6rem 0.8rem; font-size: 14px; margin: 0.6rem 0; }
+  .ask b { color: var(--student); }
 
-        /* Category checks */
-        .category-check {
-            display: inline-block;
-            font-size: 13px;
-            margin-right: 0.75rem;
-            margin-bottom: 0.25rem;
-            color: var(--text-muted);
-        }
-        .category-check.covered {
-            color: var(--text-color);
-        }
-        .category-check.covered::before {
-            content: "\2713 ";
-            color: #5a8a5a;
-            font-weight: 600;
-        }
-        .category-check.uncovered::before {
-            content: "\25CB ";
-            color: #c4b8ae;
-        }
+  /* Inbox */
+  .thread { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.8rem; overflow: hidden; }
+  .thread-head {
+    width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+    background: var(--surface); border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  .thread-head:focus-visible { outline: 2px solid var(--teacher); outline-offset: -2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teacher); flex-shrink: 0; }
+  .thread.read .dot { background: var(--line); }
+  .t-kind {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 0.12rem 0.55rem; white-space: nowrap;
+    background: var(--student-soft); color: var(--student);
+  }
+  .t-kind.rep { background: var(--chip); color: var(--muted); }
+  .t-who { font-weight: 600; }
+  .t-sum { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .t-date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .thread-body { display: none; border-top: 1px solid var(--line); padding: 1rem; }
+  .thread.open .thread-body { display: block; }
+  .msg { border-left: 3px solid var(--student-soft); padding: 0.2rem 0 0.2rem 0.85rem; margin-bottom: 0.8rem; font-size: 14px; }
+  .msg .m-meta { font-size: 12px; color: var(--muted); }
+  .msg.mine { border-left-color: var(--teacher-soft); }
+  .msg.mine .m-meta { color: var(--teacher); }
+  .reply-row { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.6rem; }
+  .reply-row textarea {
+    flex: 1; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.5rem 0.7rem; resize: vertical; min-height: 40px;
+  }
+  .reply-row textarea:focus { outline: 2px solid var(--teacher); outline-offset: 1px; }
+  .btn {
+    border: 0; border-radius: 4px; font: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 0.5rem 1rem; cursor: pointer;
+  }
+  .btn.teacher-bg { background: var(--teacher); color: var(--ground); }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
+  .btn.ghost:hover { color: var(--ink); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .notify-set { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+  .chip-opt {
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12.5px; padding: 0.28rem 0.7rem; border-radius: 999px; cursor: pointer;
+  }
+  .chip-opt.on { background: var(--teacher-soft); color: var(--teacher); border-color: var(--teacher); font-weight: 600; }
 
-        /* Tables */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            margin: 0.5rem 0;
-        }
-        .data-table th {
-            text-align: left;
-            padding: 0.6rem 0.75rem;
-            border-bottom: 2px solid var(--border-color);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-            user-select: none;
-        }
-        .data-table th:hover {
-            color: var(--primary-color);
-        }
-        .data-table th.sorted-asc::after {
-            content: " \25B2";
-            font-size: 10px;
-        }
-        .data-table th.sorted-desc::after {
-            content: " \25BC";
-            font-size: 10px;
-        }
-        .data-table td {
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: top;
-        }
-        .data-table tbody tr:hover {
-            background: var(--bg-warm);
-        }
-        .table-scroll {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
+  /* Students */
+  .roster-row { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.8rem; }
+  .roster-head {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem;
+    background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  .roster-head strong { min-width: 9em; }
+  .roster-body { display: none; border-top: 1px solid var(--line); padding: 1rem; }
+  .roster-row.open .roster-body { display: block; }
 
-        /* Status dots */
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 0.4rem;
-        }
-        .status-dot.green { background: #5a8a5a; }
-        .status-dot.amber { background: #c49a3c; }
-        .status-dot.red { background: #9c5c5c; }
+  /* Repertoire board */
+  .board-student { margin-bottom: 2rem; }
+  .board-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .board-head h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+  .board-prog { font-size: 12.5px; color: var(--muted); }
+  .fill-count { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--teacher); }
+  .slot {
+    display: flex; align-items: center; gap: 0.9rem; padding: 0.6rem 0.9rem;
+    border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.45rem;
+    background: var(--surface); font-size: 13.5px; flex-wrap: wrap;
+  }
+  .slot .req { color: var(--muted); font-size: 12.5px; flex: 1 1 220px; }
+  .slot.empty { border-style: dashed; background: none; }
+  .slot .piece { font-weight: 600; }
+  .slot .phase { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mini-rail { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem; }
+  .mini-rail span { width: 12px; height: 6px; border-radius: 3px; background: var(--line); }
+  .mini-rail span.d { background: var(--student); }
+  .mini-rail span.c { background: var(--student); opacity: 0.45; }
+  .assign-form { display: none; width: 100%; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .slot.assigning .assign-form { display: flex; }
+  .assign-form input {
+    border: 1px solid var(--line); border-radius: 4px; background: var(--ground); color: var(--ink);
+    font: inherit; font-size: 13.5px; padding: 0.4rem 0.6rem; flex: 1 1 150px;
+  }
+  .pool { font-size: 12.5px; color: var(--muted); margin: 0.3rem 0 0; }
+  .pool button { font-size: 12px; }
 
-        /* Heatmap cells */
-        .heat-cell {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-            min-width: 32px;
-        }
-        .heat-cell.heat-0 { color: #9c5c5c; background: rgba(156, 92, 92, 0.08); }
-        .heat-cell.heat-1 { color: #c49a3c; background: rgba(196, 154, 60, 0.08); }
-        .heat-cell.heat-2, .heat-cell.heat-3 { color: #5a8a5a; background: rgba(90, 138, 90, 0.08); }
+  /* Analytics */
+  .an-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 900px) { .an-grid { grid-template-columns: 1fr; } }
+  .an-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1rem 1.1rem; cursor: pointer; text-align: left; font: inherit; color: inherit;
+    transition: border-color 0.15s;
+  }
+  .an-card:hover { border-color: var(--muted); }
+  .an-card.flagged { border-left: 3px solid var(--warn); }
+  .an-card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 0.1rem; }
+  .an-nums { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 0.5rem; }
+  .an-delta { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .an-delta .up { color: var(--good); font-weight: 600; }
+  .an-delta .down { color: var(--warn); font-weight: 600; }
+  .an-delta .flat { color: var(--muted); }
+  .drill { margin-top: 1.5rem; }
+  .drill-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+  .drill-head h2 { margin: 0; font-size: 1.15rem; }
+  .goals-edit textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; resize: vertical;
+  }
 
-        /* Filter buttons */
-        .filter-bar {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.45rem 0.85rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            background: #fff;
-            color: var(--text-color);
-            cursor: pointer;
-            transition: all var(--transition);
-            font-family: inherit;
-        }
-        .filter-btn:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-        .filter-btn.active {
-            background: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
-        }
+  /* Announcements */
+  .ann { border-left: 3px solid var(--teacher-soft); padding: 0.2rem 0 0.2rem 0.85rem; margin-bottom: 0.9rem; }
+  .ann .m-meta { font-size: 12px; color: var(--muted); }
+  textarea.full {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; resize: vertical;
+  }
 
-        /* Announcement cards */
-        .announcement-card {
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            border-radius: var(--radius-lg);
-            padding: 1rem 1.5rem;
-            background: #fff;
-            margin-bottom: 0.75rem;
-            transition: box-shadow var(--transition);
-        }
-        .announcement-card:hover {
-            box-shadow: var(--shadow-card);
-        }
-        .announcement-card.pinned {
-            border-left-color: var(--primary-color);
-        }
-        .announcement-title {
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-            margin-bottom: 0.25rem;
-        }
-        .announcement-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-        .announcement-body {
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        /* Event cards */
-        .event-week-label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin: 1.5rem 0 0.5rem;
-            padding-bottom: 0.35rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .event-card {
-            display: flex;
-            gap: 1rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-            font-size: 14px;
-        }
-        .event-date-col {
-            width: 90px;
-            flex-shrink: 0;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .event-type-badge {
-            display: inline-block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.1rem 0.45rem;
-            border-radius: 3px;
-            background: rgba(108, 73, 91, 0.08);
-            color: var(--primary-color);
-            margin-right: 0.5rem;
-        }
-
-        /* No data state */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: var(--text-muted);
-        }
-        .empty-state h2 {
-            font-weight: 300;
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        /* Feedback block for juries */
-        .feedback-block {
-            border-left: 2px solid var(--accent-color);
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 0.75rem;
-            font-size: 14px;
-        }
-        .feedback-block .fb-panelist {
-            font-weight: 500;
-            color: var(--primary-color);
-            font-size: 13px;
-        }
-
-        /* Student detail sub-sections */
-        .detail-section {
-            margin-top: 1.25rem;
-        }
-        .detail-section h4 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            padding-bottom: 0.25rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .detail-section p, .detail-section li {
-            font-size: 14px;
-            line-height: 1.7;
-        }
-        .detail-section ul {
-            padding-left: 1.25rem;
-            margin: 0.25rem 0;
-        }
-        .detail-section li {
-            margin-bottom: 0.25rem;
-        }
-
-        /* Days-since warning */
-        .days-warning { color: #9c5c5c; font-weight: 500; }
-
-        /* Draft badge */
-        .draft-badge {
-            display: inline-block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.1rem 0.45rem;
-            border-radius: 3px;
-            background: rgba(196, 154, 60, 0.15);
-            color: #9a7a2a;
-        }
-        .approved-badge {
-            display: inline-block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.15rem 0.5rem;
-            border-radius: 3px;
-            background: rgba(90, 138, 90, 0.12);
-            color: #5a8a5a;
-        }
-        .btn-approve {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.25rem 0.6rem;
-            border-radius: 3px;
-            background: var(--primary-color);
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            transition: opacity 0.2s;
-        }
-        .btn-approve:hover { opacity: 0.85; }
-
-        /* Toast */
-        .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 14px; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-        .toast.show { opacity: 1; }
-        .toast.success { background: #5a8a5a; color: #fff; }
-        /* Studio cards */
-        .studio-card {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            margin-bottom: 0.5rem;
-            background: #fff;
-            transition: box-shadow var(--transition);
-        }
-        .studio-card:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .studio-card.status-action {
-            border-left: 3px solid var(--primary-color);
-        }
-        .studio-card.status-warn {
-            border-left: 3px solid #c49a3c;
-        }
-        .studio-card.status-wait {
-            border-left: 3px solid var(--border-color);
-        }
-        .studio-card.status-ok {
-            border-left: 3px solid #5a8a5a;
-        }
-        .studio-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1.25rem;
-            cursor: pointer;
-        }
-        .studio-card-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .studio-card-name {
-            font-size: 15px;
-            color: var(--primary-color);
-        }
-        .studio-card-status {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .studio-card-right {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .studio-card-chevron {
-            font-size: 10px;
-            color: var(--text-muted);
-            transition: transform var(--transition);
-        }
-        .btn-studio-action {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.3rem 0.75rem;
-            border-radius: 3px;
-            background: var(--primary-color);
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .btn-studio-action:hover {
-            opacity: 0.85;
-        }
-        .studio-card-detail {
-            padding: 0 1.25rem 1.25rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .studio-detail-meta {
-            font-size: 13px;
-            color: var(--text-muted);
-            padding: 0.75rem 0 0.5rem;
-        }
-        .studio-section {
-            margin-top: 0.75rem;
-            padding-top: 0.5rem;
-        }
-
-        /* Workflow steps */
-        .studio-workflow {
-            margin-top: 0.5rem;
-        }
-        .workflow-step {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.3rem 0;
-            font-size: 13px;
-        }
-        .wf-icon {
-            width: 18px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        .wf-done .wf-icon { color: #5a8a5a; }
-        .wf-active .wf-icon { color: var(--primary-color); font-weight: bold; }
-        .wf-pending .wf-icon { color: var(--text-muted); }
-        .wf-label {
-            font-weight: 500;
-            min-width: 90px;
-        }
-        .wf-done .wf-label { color: var(--text-color); }
-        .wf-active .wf-label { color: var(--primary-color); }
-        .wf-pending .wf-label { color: var(--text-muted); }
-        .wf-detail {
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-        .workflow-action {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.15rem 0.5rem;
-            border-radius: 3px;
-            background: none;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-            cursor: pointer;
-            font-family: inherit;
-            margin-left: auto;
-        }
-        .workflow-action:hover {
-            background: rgba(108, 73, 91, 0.06);
-        }
-
-        /* Pulse (kept for student view metrics) */
-        .pulse-metric { display: inline-block; margin-right: 1.5rem; font-size: 14px; margin-bottom: 0.25rem; }
-        .pulse-metric-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-right: 0.35rem; }
-        .pulse-metric-value { font-weight: 500; color: var(--primary-color); }
-
-        /* View as Student button */
-        .btn-view-student {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.4rem 0.85rem;
-            border: 1px solid var(--accent-color);
-            border-radius: var(--radius, 2px);
-            background: #fff;
-            color: var(--accent-color);
-            cursor: pointer;
-            font-family: inherit;
-            transition: all var(--transition);
-            margin-top: 1rem;
-        }
-        .btn-view-student:hover {
-            background: var(--accent-color);
-            color: #fff;
-        }
-
-        /* Student View Overlay */
-        #page-student-view { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1000; background: var(--bg-cream, #faf8f5); overflow-y: auto; display: none; }
-        .sv-topbar { position: sticky; top: 0; z-index: 1001; background: var(--bg-cream, #faf8f5); border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .sv-topbar-name { font-size: 1.1rem; font-weight: 500; color: var(--primary-color); }
-        .sv-topbar-badge { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 3px; background: rgba(108, 73, 91, 0.1); color: var(--primary-color); margin-left: 0.75rem; }
-        .sv-body { max-width: 900px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
-        .sv-welcome h1 { font-size: 1.8rem; font-weight: 300; margin-bottom: 0.25rem; }
-        .sv-welcome-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 0; }
-        .sv-events-banner { background: var(--bg-warm, #f5f0eb); border: 1px solid var(--border-color); border-radius: var(--radius-lg, 4px); padding: 1rem 1.25rem; margin: 1.25rem 0; font-size: 14px; }
-        .sv-events-banner h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--primary-color); margin-bottom: 0.5rem; }
-        .sv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin: 1.5rem 0 2rem; }
-        .sv-card { border: 1px solid var(--border-color); border-radius: var(--radius-lg, 4px); padding: 1.5rem; background: #fff; cursor: pointer; position: relative; transition: box-shadow var(--transition); }
-        .sv-card:hover { box-shadow: var(--shadow-card); }
-        .sv-card::after { content: ''; position: absolute; bottom: 0.75rem; right: 0.75rem; width: 16px; height: 16px; border-right: 1.5px solid var(--border-color); border-bottom: 1.5px solid var(--border-color); transition: border-color 0.2s; }
-        .sv-card:hover::after { border-color: var(--accent-color); }
-        .sv-card-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.6rem; }
-        .sv-card-value { font-size: 1.4rem; font-weight: 300; color: var(--primary-color); margin-bottom: 0.5rem; }
-        .sv-card-summary { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-        .sv-detail-wrap { background: var(--bg-light, #fff); border: 1px solid var(--border-color); border-radius: var(--radius-lg, 4px); padding: 2rem 2.5rem; margin-top: 0.5rem; }
-        .sv-detail-wrap h2 { margin-top: 0.5rem; }
-        .sv-announcements { margin-top: 2rem; }
-        .sv-announcements h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.75rem; }
-        .sv-ann-card { border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); border-radius: var(--radius-lg, 4px); padding: 1rem 1.25rem; background: #fff; margin-bottom: 0.75rem; }
-        .sv-ann-card.sv-ann-pinned { border-left-color: var(--primary-color); }
-        .sv-ann-title { font-size: 1rem; font-weight: 500; color: var(--primary-color); margin-bottom: 0.25rem; }
-        .sv-ann-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 0.5rem; }
-        .sv-ann-body { font-size: 14px; line-height: 1.7; }
-        .nav-signout { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; color: var(--text-muted); cursor: pointer; font-family: inherit; transition: all var(--transition); }
-        .nav-signout:hover { border-color: var(--accent-color); color: var(--accent-color); }
-
-        @media (max-width: 768px) {
-            .teacher-nav {
-                flex-wrap: wrap;
-            }
-            .teacher-nav-links {
-                gap: 0;
-            }
-            .nav-item {
-                padding: 0.35rem 0.5rem;
-                font-size: 11px;
-            }
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-            .flag-tags {
-                margin-left: 0;
-            }
-            .demo-banner {
-                font-size: 12px;
-                padding: 0.5rem 0.75rem;
-            }
-            .sv-topbar { padding: 0.75rem 1rem; }
-            .sv-body { padding: 1rem 1rem 2rem; }
-            .sv-detail-wrap { padding: 1.5rem; }
-            .sv-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+  .toast {
+    position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 210;
+    background: var(--ink); color: var(--ground); font-size: 13px;
+    padding: 0.55rem 0.9rem; border-radius: 6px; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; max-width: 300px;
+  }
+  .toast.show { opacity: 1; }
+</style>
 </head>
 <body>
 
-<!-- Demo Banner -->
-<div class="demo-banner">
-    This is a demonstration of the Voice Studio teacher dashboard with sample data.
-</div>
+<div class="proto-banner"><strong>Demo</strong> &nbsp;·&nbsp; sample studio, sample data &nbsp;·&nbsp; entries reset on refresh</div>
 
-<!-- NAV -->
-<nav id="main-nav">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="teacher-nav">
-            <span class="nav-brand">Voice Studio <span class="demo-badge">Demo</span></span>
-            <div class="teacher-nav-links">
-                <button class="nav-item active" data-nav="studio">Studio</button>
-                <button class="nav-item" data-nav="students">Students</button>
-                <button class="nav-item" data-nav="repertoire">Repertoire</button>
-                <button class="nav-item" data-nav="announcements">Announcements</button>
-                <button class="nav-item" data-nav="events">Events</button>
-            </div>
-        </div>
+<nav>
+  <div class="nav-inner">
+    <span class="wordmark">Studio Desk</span>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-page="today">Today</button>
+      <button class="tab" data-page="inbox">Inbox<span class="badge" id="inbox-badge">3</span></button>
+      <button class="tab" data-page="students">Students</button>
+      <button class="tab" data-page="announce">Announcements</button>
     </div>
+    <span class="who-chip">Prof. G</span>
+  </div>
 </nav>
 
-<main class="container">
+<main>
 
-<!-- STUDIO -->
-<div id="page-studio" class="page active">
-    <div class="teacher-header">
-        <h1 id="studio-greeting">Studio</h1>
-        <div class="teacher-date" id="studio-date"></div>
-    </div>
-    <div id="studio-content"></div>
-</div>
+  <!-- ============ TODAY ============ -->
+  <section class="page active" id="page-today">
+    <h1>Thursday, September 18</h1>
 
-<!-- STUDENTS -->
-<div id="page-students" class="page">
-    <div class="teacher-header">
-        <h1>Students</h1>
-        <div class="teacher-date">Full studio roster</div>
+    <div class="panel">
+      <h2>Needs review</h2>
+      <p class="meta">1 draft lesson log</p>
+      <div class="slot"><span><strong>June Castillo</strong> · Sep 17 lesson log</span><span class="req">drafted from transcript</span><button class="btn teacher-bg">Review + Approve</button></div>
     </div>
-    <div id="students-content"></div>
-</div>
 
-<!-- REPERTOIRE -->
-<div id="page-repertoire" class="page">
-    <div class="teacher-header">
-        <h1>Repertoire</h1>
-        <div class="teacher-date">All active repertoire across the studio</div>
+    <div class="panel lesson-card">
+      <div class="lesson-head">
+        <span class="lesson-time">12:30</span>
+        <h2 style="margin: 0;">Riley Okafor</h2>
+        <span class="snap">4 logs · 150 min · condition 3.6/5 · check-in done</span>
+      </div>
+      <div class="ask"><b>They ask:</b> How do I find the narrowing on an EE vowel without spreading?</div>
+      <p><strong>Working toward (Sep 15 lesson):</strong> Clean open-open onsets into the low entrances of Deep River; bridge of She Used to Be Mine on loo before words.</p>
+      <p><strong>Rep movement:</strong> moved "She Used to Be Mine" to Characterization Integration on Tuesday.</p>
+      <button class="btn ghost">Open forecast</button>
     </div>
-    <div id="repertoire-content"></div>
-</div>
 
-<!-- ANNOUNCEMENTS -->
-<div id="page-announcements" class="page">
-    <div class="teacher-header">
-        <h1>Announcements</h1>
-        <div class="teacher-date">Studio announcements</div>
+    <div class="panel lesson-card">
+      <div class="lesson-head">
+        <span class="lesson-time">1:30</span>
+        <h2 style="margin: 0;">Devon Marsh</h2>
+        <span class="snap">1 log · 95 min · condition 2.3/5 · check-in due · <span class="flag">2 flags</span></span>
+      </div>
+      <p class="flag" style="font-size: 13.5px; margin: 0.3rem 0;">Sep 16: 95 min (rehearsal) with condition 2.1/5 · Average condition 2.3/5 this week</p>
+      <div class="ask"><b>They ask:</b> My voice keeps giving out in the last hour of Hair rehearsal. Is that normal?</div>
+      <p><strong>Working toward (Sep 11 lesson):</strong> Marking strategy for ensemble rehearsals; straw work before the drive home.</p>
+      <button class="btn ghost">Open forecast</button>
     </div>
-    <div id="announcements-content"></div>
-</div>
 
-<!-- EVENTS -->
-<div id="page-events" class="page">
-    <div class="teacher-header">
-        <h1>Events</h1>
-        <div class="teacher-date">Upcoming performances, juries, and recent feedback</div>
+    <div class="panel">
+      <h2>Upcoming</h2>
+      <div class="slot"><span><strong>June Castillo</strong> · Fri Sep 19, 11:00</span>
+        <span class="req">forecast generates Friday 7:00 AM</span>
+        <button class="btn ghost gen-now">Generate now</button></div>
+      <div class="slot"><span><strong>Riley Okafor</strong> · Mon Sep 22, 12:30</span>
+        <span class="req">forecast generates Monday 7:00 AM</span>
+        <button class="btn ghost gen-now">Generate now</button></div>
     </div>
-    <div id="events-content"></div>
-</div>
+
+  </section>
+
+  <!-- ============ INBOX ============ -->
+  <section class="page" id="page-inbox">
+    <h1>Inbox</h1>
+
+    <div class="panel">
+      <div class="notify-set">
+        <span style="font-size: 13px; font-weight: 600;">Email me a digest of new activity:</span>
+        <button class="chip-opt on" data-n="daily">Daily</button>
+        <button class="chip-opt" data-n="weekly">Weekly</button>
+        <button class="chip-opt" data-n="off">Off</button>
+        <span style="font-size: 12.5px; color: var(--muted);">The inbox badge updates live either way.</span>
+      </div>
+    </div>
+
+    <div class="thread" data-id="t1">
+      <button class="thread-head">
+        <span class="dot"></span>
+        <span class="t-kind">Reflection</span>
+        <span class="t-who">Riley Okafor</span>
+        <span class="t-sum">Takeaways: the hose picture finally separated two things I always mixed up...</span>
+        <span class="t-date">Wed 9:41 PM</span>
+      </button>
+      <div class="thread-body">
+        <div class="msg">
+          <p class="m-meta">Riley · lesson reflection · Sep 15 lesson</p>
+          <p><strong>Takeaways:</strong> The hose picture finally separated two things I always mixed up. Squeezing my throat for brightness is the kink. The narrowing that works is way downstream, tongue and space.</p>
+          <p><strong>Risk taken:</strong> I let the cracky sound happen on the slides instead of smoothing it over.</p>
+          <p><strong>Questions or goals:</strong> How do I find the narrowing on an EE vowel without spreading?</p>
+        </div>
+        <div class="replies"></div>
+        <div class="reply-row">
+          <textarea placeholder="Reply to Riley..."></textarea>
+          <button class="btn teacher-bg reply-btn">Reply</button>
+        </div>
+        <p class="meta" style="margin: 0.4rem 0 0;">Replies appear in their portal next to this reflection; they get an email and can reply back here.</p>
+      </div>
+    </div>
+
+    <div class="thread" data-id="t2">
+      <button class="thread-head">
+        <span class="dot"></span>
+        <span class="t-kind">Practice log</span>
+        <span class="t-who">Devon Marsh</span>
+        <span class="t-sum">Rehearsal · 95 min · taxing · condition 2.1/5 (voice gave out in the last hour)</span>
+        <span class="t-date">Tue 10:12 PM</span>
+      </button>
+      <div class="thread-body">
+        <div class="msg">
+          <p class="m-meta">Devon · voice-use log · Sep 16</p>
+          <p>Rehearsal · 95 min · taxing · condition 2.1/5</p>
+          <p>(Voice gave out in the last hour of Hair rehearsal. Felt husky on the drive home.)</p>
+        </div>
+        <div class="replies"></div>
+        <div class="reply-row">
+          <textarea placeholder="Reply to Devon..."></textarea>
+          <button class="btn teacher-bg reply-btn">Reply</button>
+        </div>
+        <p class="meta" style="margin: 0.4rem 0 0;">Replies appear in their portal next to this entry; they get an email and can reply back here.</p>
+      </div>
+    </div>
+
+    <div class="thread" data-id="t3">
+      <button class="thread-head">
+        <span class="dot"></span>
+        <span class="t-kind rep">Repertoire</span>
+        <span class="t-who">June Castillo</span>
+        <span class="t-sum">Suggested "Bring Him Home" (Les Misérables)</span>
+        <span class="t-date">Tue 4:03 PM</span>
+      </button>
+      <div class="thread-body">
+        <div class="msg">
+          <p class="m-meta">June · piece suggestion</p>
+          <p>"Bring Him Home" (Les Misérables)</p>
+        </div>
+        <div class="replies"></div>
+        <div style="display: flex; gap: 0.5rem; margin: 0.5rem 0;">
+          <button class="btn teacher-bg" onclick="showToast('Assigned to June, jury slot: ballad'); this.textContent='Assigned'; this.disabled=true;">Assign to a jury slot</button>
+          <button class="btn ghost">Keep in pool</button>
+        </div>
+        <div class="reply-row">
+          <textarea placeholder="Reply to June..."></textarea>
+          <button class="btn teacher-bg reply-btn">Reply</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="thread read" data-id="t4">
+      <button class="thread-head">
+        <span class="dot"></span>
+        <span class="t-kind">Check-in</span>
+        <span class="t-who">Riley Okafor</span>
+        <span class="t-sum">September Singing-VoSES: higher + transitions 3.9 · middle 5.2 · lower 4.8</span>
+        <span class="t-date">Mon 8:15 AM</span>
+      </button>
+      <div class="thread-body">
+        <div class="msg">
+          <p class="m-meta">Riley · monthly check-in · September</p>
+          <p>Higher range and transitions 3.9 · Middle range 5.2 · Lower range 4.8 (of 6)</p>
+        </div>
+        <div class="replies">
+          <div class="msg mine">
+            <p class="m-meta">You · Mon 9:02 AM</p>
+            <p>That higher-range number is the one that grows slowest for everyone, including professionals. Watch it move this semester.</p>
+          </div>
+          <div class="msg">
+            <p class="m-meta">Riley · Mon 11:15 AM</p>
+            <p>That helps. I was reading it as failing. I'll watch the trend instead of the number.</p>
+          </div>
+        </div>
+        <div class="reply-row">
+          <textarea placeholder="Reply to Riley..."></textarea>
+          <button class="btn teacher-bg reply-btn">Reply</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STUDENTS ============ -->
+  <section class="page" id="page-students">
+    <h1>Students</h1>
+    <div id="roster"></div>
+    <details style="margin-top: 1.5rem;">
+      <summary style="cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">Archived (1)</summary>
+      <div class="roster-row" style="margin-top: 0.6rem;">
+        <button class="roster-head"><strong>Sam Odeya</strong><span class="snap">12 lessons on record · graduated Spring 2026</span></button>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ ANNOUNCEMENTS ============ -->
+  <section class="page" id="page-announce">
+    <h1>Announcements</h1>
+
+    <div class="panel">
+      <h2>Post to the studio</h2>
+      <p class="meta">Appears on every student's dashboard; they get an email</p>
+      <textarea class="full" id="ann-text" rows="3" placeholder="Studio class Friday at 4 in T405..."></textarea>
+      <div style="margin-top: 0.6rem;"><button class="btn teacher-bg" id="ann-post">Post</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>Posted</h2>
+      <div id="ann-list">
+        <div class="ann">
+          <p class="m-meta">Mon Sep 14</p>
+          <p>NATS student auditions open Oct 1. Tell me by Friday if you want to enter.</p>
+        </div>
+        <div class="ann">
+          <p class="m-meta">Thu Sep 10</p>
+          <p>Studio class Sep 26, 4:00, T405. Bring one piece in progress, any phase.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </main>
 
-<!-- Student View Overlay -->
-<div id="page-student-view">
-    <div class="sv-topbar">
-        <div>
-            <span class="sv-topbar-name" id="sv-student-name"></span>
-            <span class="sv-topbar-badge">Student View</span>
-        </div>
-        <button class="nav-signout" onclick="closeStudentView()">Back to Teacher View</button>
-    </div>
-    <div class="sv-body" id="sv-body"></div>
-</div>
-
-<!-- Artifact Viewer Modal (read-only: plans, reflections, forecasts) -->
-<div id="artifact-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
-    <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 600px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
-        <div id="artifact-modal-body"></div>
-    </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
-// ============================================================
-// SAMPLE DATA
-// ============================================================
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', () => {
+      const name = el.dataset.page;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+      window.scrollTo({ top: 0 });
+    });
+  });
 
-const STUDENTS = [
-    { id: 1, name: 'Alex Rivera', voice_type: 'Soprano', degree_program: 'MM Vocal Pedagogy', lesson_day: 'monday', status: 'active' },
-    { id: 2, name: 'Jordan Chen', voice_type: 'Tenor', degree_program: 'MFA MT Vocal Pedagogy', lesson_day: 'monday', status: 'active' },
-    { id: 3, name: 'Sam Okafor', voice_type: 'Mezzo', degree_program: 'BFA Musical Theater', lesson_day: 'wednesday', status: 'active' },
-    { id: 4, name: 'Taylor Kim', voice_type: 'Baritone', degree_program: 'MM Vocal Pedagogy', lesson_day: 'monday', status: 'active' },
-    { id: 5, name: 'Morgan Wells', voice_type: 'Soprano', degree_program: 'MFA', lesson_day: 'thursday', status: 'active' }
-];
+  const toast = document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
 
-const BRIEFS = {};
+  // Inbox threads: expand marks read, updates badge
+  function updateBadge() {
+    const unread = document.querySelectorAll('.thread:not(.read)').length;
+    const b = document.getElementById('inbox-badge');
+    if (unread === 0) b.remove(); else b.textContent = unread;
+  }
+  document.querySelectorAll('.thread-head').forEach(h => {
+    h.addEventListener('click', () => {
+      const t = h.closest('.thread');
+      t.classList.toggle('open');
+      if (!t.classList.contains('read')) { t.classList.add('read'); updateBadge(); }
+    });
+  });
 
-// Reflections: Sam (3) and Taylor (4) have reflections since latest lesson
-const REFLECTIONS = {
-    3: { student_id: 3, voice_feeling: 8, engagement: 9, notes: 'Feeling solid this week. The belt exercises are clicking.', date_submitted: '2026-04-05' },
-    4: { student_id: 4, voice_feeling: 7, engagement: 7, notes: 'Have not had a chance to practice much this week. Looking forward to getting back.', date_submitted: '2026-03-16' }
-};
+  // Replies (in-memory)
+  document.querySelectorAll('.reply-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.reply-row');
+      const ta = row.querySelector('textarea');
+      const text = ta.value.trim();
+      if (!text) return;
+      const replies = btn.closest('.thread-body').querySelector('.replies');
+      const div = document.createElement('div');
+      div.className = 'msg mine';
+      const meta = document.createElement('p');
+      meta.className = 'm-meta';
+      meta.textContent = 'You · just now';
+      const p = document.createElement('p');
+      p.textContent = text;
+      div.appendChild(meta); div.appendChild(p);
+      replies.appendChild(div);
+      ta.value = '';
+      showToast('Reply sent to their portal and email');
+    });
+  });
 
-// Lesson logs: designed to create specific pipeline states per student
-// Alex Rivera (1): latest log NOT approved (needs review, Apr 4), has transcript
-// Jordan Chen (2): latest log approved, has plan, NO reflection (overdue)
-// Sam Okafor (3): latest log approved, has plan, has reflection (all caught up)
-// Taylor Kim (4): last lesson Mar 20 (>14 days ago, no recent lessons)
-// Morgan Wells (5): latest log approved, NO plan (plan pending)
-const LESSON_LOGS = {
-    1: [
-        {
-            id: 'l1a', student_id: 1, date: '2026-04-04', approved: false, has_transcript: true,
-            repertoire_worked: ['Dove sono (Mozart)', 'Come to My Garden (Simon)'],
-            exercises: [
-                { name: 'Straw phonation', pattern: 'Ascending 5ths, C4-A5', functional_purpose: 'Even airflow, reduced strain in upper register', category: 'breath' },
-                { name: 'Descending "mee" scales', pattern: 'Starting at F5', functional_purpose: 'Head voice connection through the passaggio', category: 'head_voice' }
-            ],
-            head_observations: 'Alex is thinking carefully about the Mozart recit. Good instincts about dramatic pacing.',
-            hand_observations: 'Straw phonation connected the breath to the upper passaggio. The "mee" scales are bridging well.',
-            heart_observations: 'Emotional depth in the Mozart is growing. The recit felt lived-in today.',
-            warmth_brightness_notes: 'Warmth: lovely in the middle. Brightness: needs more in the upper passaggio. Buzziness: present on straw work.',
-            breakthroughs: 'Found a legato line through the passaggio that felt easy. First time the Mozart aria flowed without a reset at the top.',
-            next_steps: 'Continue straw warm-up. Apply legato approach to Simon piece. Dynamic contrast in the garden imagery.',
-            exercise_categories_addressed: ['body','breath','head_voice','mix_registration','dynamics']
-        },
-        {
-            id: 'l1b', student_id: 1, date: '2026-03-28', approved: true, has_transcript: true,
-            repertoire_worked: ['Dove sono (Mozart)'],
-            exercises: [
-                { name: 'Lip trills on arpeggios', pattern: 'Ascending, Bb3-F5', functional_purpose: 'Registration smoothing', category: 'mix_registration' }
-            ],
-            head_observations: 'Focused session on the recit. Alex came prepared with text translation questions.',
-            hand_observations: 'Breath pacing improved on the long phrases. Still a slight grab before the high A.',
-            warmth_brightness_notes: 'Warmth: strong. Brightness: well-balanced. Buzziness: needs more on sustained tones.',
-            breakthroughs: 'The recit phrasing felt natural for the first time.',
-            next_steps: 'Work on the transition from recit to aria. Release before the high A.',
-            exercise_categories_addressed: ['breath','speech_access','mix_registration','sustain']
-        }
-    ],
-    2: [
-        {
-            id: 'l2a', student_id: 2, date: '2026-04-02', approved: true, has_transcript: true,
-            repertoire_worked: ['Corner of the Sky (Schwartz)', 'Giants in the Sky (Sondheim)'],
-            exercises: [
-                { name: 'Belt anchoring on "hey"', pattern: 'Ascending, C3-G4', functional_purpose: 'Chest voice connection into belt', category: 'chest_voice' },
-                { name: 'Sirens through the passaggio', pattern: 'Full range', functional_purpose: 'Registration continuity', category: 'mix_registration' }
-            ],
-            head_observations: 'Jordan is making good choices about where to belt and where to mix.',
-            hand_observations: 'The passaggio work is paying off. Mix on the high G is reliable now.',
-            heart_observations: 'Great storytelling instincts on Giants. The wonder is genuine.',
-            warmth_brightness_notes: 'Warmth: solid in chest. Brightness: excellent belt quality. Buzziness: consistent throughout.',
-            breakthroughs: 'Found the mix on "the roof, the house, and the world" without pushing. Clean, ringing, connected.',
-            next_steps: 'Run both pieces back to back for program arc. Polish the Corner of the Sky final build.',
-            exercise_categories_addressed: ['body','breath','chest_voice','mix_registration','speech_access','dynamics']
-        },
-        {
-            id: 'l2b', student_id: 2, date: '2026-03-26', approved: true, has_transcript: true,
-            repertoire_worked: ['Corner of the Sky (Schwartz)'],
-            exercises: [],
-            head_observations: 'First session on this piece. Good energy, strong preparation.',
-            hand_observations: 'Natural belt in the right spots. Working on dynamic range in the verses.',
-            warmth_brightness_notes: 'Warmth: present. Brightness: strong. Buzziness: needs more in quiet moments.',
-            breakthroughs: 'The verses have a natural speech quality. Good starting point.',
-            next_steps: 'Build dynamic contrast. Add Giants in the Sky next session.',
-            exercise_categories_addressed: ['breath','speech_access','chest_voice']
-        }
-    ],
-    3: [
-        {
-            id: 'l3a', student_id: 3, date: '2026-04-03', approved: true, has_transcript: true,
-            repertoire_worked: ['I\'m Not Afraid of Anything (JRB)', 'Pulled (O\'Keefe)'],
-            exercises: [
-                { name: 'Belt anchoring on "hey"', pattern: 'Ascending, C4-G4', functional_purpose: 'Chest voice connection into belt', category: 'chest_voice' }
-            ],
-            head_observations: 'Sam is thinking about the vulnerability in the JRB verses. Good instinct.',
-            hand_observations: 'Belt on the climax is strong and connected. Verses need more dynamic range.',
-            warmth_brightness_notes: 'Warmth: good chest quality. Brightness: strong belt ring. Buzziness: present in the belt, drops in quiet singing.',
-            breakthroughs: 'Found vulnerability in the verses without losing vocal connection. A breakthrough moment.',
-            next_steps: 'Comedy timing work on Pulled. Continue the verse/belt contrast in JRB.',
-            exercise_categories_addressed: ['body','breath','chest_voice','mix_registration','speech_access']
-        },
-        {
-            id: 'l3b', student_id: 3, date: '2026-03-27', approved: true, has_transcript: true,
-            repertoire_worked: ['Pulled (O\'Keefe)'],
-            exercises: [],
-            head_observations: 'Character voice session. Exploring the comedy.',
-            hand_observations: 'Good agility. The comedic timing is improving.',
-            warmth_brightness_notes: 'Warmth: present. Brightness: excellent speech quality. Buzziness: consistent.',
-            breakthroughs: 'Found a great character voice that still supports technically.',
-            next_steps: 'Run both pieces back to back. Build the program arc.',
-            exercise_categories_addressed: ['breath','speech_access','chest_voice','agility']
-        }
-    ],
-    4: [
-        {
-            id: 'l4a', student_id: 4, date: '2026-03-14', approved: true, has_transcript: true,
-            repertoire_worked: ['If Ever I Would Leave You (Lerner & Loewe)'],
-            exercises: [
-                { name: 'Lip trills on descending arpeggios', pattern: 'Starting in passaggio', functional_purpose: 'Even airflow through passaggio', category: 'breath' },
-                { name: 'Tongue-out phonation', pattern: '[a] sustained', functional_purpose: 'Laryngeal freedom, reduce tongue root tension', category: 'body' }
-            ],
-            head_observations: 'Taylor is being thoughtful about the high F approach. Willing to try new strategies.',
-            hand_observations: 'Legato in the verse is strong. The high F is still slightly pressed but improving.',
-            heart_observations: 'Starting to find the emotional arc of the piece. The tenderness is emerging.',
-            warmth_brightness_notes: 'Warmth: solid in the verse. Brightness: needs more ring above D4. Buzziness: dropped on the high F.',
-            breakthroughs: 'The "pour" gesture on the high F produced the best quality we have heard so far.',
-            next_steps: 'Breath plan for the bridge. Apply "pour" gesture consistently. New piece: Ich grolle nicht.',
-            exercise_categories_addressed: ['breath','speech_access','sustain','head_voice']
-        }
-    ],
-    5: [
-        {
-            id: 'l5a', student_id: 5, date: '2026-04-03', approved: true, has_transcript: true,
-            repertoire_worked: ['Gimme Gimme (Tesori)', 'Alto\'s Lament (Goldrich)'],
-            exercises: [
-                { name: 'Siren glides', pattern: 'Full range', functional_purpose: 'Registration smoothing', category: 'mix_registration' }
-            ],
-            head_observations: 'Morgan is in great shape for the recital. Confident and prepared.',
-            hand_observations: 'Belt is clean and connected on Gimme Gimme. Great character work on Alto\'s Lament.',
-            warmth_brightness_notes: 'Warmth: strong throughout. Brightness: excellent belt ring. Buzziness: consistent.',
-            breakthroughs: 'The comedic timing on Alto\'s Lament is landing. Morgan found the character without losing the vocal technique.',
-            next_steps: 'Final recital prep. Run-through of the full set with staging.',
-            exercise_categories_addressed: ['body','breath','speech_access','mix_registration','head_voice','dynamics']
-        },
-        {
-            id: 'l5b', student_id: 5, date: '2026-03-27', approved: true, has_transcript: true,
-            repertoire_worked: ['The Wizard and I (Schwartz)'],
-            exercises: [],
-            head_observations: 'Building the long arc. This piece is a journey.',
-            hand_observations: 'Passaggio navigation on the final phrase needs more work. Getting better each session.',
-            warmth_brightness_notes: 'Warmth: solid. Brightness: needs more on the final sustained note.',
-            breakthroughs: 'The long arc from the opening to the climax felt connected for the first time.',
-            next_steps: 'Continue passaggio work. Prepare for recital run-through.',
-            exercise_categories_addressed: ['breath','speech_access','sustain','agility','range_extension']
-        }
-    ]
-};
+  // Notification preference chips
+  document.querySelectorAll('.notify-set .chip-opt').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.notify-set .chip-opt').forEach(x => x.classList.toggle('on', x === c));
+    });
+  });
 
-const ALL_CATEGORIES = ['body','breath','speech_access','chest_voice','sustain','head_voice','range_extension','middle_range','mix_registration','dynamics','agility'];
-const CATEGORY_LABELS = {
-    body: 'Body', breath: 'Breath', speech_access: 'Speech Access',
-    chest_voice: 'Chest Voice', sustain: 'Sustain', head_voice: 'Head Voice',
-    range_extension: 'Range Extension', middle_range: 'Middle Range',
-    mix_registration: 'Mix/Registration', dynamics: 'Dynamics', agility: 'Agility'
-};
-
-const REPERTOIRE = [
-    { student_id: 1, title: 'Dove sono', composer: 'W. A. Mozart', style: 'Art Song', phase: 'polishing', notes: 'Legato through the passaggio. Recit pacing.' },
-    { student_id: 1, title: 'Come to My Garden', composer: 'Lucy Simon', style: 'MT', phase: 'coaching', notes: 'Dynamic contrast in the garden imagery.' },
-    { student_id: 2, title: 'Corner of the Sky', composer: 'Stephen Schwartz', style: 'MT', phase: 'polishing', notes: 'Final build. Belt without pushing.' },
-    { student_id: 2, title: 'Giants in the Sky', composer: 'Stephen Sondheim', style: 'MT', phase: 'coaching', notes: 'Mix on the high G. Storytelling.' },
-    { student_id: 3, title: 'I\'m Not Afraid of Anything', composer: 'Jason Robert Brown', style: 'MT', phase: 'polishing', notes: 'Belt on the climax. Vulnerability in the verses.' },
-    { student_id: 3, title: 'Pulled', composer: 'Laurence O\'Keefe', style: 'MT', phase: 'coaching', notes: 'Comedy timing, character voice choices.' },
-    { student_id: 4, title: 'If Ever I Would Leave You', composer: 'Lerner & Loewe', style: 'MT', phase: 'coaching', notes: 'Legato good. Working on high F approach.' },
-    { student_id: 4, title: 'Ich grolle nicht', composer: 'Robert Schumann', style: 'Art Song', phase: 'learning', notes: 'New piece. First coaching.' },
-    { student_id: 5, title: 'Gimme Gimme', composer: 'Jeanine Tesori', style: 'MT', phase: 'performance-ready', notes: 'Recital piece. Belt is clean and connected.' },
-    { student_id: 5, title: 'Alto\'s Lament', composer: 'Zina Goldrich', style: 'MT/Comedy', phase: 'polishing', notes: 'Character work and comedic timing.' },
-    { student_id: 5, title: 'The Wizard and I', composer: 'Stephen Schwartz', style: 'MT', phase: 'coaching', notes: 'Passaggio navigation on the final phrase.' }
-];
-
-const ANNOUNCEMENTS = [
-    { id: 1, title: 'Studio Recital: April 18, Houston Hall, 7 PM', type: 'event', pinned: true, date: '2026-04-02', body: 'Our spring studio recital is confirmed for April 18 at 7 PM in Houston Hall. Program order will be posted by April 10. Please submit your program notes (title, composer, brief context) by April 8.' },
-    { id: 2, title: 'NATS New England Regional: April 12', type: 'competition', pinned: false, date: '2026-04-01', body: 'Registration is closed. Accompanist assignments are finalized. Please confirm your program order with Prof. G by April 8.' },
-    { id: 3, title: 'Jury scheduling posted', type: 'deadline', pinned: false, date: '2026-03-28', body: 'Jury schedule for April 20-21 is posted. Check your assigned time slot. Bring two copies of each score for the panel. Arrive 15 minutes early.' }
-];
-
-const EVENTS = [
-    { id: 1, student_id: 1, student_name: 'Alex Rivera', title: 'Pre-Recital Hearing', type: 'hearing', date: '2026-04-08' },
-    { id: 2, student_id: 2, student_name: 'Jordan Chen', title: 'NATS Regional', type: 'competition', date: '2026-04-12' },
-    { id: 3, student_id: null, student_name: null, title: 'Studio Recital', type: 'recital', date: '2026-04-18' },
-    { id: 4, student_id: 3, student_name: 'Sam Okafor', title: 'Jury', type: 'jury', date: '2026-04-20' },
-    { id: 5, student_id: 4, student_name: 'Taylor Kim', title: 'Jury', type: 'jury', date: '2026-04-20' },
-    { id: 6, student_id: 5, student_name: 'Morgan Wells', title: 'Jury', type: 'jury', date: '2026-04-20' },
-    { id: 7, student_id: 1, student_name: 'Alex Rivera', title: 'Jury', type: 'jury', date: '2026-04-21' },
-    { id: 8, student_id: 2, student_name: 'Jordan Chen', title: 'Jury', type: 'jury', date: '2026-04-21' }
-];
-
-const JURY_FEEDBACK = {
-    1: [
-        { panelist: 'Dr. Chen', date: '2026-03-15', event: 'Mid-semester hearing', comments: 'Lovely legato in the Mozart. The passaggio is smoothing out nicely. I would encourage more dynamic contrast in the piano passages. The quiet singing can be just as compelling as the forte.' },
-        { panelist: 'Prof. Torres', date: '2026-03-15', event: 'Mid-semester hearing', comments: 'Strong progress since the fall jury. Breath management is notably improved. The recit pacing felt natural. Watch for a slight tendency to rush the approach to the high A.' }
-    ]
-};
-
-// Performance event notes (dress rehearsal, hearing notes)
-const PERFORMANCE_NOTES = {};
-
-// Practice plans: Jordan (2), Sam (3), and Taylor (4) have plans. Morgan (5) does not (plan pending).
-const PRACTICE_PLANS = {
-    2: {
-        date_generated: '2026-04-02',
-        content: `## Practice Plan: Week of April 2\n\n### Warm-Up (10 min)\n- **Belt anchoring on "hey"**: Ascending from C3 to G4. Keep the chest connection, let the sound ring.\n- **Sirens through the passaggio**: Full range, slow and even. No breaks.\n\n### Repertoire Practice\n**"Corner of the Sky"**: Run the final build 3 times. Find the crescendo without pushing.\n**"Giants in the Sky"**: Focus on the mix section. Use the siren approach into the high G.\n\n### What to Listen For\n- **Belt quality**: Should ring, not push. If it feels heavy, come back to the sirens.\n- **Mix**: Consistent through the passaggio. No flip or crack.\n- **Storytelling**: Keep the text alive even while working technique.\n\n### Structure\n- 3 sessions, 30 min each. Start with belt anchoring.\n\nProf. G`
+  // ---- Students hub: per-student dossier (snapshot, analytics, repertoire, history) ----
+  const AN = {
+    riley: {
+      name: 'Riley Okafor',
+      mins: [30, 40, 0, 35, 45, 60, 15, 30, 40, 35, 0, 25, 45, 40],
+      cond: [3.5, 3.5, null, 3.0, 3.5, 3.3, 3.0, 3.0, 3.5, 3.5, null, 3.5, 3.7, 3.7],
+      voses: { Aug: [3.6, 5.0, 4.6], Sep: [3.9, 5.2, 4.8] },
+      goals: 'Warmth back in the middle voice on sustained phrases\nFour pieces memorized for the Dec 11 jury\nSing through the transitional region without resetting the breath',
+      week: 'Last lesson Sep 15 · reflection submitted · 4 logs · 150 min · condition 3.6/5',
+      ask: 'How do I find the narrowing on an EE vowel without spreading?',
+      flags: [], flagged: false,
+      prog: 'MM Vocal Pedagogy · Dec 11 jury · 6 selections, memorized',
+      slots: [
+        { req: '1 operatic aria (opera or operetta)', piece: '"He Shall Feed His Flock"', phase: 0, phaseName: 'Translation + Characterization' },
+        { req: '1 musical theater standard (belt or legit)', piece: '"She Used to Be Mine"', phase: 3, phaseName: 'Characterization Integration' },
+        { req: 'Art song 1 of 4 (2 basic languages incl. English)', piece: '"Deep River"', phase: 2, phaseName: 'Melody + Text + Rhythm' },
+        { req: 'Art song 2 of 4' }, { req: 'Art song 3 of 4' }, { req: 'Art song 4 of 4' },
+      ],
+      pool: 'Unassigned pool: "Bring Him Home" (suggested Sep 10)',
+      hist: [
+        { d: 'Sep 15', sum: 'Deep River, She Used to Be Mine · approved',
+          body: '<p><strong>Motor learning phase:</strong> Associative on onsets; cognitive on the bridge build.</p><p><strong>Pivots:</strong> From onset drill to Deep River entrances when the pop landed clean twice.</p><p><strong>Plan for next lesson:</strong> EE-vowel narrowing without spread; bridge with words if loo holds.</p>' },
+        { d: 'Sep 8', sum: 'Deep River · approved',
+          body: '<p><strong>Motor learning phase:</strong> Cognitive; the hose picture landed late in the hour.</p><p><strong>Pivots:</strong> Abandoned planned rep work for the kink-vs-thumb separation when it surfaced.</p>' },
+      ],
     },
-    3: {
-        date_generated: '2026-04-03',
-        content: `## Practice Plan: Week of April 3\n\n### Warm-Up (8 min)\n- **Belt anchoring on "hey"**: Ascending from C4 to G4. Focus on chest voice connection.\n- **Breath pacing on sustained tones**: [a] on Bb3, 8 counts.\n\n### Repertoire Practice\n**"I'm Not Afraid of Anything"**: Work the verses at a whisper, then bring to full voice. Keep the vulnerability.\n**"Pulled"**: Comedy timing work. Exaggerate the character, then pull back.\n\n### What to Listen For\n- **Dynamic contrast**: The quiet moments should be as intentional as the belt.\n- **Character voice**: Present and fun without losing support.\n\nProf. G`
+    devon: {
+      name: 'Devon Marsh',
+      mins: [60, 0, 90, 45, 0, 120, 30, 0, 60, 0, 95, 20, 0, 15],
+      cond: [3.0, null, 2.6, 3.0, null, 2.2, 2.8, null, 2.6, null, 2.1, 2.4, null, 2.5],
+      voses: { Aug: [3.4, 4.4, 4.2], Sep: [3.2, 4.2, 4.1] },
+      goals: 'Marking strategy that survives full Hair rehearsals\nSix jury slots assigned by October\nRecovery routine after ensemble nights',
+      week: 'Last lesson Sep 11 · reflection due · 1 log · 95 min · condition 2.3/5',
+      ask: 'My voice keeps giving out in the last hour of Hair rehearsal. Is that normal?',
+      flags: ['Sep 16: 95 min with condition 2.1/5', 'Average condition 2.3/5 this week'], flagged: true,
+      prog: 'MFA MT Vocal Pedagogy · Dec 11 jury · 6 selections, memorized',
+      slots: [
+        { req: 'A ballad', piece: '"If I Loved You"', phase: 1, phaseName: 'Text + Rhythm' },
+        { req: 'A Golden Age musical theater selection' }, { req: 'An up-tempo of choice' },
+        { req: 'Jazz/Folk/Rock/Pop' }, { req: 'Contemporary MT selection post-2000' },
+        { req: 'An English art song' },
+      ],
+      pool: null,
+      hist: [{ d: 'Sep 11', sum: 'If I Loved You · approved',
+        body: '<p><strong>Motor learning phase:</strong> Cognitive on marking; the concept of singing at 60 percent is new.</p><p><strong>Pivots:</strong> Rehearsal-survival planning displaced rep work after the fatigue report.</p>' }],
     },
-    4: {
-        date_generated: '2026-03-14',
-        content: `## Practice Plan: Week of March 14\n\n### Warm-Up (10 min)\n- **Lip trills on descending arpeggios**: Starting in the passaggio and working down. Even airflow.\n- **Tongue-out phonation on [a]**: Laryngeal freedom.\n\n### Repertoire Practice\n**"If Ever I Would Leave You"**: Map the breath plan for the bridge. Use the "pour" gesture on the high F.\n\nProf. G`
+    june: {
+      name: 'June Castillo',
+      mins: [20, 25, 0, 20, 30, 0, 15, 25, 20, 0, 25, 30, 20, 25],
+      cond: [3.5, 3.8, null, 3.5, 4.0, null, 3.8, 3.8, 4.0, null, 3.8, 4.0, 4.0, 4.2],
+      voses: { Aug: null, Sep: [3.1, 4.8, 4.4] },
+      goals: 'A legit sound she trusts by juries\nDaily 20-minute practice habit',
+      week: 'Last lesson Sep 17 · log needs review · 3 logs · 80 min · condition 3.9/5',
+      ask: null,
+      flags: [], flagged: false,
+      prog: 'BFA Musical Theater, First Year · Dec 11 jury · 3 selections, memorized',
+      slots: [
+        { req: 'Legit selection', piece: '"Till There Was You"', phase: 4, phaseName: 'Memorization' },
+        { req: '32-bar or 1.5-minute cut, any MT', piece: '"Watch What Happens"', phase: 2, phaseName: 'Melody + Text + Rhythm' },
+        { req: 'Selection 3 (entirety or standard cut)' },
+      ],
+      pool: 'Unassigned pool: "Bring Him Home" (suggested Sep 16)',
+      hist: [{ d: 'Sep 17', sum: 'Till There Was You · draft, needs review',
+        body: '<p><strong>Motor learning phase:</strong> Associative on the legit sound in exercises; cognitive in rep.</p>' }],
+    },
+  };
+
+  function miniStrip(d) {
+    const w = 220, hh = 54;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + hh + '" width="220" height="' + hh + '" aria-hidden="true" style="flex-shrink: 0;">';
+    const maxM = Math.max(60, ...d.mins);
+    d.mins.forEach((m, i) => {
+      if (!m) return;
+      const bh = Math.round(m / maxM * 26);
+      svg += '<rect x="' + (4 + i * 15.4) + '" y="' + (28 - bh) + '" width="10" height="' + bh + '" rx="1.5" fill="var(--student)" opacity="0.35"/>';
+    });
+    d.cond.forEach((c, i) => {
+      if (c == null) return;
+      svg += '<circle cx="' + (9 + i * 15.4) + '" cy="' + Math.round(52 - (c - 1) * 4.5) + '" r="2.2" fill="var(--ink)"/>';
+    });
+    svg += '<line x1="0" y1="29" x2="' + w + '" y2="29" stroke="var(--line)"/></svg>';
+    return svg;
+  }
+
+  function railHtml(phase) {
+    let out = '<span class="mini-rail">';
+    for (let i = 0; i < 6; i++) {
+      out += '<span class="' + (i < phase ? 'd' : (i === phase ? 'c' : '')) + '"></span>';
     }
-};
+    return out + '</span>';
+  }
 
-// ============================================================
-// UTILITIES
-// ============================================================
+  function slotHtml(sl) {
+    if (sl.piece) {
+      return '<div class="slot"><span class="req">' + sl.req + '</span><span class="piece">' + sl.piece +
+        '</span>' + railHtml(sl.phase) + '<span class="phase">' + sl.phaseName + '</span>' +
+        '<button class="btn ghost change-btn">Change</button>' + slotFormHtml(true) + '</div>';
+    }
+    return '<div class="slot empty"><span class="req">' + sl.req + '</span>' +
+      '<button class="btn ghost assign-btn">Assign piece</button>' + slotFormHtml(false) + '</div>';
+  }
+  function slotFormHtml(replace) {
+    return '<div class="assign-form"><input type="text" placeholder="Title"><input type="text" placeholder="Composer">' +
+      '<button class="btn teacher-bg do-assign">' + (replace ? 'Replace' : 'Assign') + '</button>' +
+      (replace ? '<button class="btn ghost remove-btn">Clear slot</button>' : '') + '</div>';
+  }
 
-let currentPage = 'studio';
-let svCurrentDetail = null;
+  function deltaSpan(prev, cur) {
+    if (!prev) return '<span class="flat">first check-in Sep</span>';
+    return ['higher', 'middle', 'lower'].map((label, i) => {
+      const d = cur[i] - prev[i];
+      const cls = d > 0.05 ? 'up' : (d < -0.05 ? 'down' : 'flat');
+      const arrow = d > 0.05 ? '&#9650;' : (d < -0.05 ? '&#9660;' : '&#8212;');
+      return '<span class="' + cls + '">' + label + ' ' + arrow + ' ' + cur[i].toFixed(1) + '</span>';
+    }).join(' &nbsp;');
+  }
 
-function getGreeting() {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-}
+  function bigStrips(d) {
+    const xs = i => 40 + i * 38;
+    const maxM = Math.max(60, ...d.mins);
+    let svg = '<svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="Daily minutes and condition, two weeks">';
+    svg += '<text x="0" y="14" font-size="11" font-weight="600" fill="var(--muted)">SINGING MINUTES</text>';
+    svg += '<line x1="0" y1="110" x2="560" y2="110" stroke="var(--line)"/>';
+    d.mins.forEach((m, i) => {
+      if (!m) return;
+      const bh = Math.round(m / maxM * 88);
+      svg += '<rect x="' + (xs(i) - 12) + '" y="' + (110 - bh) + '" width="24" height="' + bh + '" rx="2" fill="var(--student)" opacity="0.35"/>';
+      svg += '<text x="' + xs(i) + '" y="' + (110 - bh - 4) + '" font-size="8.5" fill="var(--muted)" text-anchor="middle">' + m + '</text>';
+    });
+    svg += '<text x="0" y="142" font-size="11" font-weight="600" fill="var(--muted)">VOICE CONDITION (1 TO 5)</text>';
+    svg += '<line x1="0" y1="225" x2="560" y2="225" stroke="var(--line)"/>';
+    svg += '<line x1="0" y1="191" x2="560" y2="191" stroke="var(--line)" stroke-dasharray="3 5"/>';
+    svg += '<text x="556" y="195" font-size="9" fill="var(--muted)" text-anchor="end">3</text>';
+    d.cond.forEach((c, i) => {
+      if (c == null) return;
+      svg += '<circle cx="' + xs(i) + '" cy="' + Math.round(225 - (c - 1) * 17) + '" r="3.5" fill="var(--ink)"/>';
+    });
+    return svg + '</svg>';
+  }
 
-function todayStr() { return '2026-04-06'; }
+  function bigScatter(d) {
+    const pts = d.mins.map((m, i) => [m, d.cond[i]]).filter(p => p[0] && p[1] != null);
+    const maxM = Math.max(60, ...pts.map(p => p[0]));
+    let svg = '<svg viewBox="0 0 560 190" width="100%" height="190" role="img" aria-label="Condition by minutes sung">';
+    svg += '<line x1="40" y1="160" x2="530" y2="160" stroke="var(--line)"/>';
+    svg += '<line x1="40" y1="30" x2="40" y2="160" stroke="var(--line)"/>';
+    svg += '<line x1="40" y1="95" x2="530" y2="95" stroke="var(--line)" stroke-dasharray="3 5"/>';
+    svg += '<text x="34" y="164" font-size="9" fill="var(--muted)" text-anchor="end">1</text>';
+    svg += '<text x="34" y="99" font-size="9" fill="var(--muted)" text-anchor="end">3</text>';
+    svg += '<text x="34" y="34" font-size="9" fill="var(--muted)" text-anchor="end">5</text>';
+    pts.forEach(p => {
+      svg += '<circle cx="' + Math.round(40 + p[0] / maxM * 480) + '" cy="' + Math.round(160 - (p[1] - 1) * 32.5) + '" r="4" fill="var(--student)" opacity="0.7"/>';
+    });
+    svg += '<text x="285" y="184" font-size="10" fill="var(--muted)" text-anchor="middle">Minutes sung that day</text>';
+    return svg + '</svg>';
+  }
 
-function formatDate(d) {
-    if (!d) return '';
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-}
+  function vosesBlock(d) {
+    if (!d.voses.Aug) {
+      const v = d.voses.Sep;
+      return '<p style="font-size: 14px;">September (first check-in): higher + transitions ' + v[0].toFixed(1) +
+        ' · middle ' + v[1].toFixed(1) + ' · lower ' + v[2].toFixed(1) + ' (of 6)</p>';
+    }
+    return ['Higher + transitions', 'Middle range', 'Lower range'].map((label, i) => {
+      const a2 = d.voses.Aug[i], b2 = d.voses.Sep[i];
+      const cls = b2 - a2 > 0.05 ? 'up' : (b2 - a2 < -0.05 ? 'down' : 'flat');
+      const arrow = b2 - a2 > 0.05 ? '&#9650;' : (b2 - a2 < -0.05 ? '&#9660;' : '&#8212;');
+      return '<p style="font-size: 14px; margin: 0 0 0.3rem;">' + label + ': Aug ' + a2.toFixed(1) +
+        ' &#8594; Sep ' + b2.toFixed(1) + ' <span class="an-delta"><span class="' + cls + '">' + arrow + '</span></span></p>';
+    }).join('');
+  }
 
-function formatShortDate(d) {
-    if (!d) return '';
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+  const roster = document.getElementById('roster');
+  Object.entries(AN).sort((a, b) => (b[1].flagged ? 1 : 0) - (a[1].flagged ? 1 : 0)).forEach(([key, d]) => {
+    const filled = d.slots.filter(x => x.piece).length;
+    const row = document.createElement('div');
+    row.className = 'roster-row' + (d.flagged ? ' flagged' : '');
+    if (d.flagged) row.style.borderLeft = '3px solid var(--warn)';
+    row.innerHTML =
+      '<button class="roster-head" style="flex-wrap: wrap;">' +
+      '<strong>' + d.name + '</strong>' +
+      '<span class="snap" style="flex: 1 1 240px;">' + d.week + (d.flagged ? ' · <span class="flag">' + d.flags.length + ' flags</span>' : '') + '</span>' +
+      miniStrip(d) +
+      '</button>' +
+      '<div class="roster-body">' +
+      (d.ask ? '<div class="ask"><b>They ask:</b> ' + d.ask + '</div>' : '') +
+      d.flags.map(f => '<p class="flag" style="font-size: 13.5px; margin: 0 0 0.3rem;">' + f + '</p>').join('') +
 
-function daysBetween(dateStr1, dateStr2) {
-    return Math.round((new Date(dateStr2 + 'T12:00:00') - new Date(dateStr1 + 'T12:00:00')) / (1000 * 60 * 60 * 24));
-}
+      '<h3 style="font-size: 13px; margin: 1.1rem 0 0.4rem;">Repertoire · ' + filled + ' of ' + d.slots.length + ' jury slots filled</h3>' +
+      '<p class="meta" style="margin: 0 0 0.5rem;">' + d.prog + '</p>' +
+      '<div class="slots">' + d.slots.map(slotHtml).join('') + '</div>' +
+      (d.pool ? '<p class="pool">' + d.pool + '</p>' : '') +
 
-function escapeHtml(text) {
-    if (!text) return '';
+      '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Analytics</h3>' +
+      '<div style="margin-bottom: 0.8rem;">' + bigStrips(d) + '</div>' +
+      '<div style="margin-bottom: 0.8rem;">' + bigScatter(d) + '</div>' +
+      '<p class="meta" style="margin: 0 0 0.3rem;">Singing-VoSES, monthly means (1 to 6)</p>' + vosesBlock(d) +
+
+      '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Semester goals</h3>' +
+      '<div class="goals-edit"><textarea rows="3" data-goals="' + key + '">' + d.goals.replace(/\\n/g, '\n') + '</textarea>' +
+      '<div style="margin-top: 0.4rem;"><button class="btn teacher-bg save-goals" data-goals-key="' + key + '">Save goals</button></div></div>' +
+
+      '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Lesson history</h3>' +
+      d.hist.map(h => '<details style="margin-bottom: 0.4rem;"><summary style="cursor: pointer; font-size: 13.5px;"><strong>' +
+        h.d + '</strong> · ' + h.sum + '</summary><div style="padding: 0.6rem 0 0 1rem; font-size: 13.5px;">' + h.body +
+        '<p class="meta" style="margin: 0;">Full log · <button class="btn ghost" style="font-size: 12px; padding: 0.2rem 0.6rem;">Open review modal</button></p></div></details>').join('') +
+
+      '<div style="display: flex; gap: 0.5rem; margin-top: 1rem;">' +
+      '<button class="btn ghost">View portal</button>' +
+      '<button class="btn ghost" data-page="inbox">Reply in inbox</button>' +
+      '</div>' +
+      '</div>';
+    roster.appendChild(row);
+  });
+
+  // Roster expand (header click only)
+  document.querySelectorAll('.roster-head').forEach(h => {
+    h.addEventListener('click', () => h.closest('.roster-row').classList.toggle('open'));
+  });
+
+  // Goals save
+  document.querySelectorAll('.save-goals').forEach(b => {
+    b.addEventListener('click', () => {
+      const key = b.dataset.goalsKey;
+      AN[key].goals = document.querySelector('textarea[data-goals="' + key + '"]').value;
+      showToast('Goals saved to ' + AN[key].name.split(' ')[0] + "'s Analytics page");
+    });
+  });
+
+  // Rep slots: assign / change / clear (delegated on the roster)
+  roster.addEventListener('click', e => {
+    const slot = e.target.closest('.slot');
+    if (!slot) return;
+    if (e.target.classList.contains('assign-btn') || e.target.classList.contains('change-btn')) {
+      slot.classList.add('assigning');
+    } else if (e.target.classList.contains('do-assign')) {
+      const inputs = slot.querySelectorAll('.assign-form input');
+      const title = inputs[0].value.trim();
+      if (!title) { showToast('Enter a title.'); return; }
+      const wasEmpty = slot.classList.contains('empty');
+      const req = slot.querySelector('.req').outerHTML;
+      slot.classList.remove('assigning', 'empty');
+      slot.innerHTML = req + '<span class="piece">"' + title + '"' +
+        (inputs[1].value.trim() ? ' (' + inputs[1].value.trim() + ')' : '') + '</span>' +
+        railHtml(0) + '<span class="phase">Assigned today</span>' +
+        '<button class="btn ghost change-btn">Change</button>' + slotFormHtml(true);
+      updateSlotCount(slot);
+      showToast(wasEmpty ? 'Assigned. It appears on their Repertoire page with the phase rail at 1.'
+                         : 'Changed. The new piece starts at phase 1 on their Repertoire page.');
+    } else if (e.target.classList.contains('remove-btn')) {
+      const req = slot.querySelector('.req').outerHTML;
+      slot.classList.remove('assigning');
+      slot.classList.add('empty');
+      slot.innerHTML = req + '<button class="btn ghost assign-btn">Assign piece</button>' + slotFormHtml(false);
+      updateSlotCount(slot);
+      showToast('Slot cleared. The piece moves to their unassigned pool.');
+    }
+  });
+  function updateSlotCount(slot) {
+    const body = slot.closest('.roster-body');
+    const h3 = body.querySelector('h3');
+    const total = body.querySelectorAll('.slot').length;
+    const filled = total - body.querySelectorAll('.slot.empty').length;
+    h3.textContent = 'Repertoire · ' + filled + ' of ' + total + ' jury slots filled';
+  }
+
+  // Generate-now: on-demand forecast ahead of the morning run
+  document.querySelectorAll('.gen-now').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.slot');
+      row.querySelector('.req').textContent = 'forecast generated just now · regenerates day-of at 7:00 AM';
+      btn.textContent = 'Open forecast';
+      btn.classList.remove('gen-now');
+      showToast('Forecast generated from data up to this moment');
+    });
+  });
+
+  // Announcements (in-memory)
+  document.getElementById('ann-post').addEventListener('click', () => {
+    const ta = document.getElementById('ann-text');
+    const text = ta.value.trim();
+    if (!text) return;
+    const list = document.getElementById('ann-list');
     const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show success';
-    setTimeout(() => { t.className = 'toast'; }, 3000);
-}
-
-function addExpandHandlers(container) {
-    container.querySelectorAll('.card-header').forEach(el => {
-        el.addEventListener('click', () => {
-            el.closest('.card').classList.toggle('expanded');
-        });
-    });
-}
-
-function getDraftCount(studentId) {
-    const logs = LESSON_LOGS[studentId] || [];
-    return logs.filter(l => !l.approved).length;
-}
-
-function getAllDrafts() {
-    let drafts = [];
-    Object.values(LESSON_LOGS).forEach(logs => {
-        logs.filter(l => !l.approved).forEach(l => drafts.push(l));
-    });
-    return drafts;
-}
-
-// ============================================================
-// MARKDOWN RENDERING
-// ============================================================
-
-function markdownToHtml(md) {
-    if (!md) return '';
-    md = md.replace(/^---[\s\S]*?---\s*\n/, '');
-    md = md.replace(/^# .+\n/m, '');
-    let lines = md.split('\n');
-    let html = '';
-    let inList = false;
-    for (let i = 0; i < lines.length; i++) {
-        let line = lines[i];
-        if (line.match(/^## /)) {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += '<h2>' + inlineFormat(line.replace(/^## /, '')) + '</h2>';
-            continue;
-        }
-        if (line.match(/^### /)) {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += '<h3>' + inlineFormat(line.replace(/^### /, '')) + '</h3>';
-            continue;
-        }
-        if (line.match(/^---+$/)) {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += '<hr>';
-            continue;
-        }
-        if (line.match(/^[-*] /)) {
-            if (!inList) { html += '<ul>'; inList = true; }
-            html += '<li>' + inlineFormat(line.replace(/^[-*] /, '')) + '</li>';
-            continue;
-        }
-        if (inList && line.trim() === '') { html += '</ul>'; inList = false; continue; }
-        if (line.trim()) {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += '<p>' + inlineFormat(line) + '</p>';
-        }
-    }
-    if (inList) html += '</ul>';
-    return html;
-}
-
-function inlineFormat(text) {
-    text = escapeHtml(text);
-    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    text = text.replace(/`(.+?)`/g, '<code>$1</code>');
-    text = text.replace(/&quot;(.+?)&quot;/g, '\u201c$1\u201d');
-    return text;
-}
-
-// ============================================================
-// PAGE SWITCHING
-// ============================================================
-
-const PAGE_IDS = ['studio', 'students', 'repertoire', 'announcements', 'events'];
-
-function navigateTo(page) {
-    currentPage = page;
-    PAGE_IDS.forEach(p => {
-        document.getElementById('page-' + p).classList.toggle('active', p === page);
-    });
-    document.querySelectorAll('.nav-item').forEach(el => {
-        el.classList.toggle('active', el.dataset.nav === page);
-    });
-    const loaders = { studio: renderStudio, students: renderStudents, repertoire: renderRepertoire, announcements: renderAnnouncements, events: renderEvents };
-    if (loaders[page]) loaders[page]();
-}
-
-document.querySelectorAll('.nav-item').forEach(el => {
-    el.addEventListener('click', () => navigateTo(el.dataset.nav));
-});
-
-// ============================================================
-// STUDIO VIEW (prioritized action list)
-// ============================================================
-
-function renderStudio() {
-    const container = document.getElementById('studio-content');
-    const today = todayStr();
-
-    // Greeting
-    document.getElementById('studio-greeting').textContent = getGreeting();
-    document.getElementById('studio-date').textContent = formatDate(today);
-
-    // Build per-student pipeline status
-    function computeStatus(student) {
-        const logs = LESSON_LOGS[student.id] || [];
-        const latestLog = logs[0] || null;
-        const plan = PRACTICE_PLANS[student.id] || null;
-        const reflection = REFLECTIONS[student.id] || null;
-
-        const hasPlanForLatestLog = latestLog ? !!plan : false;
-        const hasReflectionSinceLesson = latestLog && reflection
-            ? reflection.date_submitted >= latestLog.date
-            : false;
-
-        // Determine the most urgent status
-        let urgency = 10;
-        let message = 'All caught up';
-        let action = null;
-        let actionType = null;
-        let actionId = null;
-        let statusClass = 'status-ok';
-
-        if (!latestLog || daysBetween(latestLog.date, today) > 21) {
-            urgency = 6;
-            message = 'No recent lessons';
-            if (latestLog) message += ' (last ' + formatShortDate(latestLog.date) + ')';
-            statusClass = 'status-warn';
-        }
-
-        if (latestLog && !latestLog.approved) {
-            urgency = 1;
-            message = 'Log needs review (' + formatShortDate(latestLog.date) + ')';
-            action = 'Review';
-            actionType = 'review-log';
-            actionId = latestLog.id;
-            statusClass = 'status-action';
-        } else if (latestLog && latestLog.approved && !hasPlanForLatestLog) {
-            urgency = 3;
-            message = 'Practice plan pending';
-            statusClass = 'status-wait';
-        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && !hasReflectionSinceLesson) {
-            urgency = 4;
-            message = 'Reflection overdue';
-            statusClass = 'status-warn';
-        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && hasReflectionSinceLesson) {
-            // Full pipeline complete, but check if the lesson is old
-            if (daysBetween(latestLog.date, today) > 21) {
-                urgency = 6;
-                message = 'No recent lessons (last ' + formatShortDate(latestLog.date) + ')';
-                statusClass = 'status-warn';
-            } else {
-                urgency = 10;
-                message = 'All caught up';
-                statusClass = 'status-ok';
-            }
-        }
-
-        return {
-            urgency, message, action, actionType, actionId, statusClass,
-            latestLog, latestPlan: plan, latestReflection: reflection,
-            logs: logs.slice(0, 3),
-            hasPlanForLatestLog, hasReflectionSinceLesson
-        };
-    }
-
-    // Compute and sort by urgency
-    const studentStatuses = STUDENTS.map(s => ({
-        student: s,
-        status: computeStatus(s)
-    })).sort((a, b) => a.status.urgency - b.status.urgency);
-
-    // Render cards
-    let html = '';
-
-    studentStatuses.forEach(({ student, status }) => {
-        const s = student;
-        const st = status;
-        const cardId = 'studio-card-' + s.id;
-        const detailId = 'studio-detail-' + s.id;
-
-        // Collapsed card
-        html += '<div class="studio-card ' + st.statusClass + '" id="' + cardId + '">';
-        html += '<div class="studio-card-header" data-student-id="' + s.id + '" data-detail-id="' + detailId + '">';
-        html += '<div class="studio-card-left">';
-        html += '<strong class="studio-card-name">' + escapeHtml(s.name) + '</strong>';
-        html += '<span class="studio-card-status">' + escapeHtml(st.message) + '</span>';
-        var DEMO_SNAPS = {1: '4 logs · 150 min · condition 3.6/5 · check-in done', 2: '2 logs · 45 min · condition 3.1/5 · check-in due', 3: 'no logs this week · check-in due · <span style=\'color: #a04545; font-weight: 600;\'>1 flag</span>'};
-        html += '<span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 0.15rem;">' + (DEMO_SNAPS[s.id] || '3 logs · 95 min · condition 3.4/5 · check-in due') + '</span>';
-        html += '</div>';
-        html += '<div class="studio-card-right">';
-        if (st.action) {
-            html += '<button class="btn-studio-action" data-action-type="' + st.actionType + '" data-action-id="' + st.actionId + '" data-student-id="' + s.id + '">' + escapeHtml(st.action) + '</button>';
-        }
-        html += '<span class="studio-card-chevron">&#9660;</span>';
-        html += '</div>';
-        html += '</div>';
-
-        // Expanded detail (hidden by default)
-        html += '<div class="studio-card-detail" id="' + detailId + '" style="display: none;">';
-
-        // Student info line
-        html += '<div class="studio-detail-meta">';
-        html += escapeHtml((s.voice_type || '') + (s.voice_type && s.degree_program ? ', ' : '') + (s.degree_program || ''));
-        if (st.latestLog) html += '<span style="float: right;">Last lesson: ' + escapeHtml(formatShortDate(st.latestLog.date)) + '</span>';
-        html += '</div>';
-
-        // Workflow steps
-        html += '<div class="studio-workflow">';
-        html += '<div class="section-label">Workflow</div>';
-
-        // 1. Lesson
-        const hasLesson = !!st.latestLog;
-        html += renderWorkflowStep(hasLesson, 'Lesson', hasLesson ? formatShortDate(st.latestLog.date) : 'No recent lesson', null);
-
-        // 2. Transcript
-        const hasTranscript = st.latestLog && st.latestLog.has_transcript;
-        html += renderWorkflowStep(hasTranscript, 'Transcript', hasTranscript ? 'Generated' : (hasLesson ? 'Not yet generated' : ''), null);
-
-        // 3. Log
-        html += renderWorkflowStep(hasLesson, 'Lesson Log', hasLesson ? 'Generated' : '', null);
-
-        // 4. Approved
-        const isApproved = st.latestLog && st.latestLog.approved;
-        if (hasLesson && !isApproved) {
-            html += renderWorkflowStep(false, 'Approval', 'Needs review', { label: 'Review + Approve', type: 'review-log', id: st.latestLog.id }, true);
-        } else {
-            html += renderWorkflowStep(isApproved, 'Approval', isApproved ? 'Approved' : '', null);
-        }
-
-        // 5. Practice Plan
-        html += renderWorkflowStep(st.hasPlanForLatestLog, 'Practice Plan', st.hasPlanForLatestLog ? 'Sent to student' : (isApproved ? 'Pending generation' : 'Waiting on approval'), st.hasPlanForLatestLog ? { label: 'View', type: 'view-plan', id: s.id } : null);
-
-        // 6. Reflection
-        html += renderWorkflowStep(st.hasReflectionSinceLesson, 'Reflection', st.hasReflectionSinceLesson ? ('Submitted ' + formatShortDate(st.latestReflection.date_submitted)) : 'Not submitted', st.hasReflectionSinceLesson ? { label: 'View', type: 'view-reflection', id: s.id } : null);
-
-        html += '</div>';
-
-        // Recent lessons
-        if (st.logs.length > 0) {
-            html += '<div class="studio-section">';
-            html += '<div class="section-label">Recent Lessons</div>';
-            st.logs.forEach(l => {
-                const titles = (l.repertoire_worked || []).map(r => typeof r === 'string' ? r.split(' (')[0] : r).join(', ').substring(0, 60);
-                const catCount = (l.exercise_categories_addressed || []).length;
-                html += '<div style="font-size: 13px; margin-bottom: 0.25rem;">';
-                html += '<strong>' + escapeHtml(formatShortDate(l.date)) + '</strong>';
-                if (titles) html += ' ' + escapeHtml(titles);
-                html += '<span style="color: var(--text-muted); margin-left: 0.5rem;">' + catCount + ' categories</span>';
-                html += '</div>';
-            });
-            html += '</div>';
-        }
-
-        // View as Student
-        html += '<div style="margin-top: 0.75rem;">';
-        html += '<button onclick="viewAsStudent(' + s.id + ')" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">View as Student</button>';
-        html += '</div>';
-
-        html += '</div>'; // studio-card-detail
-        html += '</div>'; // studio-card
-    });
-
-    container.innerHTML = html;
-
-    // Expand/collapse handlers
-    container.querySelectorAll('.studio-card-header').forEach(el => {
-        el.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-studio-action')) return;
-            const detailId = el.dataset.detailId;
-            const detail = document.getElementById(detailId);
-            const chevron = el.querySelector('.studio-card-chevron');
-            if (detail) {
-                const isOpen = detail.style.display !== 'none';
-                detail.style.display = isOpen ? 'none' : 'block';
-                if (chevron) chevron.innerHTML = isOpen ? '&#9660;' : '&#9650;';
-            }
-        });
-    });
-
-    // Action button handlers
-    container.querySelectorAll('.btn-studio-action').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleStudioAction(btn.dataset.actionType, btn.dataset.actionId, btn.dataset.studentId);
-        });
-    });
-
-    // Workflow step click handlers
-    container.querySelectorAll('.workflow-action').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleStudioAction(btn.dataset.type, btn.dataset.id, btn.dataset.studentId);
-        });
-    });
-}
-
-function renderWorkflowStep(done, label, detail, action, isActive) {
-    const icon = done ? '&#10003;' : (isActive ? '&#9658;' : '&middot;');
-    const cls = done ? 'wf-done' : (isActive ? 'wf-active' : 'wf-pending');
-    let html = '<div class="workflow-step ' + cls + '">';
-    html += '<span class="wf-icon">' + icon + '</span>';
-    html += '<span class="wf-label">' + escapeHtml(label) + '</span>';
-    if (detail) html += '<span class="wf-detail">' + escapeHtml(detail) + '</span>';
-    if (action) {
-        html += '<button class="workflow-action" data-type="' + action.type + '" data-id="' + action.id + '">' + escapeHtml(action.label) + '</button>';
-    }
-    html += '</div>';
-    return html;
-}
-
-function handleStudioAction(type, id, studentId) {
-    if (type === 'review-log' || type === 'view-log') {
-        // In the demo, just show a toast
-        showToast('Log review would open here in the live portal.');
-    } else if (type === 'view-plan') {
-        const plan = PRACTICE_PLANS[id];
-        if (plan) {
-            showArtifactModal('Practice Plan', '<div class="brief-content">' + markdownToHtml(plan.content) + '</div>', plan.date_generated ? 'Generated ' + formatShortDate(plan.date_generated) : '');
-        } else {
-            showToast('No practice plan available.');
-        }
-    } else if (type === 'view-reflection') {
-        const ref = REFLECTIONS[id];
-        if (ref) {
-            let content = '';
-            content += '<p><strong>Voice Feeling:</strong> ' + ref.voice_feeling + '/10</p>';
-            content += '<p><strong>Engagement:</strong> ' + ref.engagement + '/10</p>';
-            if (ref.notes) content += '<p><strong>Notes:</strong> ' + escapeHtml(ref.notes) + '</p>';
-            showArtifactModal('Student Reflection', content, 'Submitted ' + formatShortDate(ref.date_submitted));
-        } else {
-            showToast('No reflection available.');
-        }
-    }
-}
-
-function showArtifactModal(title, htmlContent, subtitle) {
-    const modal = document.getElementById('artifact-modal');
-    const body = document.getElementById('artifact-modal-body');
-    let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">';
-    html += '<div><h2 style="margin: 0;">' + escapeHtml(title) + '</h2>';
-    if (subtitle) html += '<p style="font-size: 13px; color: var(--text-muted); margin: 0.25rem 0 0;">' + escapeHtml(subtitle) + '</p>';
-    html += '</div>';
-    html += '<button onclick="closeArtifactModal()" style="font-size: 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">X</button>';
-    html += '</div>';
-    html += '<div class="brief-content">' + htmlContent + '</div>';
-    body.innerHTML = html;
-    modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-}
-
-function closeArtifactModal() {
-    document.getElementById('artifact-modal').style.display = 'none';
-    document.body.style.overflow = '';
-}
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.getElementById('artifact-modal').style.display === 'block') {
-        closeArtifactModal();
-    }
-});
-
-// ============================================================
-// STUDENTS VIEW
-// ============================================================
-
-function renderStudents() {
-    const container = document.getElementById('students-content');
-    let html = '';
-
-    STUDENTS.forEach(s => {
-        const logs = LESSON_LOGS[s.id] || [];
-        const drafts = getDraftCount(s.id);
-        const lastDate = logs.length > 0 ? logs[0].date : null;
-
-        html += '<div class="card" data-student-id="' + s.id + '">';
-        html += '<div class="card-header">';
-        html += '<div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">';
-        html += '<span class="card-name">' + escapeHtml(s.name) + '</span>';
-        if (drafts > 0) {
-            html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(156, 92, 92, 0.12); color: #8b4040;">' + drafts + ' draft' + (drafts > 1 ? 's' : '') + ' pending</span>';
-        }
-        html += '<span class="card-meta">' + escapeHtml(s.voice_type + ', ' + s.degree_program) + '</span>';
-        html += '<span class="card-meta">' + logs.length + ' lessons' + (lastDate ? ' | Last: ' + formatShortDate(lastDate) : '') + '</span>';
-        html += '</div>';
-        html += '<span class="card-chevron">\u25BC</span>';
-        html += '</div>';
-        html += '<div class="card-body">' + renderStudentDetail(s) + '</div>';
-        html += '</div>';
-    });
-
-    html += '<details style="margin-top: 2rem;"><summary style="cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Archived (1)</summary><div style="padding: 0.6rem 0.2rem; font-size: 14px;"><strong>Jamie Ellis</strong> <span style="color: var(--text-muted); font-size: 12.5px;">12 lessons on record</span></div></details>';
-    container.innerHTML = html;
-    addExpandHandlers(container);
-    addLessonExpandHandlers(container);
-}
-
-function renderStudentDetail(student) {
-    const logs = LESSON_LOGS[student.id] || [];
-    const rep = REPERTOIRE.filter(r => r.student_id === student.id);
-    const reflection = REFLECTIONS[student.id];
-    const feedback = JURY_FEEDBACK[student.id];
-    const perfNotes = PERFORMANCE_NOTES[student.id];
-
-    let html = '<div class="brief-content">';
-
-    // Repertoire
-    if (rep.length > 0) {
-        html += '<div class="detail-section"><h4>Current Repertoire</h4>';
-        html += '<div class="table-scroll"><table class="data-table"><thead><tr><th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th></tr></thead><tbody>';
-        rep.forEach(r => {
-            html += '<tr><td>' + escapeHtml(r.title) + '</td><td>' + escapeHtml(r.composer) + '</td><td>' + escapeHtml(r.style) + '</td><td>' + escapeHtml(r.phase) + '</td></tr>';
-        });
-        html += '</tbody></table></div></div>';
-    }
-
-    // Lesson logs with expandable rows
-    html += '<div class="detail-section"><h4>Lesson Logs (' + logs.length + ')</h4>';
-    if (logs.length === 0) {
-        html += '<p style="color: var(--text-muted);">No lessons recorded.</p>';
-    } else {
-        logs.forEach(l => {
-            const lid = 'lesson-detail-' + l.id;
-            html += '<div style="margin-bottom: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius);">';
-            // Header row
-            html += '<div class="lesson-log-header" data-target="' + lid + '" style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'var(--bg-warm)\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<div style="display: flex; align-items: center; gap: 0.75rem;">';
-            html += '<strong style="font-size: 14px;">' + escapeHtml(formatShortDate(l.date)) + '</strong>';
-            if (l.repertoire_worked && l.repertoire_worked.length > 0) {
-                const titles = l.repertoire_worked.map(r => typeof r === 'string' ? r.split(' (')[0] : r).join(', ');
-                html += '<span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(titles.substring(0, 80)) + '</span>';
-            }
-            html += '</div>';
-            html += '<div style="display: flex; align-items: center; gap: 0.5rem;">';
-            if (l.approved) {
-                html += '<span class="approved-badge">Approved</span>';
-            } else {
-                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + student.id + '">Approve</button>';
-            }
-            html += '<span style="font-size: 11px; color: var(--text-muted);">&#9660;</span>';
-            html += '</div></div>';
-
-            // Expandable detail
-            html += '<div id="' + lid + '" style="display: none; padding: 0 1rem 1rem; border-top: 1px solid var(--border-color); font-size: 13px; line-height: 1.7;">';
-            const fields = [
-                { key: 'head_observations', label: 'Head (Intention)' },
-                { key: 'heart_observations', label: 'Heart (Expression)' },
-                { key: 'hand_observations', label: 'Hand (Function)' },
-                { key: 'warmth_brightness_notes', label: 'Warmth/Brightness/Buzziness' },
-                { key: 'breakthroughs', label: 'Breakthroughs / What Shifted' },
-                { key: 'next_steps', label: 'Next Steps' }
-            ];
-            fields.forEach(f => {
-                const val = l[f.key];
-                if (val && val.trim()) {
-                    html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">' + f.label + '</strong>';
-                    html += '<div style="margin-top: 0.25rem;">' + markdownToHtml(val) + '</div></div>';
-                }
-            });
-            // Exercises
-            if (l.exercises && l.exercises.length > 0) {
-                html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">Exercises (' + l.exercises.length + ')</strong>';
-                l.exercises.forEach(ex => {
-                    html += '<div style="margin: 0.5rem 0 0.5rem 0.75rem; padding-left: 0.75rem; border-left: 2px solid var(--border-color);">';
-                    html += '<strong>' + escapeHtml(ex.name || 'Unnamed') + '</strong>';
-                    if (ex.pattern) html += '<br><span style="color: var(--text-muted);">' + escapeHtml(ex.pattern) + '</span>';
-                    if (ex.functional_purpose) html += '<br>' + escapeHtml(ex.functional_purpose);
-                    if (ex.category) html += '<br><span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">' + escapeHtml(ex.category) + '</span>';
-                    html += '</div>';
-                });
-                html += '</div>';
-            }
-            // Categories
-            if (l.exercise_categories_addressed && l.exercise_categories_addressed.length > 0) {
-                html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">Categories</strong><div style="margin-top: 0.25rem;">';
-                ALL_CATEGORIES.forEach(c => {
-                    html += '<span class="category-check ' + (l.exercise_categories_addressed.includes(c) ? 'covered' : 'uncovered') + '">' + (CATEGORY_LABELS[c] || c) + '</span>';
-                });
-                html += '</div></div>';
-            }
-            html += '</div></div>';
-        });
-    }
-    html += '</div>';
-
-    // Latest reflection
-    if (reflection) {
-        html += '<div class="detail-section"><h4>Latest Reflection</h4>';
-        html += '<div><span class="pulse-metric"><span class="pulse-metric-label">Voice:</span> <span class="pulse-metric-value">' + reflection.voice_feeling + '/10</span></span>';
-        html += '<span class="pulse-metric"><span class="pulse-metric-label">Engagement:</span> <span class="pulse-metric-value">' + reflection.engagement + '/10</span></span></div>';
-        if (reflection.notes) {
-            html += '<p style="font-size:13px;color:var(--text-muted);margin-top:0.35rem;font-style:italic">' + escapeHtml(reflection.notes) + '</p>';
-        }
-        html += '</div>';
-    }
-
-    // Performance event notes (dress rehearsal)
-    if (perfNotes && perfNotes.length > 0) {
-        html += '<div class="detail-section"><h4>Performance Event Notes</h4>';
-        perfNotes.forEach(pn => {
-            html += '<div class="feedback-block"><div class="fb-panelist">' + escapeHtml(pn.event) + ' (' + formatShortDate(pn.date) + ')</div>';
-            pn.notes.split(/\n\n+/).filter(p => p.trim()).forEach(p => {
-                html += '<p style="margin-top: 0.35rem;">' + escapeHtml(p.trim()) + '</p>';
-            });
-            html += '</div>';
-        });
-        html += '</div>';
-    }
-
-    // Jury feedback
-    if (feedback) {
-        html += '<div class="detail-section"><h4>Jury / Hearing Feedback</h4>';
-        feedback.forEach(fb => {
-            html += '<div class="feedback-block"><div class="fb-panelist">' + escapeHtml(fb.panelist) + ' (' + escapeHtml(fb.event) + ', ' + formatShortDate(fb.date) + ')</div>';
-            html += '<p style="margin-top:0.35rem">' + escapeHtml(fb.comments) + '</p></div>';
-        });
-        html += '</div>';
-    }
-
-    // Category coverage (last 3 lessons)
-    if (logs.length > 0) {
-        const catCounts = {};
-        ALL_CATEGORIES.forEach(c => { catCounts[c] = 0; });
-        logs.slice(0, 3).forEach(l => (l.exercise_categories_addressed || []).forEach(c => { if (catCounts[c] !== undefined) catCounts[c]++; }));
-        html += '<div class="detail-section"><h4>Category Coverage (Last ' + Math.min(logs.length, 3) + ' Lessons)</h4><div>';
-        ALL_CATEGORIES.forEach(c => {
-            html += '<span class="category-check ' + (catCounts[c] > 0 ? 'covered' : 'uncovered') + '">' + CATEGORY_LABELS[c] + ' (' + catCounts[c] + ')</span>';
-        });
-        html += '</div></div>';
-    }
-
-    // View Student Portal button
-    html += '<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">';
-    html += '<button class="btn-view-student" onclick="event.stopPropagation(); viewAsStudent(' + student.id + ')">View Student Portal</button>';
-    html += '</div>';
-
-    html += '</div>';
-    return html;
-}
-
-function addLessonExpandHandlers(container) {
-    container.querySelectorAll('.lesson-log-header').forEach(el => {
-        el.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-approve')) return;
-            const target = document.getElementById(el.dataset.target);
-            if (target) target.style.display = target.style.display === 'none' ? 'block' : 'none';
-        });
-    });
-}
-
-// ============================================================
-// REPERTOIRE VIEW
-// ============================================================
-
-let repSortCol = null;
-let repSortDir = 'asc';
-
-function renderRepertoire() {
-    const container = document.getElementById('repertoire-content');
-    const styles = [...new Set(REPERTOIRE.map(r => r.style))].sort();
-    let html = '<div class="filter-bar">';
-    html += '<button class="filter-btn active" data-filter="all">All</button>';
-    styles.forEach(st => { html += '<button class="filter-btn" data-filter="style:' + st + '">' + escapeHtml(st) + '</button>'; });
-    html += '</div>';
-    html += buildRepertoireTable(REPERTOIRE);
-    container.innerHTML = html;
-    container.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const filter = btn.dataset.filter;
-            let filtered = REPERTOIRE;
-            if (filter !== 'all') { const [key, val] = filter.split(':'); filtered = REPERTOIRE.filter(r => r[key] === val); }
-            container.querySelector('.table-scroll').outerHTML = buildRepertoireTable(filtered);
-            addSortHandlers(container);
-        });
-    });
-    addSortHandlers(container);
-}
-
-function buildRepertoireTable(data) {
-    const studentMap = {};
-    STUDENTS.forEach(s => { studentMap[s.id] = s.name; });
-    if (repSortCol !== null) {
-        data = [...data].sort((a, b) => {
-            let va, vb;
-            switch (repSortCol) {
-                case 0: va = studentMap[a.student_id] || ''; vb = studentMap[b.student_id] || ''; break;
-                case 1: va = a.title; vb = b.title; break;
-                case 2: va = a.composer; vb = b.composer; break;
-                case 3: va = a.style; vb = b.style; break;
-                case 4: va = a.phase; vb = b.phase; break;
-                default: va = ''; vb = '';
-            }
-            return repSortDir === 'asc' ? va.localeCompare(vb) : -va.localeCompare(vb);
-        });
-    }
-    let html = '<div class="table-scroll"><table class="data-table" id="rep-table"><thead><tr>';
-    ['Student', 'Title', 'Composer', 'Style', 'Phase', 'Notes'].forEach((h, i) => {
-        let cls = '';
-        if (i === repSortCol) cls = repSortDir === 'asc' ? ' class="sorted-asc"' : ' class="sorted-desc"';
-        html += '<th data-col="' + i + '"' + cls + '>' + h + '</th>';
-    });
-    html += '</tr></thead><tbody>';
-    data.forEach(r => {
-        html += '<tr><td style="white-space:nowrap">' + escapeHtml(studentMap[r.student_id] || '') + '</td>' +
-            '<td>' + escapeHtml(r.title) + '</td><td>' + escapeHtml(r.composer) + '</td>' +
-            '<td>' + escapeHtml(r.style) + '</td><td>' + escapeHtml(r.phase) + '</td>' +
-            '<td style="font-size:13px;color:var(--text-muted)">' + escapeHtml(r.notes) + '</td></tr>';
-    });
-    html += '</tbody></table></div>';
-    return html;
-}
-
-function addSortHandlers(container) {
-    container.querySelectorAll('.data-table th[data-col]').forEach(th => {
-        th.addEventListener('click', () => {
-            const col = parseInt(th.dataset.col);
-            if (col >= 5) return;
-            if (repSortCol === col) { repSortDir = repSortDir === 'asc' ? 'desc' : 'asc'; }
-            else { repSortCol = col; repSortDir = 'asc'; }
-            renderRepertoire();
-        });
-    });
-}
-
-// ============================================================
-// ANNOUNCEMENTS VIEW
-// ============================================================
-
-function renderAnnouncements() {
-    const container = document.getElementById('announcements-content');
-    const sorted = [...ANNOUNCEMENTS].sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return b.date.localeCompare(a.date);
-    });
-    let html = '';
-    sorted.forEach(ann => {
-        const typeLabel = ann.type.charAt(0).toUpperCase() + ann.type.slice(1);
-        html += '<div class="announcement-card' + (ann.pinned ? ' pinned' : '') + '">' +
-            '<div class="announcement-title">' +
-                (ann.pinned ? '<span style="font-size:11px;color:var(--primary-color);text-transform:uppercase;letter-spacing:0.05em;margin-right:0.5rem">Pinned</span>' : '') +
-                escapeHtml(ann.title) +
-            '</div>' +
-            '<div class="announcement-meta"><span class="event-type-badge">' + escapeHtml(typeLabel) + '</span>' + formatShortDate(ann.date) + '</div>' +
-            '<div class="announcement-body">' + escapeHtml(ann.body) + '</div>' +
-        '</div>';
-    });
-    container.innerHTML = html;
-}
-
-// ============================================================
-// EVENTS VIEW
-// ============================================================
-
-function renderEvents() {
-    const container = document.getElementById('events-content');
-    let html = '';
-    const sorted = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date));
-    const weeks = {};
-    sorted.forEach(ev => {
-        const d = new Date(ev.date + 'T12:00:00');
-        const start = new Date(d);
-        start.setDate(d.getDate() - d.getDay());
-        const weekKey = start.toISOString().split('T')[0];
-        if (!weeks[weekKey]) weeks[weekKey] = [];
-        weeks[weekKey].push(ev);
-    });
-    Object.keys(weeks).sort().forEach(weekKey => {
-        const startDate = new Date(weekKey + 'T12:00:00');
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        html += '<div class="event-week-label">Week of ' + fmt(startDate) + ' to ' + fmt(endDate) + '</div>';
-        weeks[weekKey].forEach(ev => {
-            const daysUntil = daysBetween(todayStr(), ev.date);
-            let countdown = '';
-            if (daysUntil === 0) countdown = 'Today';
-            else if (daysUntil === 1) countdown = 'Tomorrow';
-            else if (daysUntil > 0) countdown = daysUntil + ' days';
-            html += '<div class="event-card">' +
-                '<div class="event-date-col">' + formatShortDate(ev.date) + '<br><span style="font-size:12px;color:var(--accent-color)">' + countdown + '</span></div>' +
-                '<div><span class="event-type-badge">' + escapeHtml(ev.type) + '</span>' +
-                    '<strong>' + escapeHtml(ev.title) + '</strong>' +
-                    (ev.student_name ? ' <span style="color:var(--text-muted)">(' + escapeHtml(ev.student_name) + ')</span>' : '') +
-                '</div></div>';
-        });
-    });
-    // Jury feedback section
-    html += '<div class="section-label" style="margin-top:2rem">Recent Jury Feedback</div>';
-    Object.keys(JURY_FEEDBACK).forEach(sid => {
-        const student = STUDENTS.find(s => s.id === parseInt(sid));
-        if (!student) return;
-        const feedbacks = JURY_FEEDBACK[sid];
-        html += '<div class="card"><div class="card-header"><div>' +
-            '<span class="card-name">' + escapeHtml(student.name) + '</span>' +
-            '<div class="card-meta">' + escapeHtml(feedbacks[0].event) + ', ' + formatShortDate(feedbacks[0].date) + '</div>' +
-            '</div><span class="card-chevron">\u25BC</span></div><div class="card-body">';
-        feedbacks.forEach(fb => {
-            html += '<div class="feedback-block"><div class="fb-panelist">' + escapeHtml(fb.panelist) + '</div>' +
-                '<p style="margin-top:0.35rem">' + escapeHtml(fb.comments) + '</p></div>';
-        });
-        html += '</div></div>';
-    });
-    container.innerHTML = html;
-    addExpandHandlers(container);
-}
-
-// ============================================================
-// STUDENT VIEW (View as Student)
-// ============================================================
-
-function closeStudentView() {
-    document.getElementById('page-student-view').style.display = 'none';
-    document.body.style.overflow = '';
-    svCurrentDetail = null;
-}
-
-function viewAsStudent(studentId) {
-    // Mirrors the live teacher page: student view IS the student portal.
-    // The demo opens the sample student dashboard (demo.html).
-    window.open('demo.html', '_blank');
-}
-
-function viewAsStudent_legacyOverlay(studentId) {
-    const overlay = document.getElementById('page-student-view');
-    const body = document.getElementById('sv-body');
-    overlay.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-
-    const student = STUDENTS.find(s => s.id === studentId);
-    const studentName = student ? student.name.split(' ')[0] : 'Student';
-    document.getElementById('sv-student-name').textContent = student ? student.name : 'Student';
-
-    const logs = LESSON_LOGS[studentId] || [];
-    const approvedLogs = logs.filter(l => l.approved);
-    const rep = REPERTOIRE.filter(r => r.student_id === studentId);
-    const reflection = REFLECTIONS[studentId];
-    const plan = PRACTICE_PLANS[studentId];
-    const perfNotes = PERFORMANCE_NOTES[studentId] || [];
-    const juryFb = JURY_FEEDBACK[studentId] || [];
-    const upcomingEvents = EVENTS.filter(e => e.student_id === studentId || e.student_id === null);
-    const wins = logs.filter(l => l.breakthroughs && l.approved);
-
-    let html = '';
-
-    // Welcome
-    html += '<div class="sv-welcome"><h1>Welcome, ' + escapeHtml(studentName) + '</h1>';
-    html += '<p class="sv-welcome-sub">Here is what is happening in your studio this week.</p></div>';
-
-    // Upcoming events
-    if (upcomingEvents.length > 0) {
-        html += '<div class="sv-events-banner"><h3>Upcoming</h3>';
-        upcomingEvents.slice(0, 3).forEach(ev => {
-            html += '<div style="margin-bottom: 0.35rem;"><strong>' + escapeHtml(formatShortDate(ev.date)) + '</strong> ' + escapeHtml(ev.type) + ': ' + escapeHtml(ev.title) + '</div>';
-        });
-        html += '</div>';
-    }
-
-    // Card grid
-    html += '<div class="sv-grid">';
-
-    // Latest Lesson card
-    const latestApproved = approvedLogs[0];
-    html += '<div class="sv-card" onclick="svShowDetail(\'lesson\', ' + studentId + ')">';
-    html += '<div class="sv-card-label">Latest Lesson</div>';
-    html += '<div class="sv-card-value">' + (latestApproved ? escapeHtml(formatShortDate(latestApproved.date)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (latestApproved && latestApproved.next_steps ? escapeHtml(latestApproved.next_steps.substring(0, 80)) + '...' : 'No lessons recorded') + '</div>';
-    html += '</div>';
-
-    // Practice Plan card
-    html += '<div class="sv-card" onclick="svShowDetail(\'plan\', ' + studentId + ')">';
-    html += '<div class="sv-card-label">Practice Plan</div>';
-    html += '<div class="sv-card-value">' + (plan ? escapeHtml(formatShortDate(plan.date_generated)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (plan ? 'Plan available' : 'No practice plans yet') + '</div>';
-    html += '</div>';
-
-    // Reflection card
-    html += '<div class="sv-card" onclick="svShowDetail(\'reflection\', ' + studentId + ')">';
-    html += '<div class="sv-card-label">Reflection</div>';
-    html += '<div class="sv-card-value">' + (reflection ? escapeHtml(formatShortDate(reflection.date_submitted)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (reflection ? 'Voice: ' + reflection.voice_feeling + '/10 | Connection: ' + reflection.engagement + '/10' : 'No reflections submitted') + '</div>';
-    html += '</div>';
-
-    // Repertoire card
-    html += '<div class="sv-card" onclick="svShowDetail(\'repertoire\', ' + studentId + ')">';
-    html += '<div class="sv-card-label">Repertoire</div>';
-    html += '<div class="sv-card-value">' + rep.length + ' piece' + (rep.length !== 1 ? 's' : '') + '</div>';
-    html += '<div class="sv-card-summary">' + (rep.length > 0 ? rep.slice(0, 2).map(r => escapeHtml(r.title)).join(', ') + (rep.length > 2 ? ', ...' : '') : 'No repertoire') + '</div>';
-    html += '</div>';
-
-    // Performance Feedback card
-    const totalFeedback = perfNotes.length + (juryFb.length > 0 ? 1 : 0);
-    html += '<div class="sv-card" onclick="svShowDetail(\'feedback\', ' + studentId + ')">';
-    html += '<div class="sv-card-label">Performance Feedback</div>';
-    html += '<div class="sv-card-value">' + (totalFeedback > 0 ? totalFeedback + ' event' + (totalFeedback !== 1 ? 's' : '') : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (totalFeedback > 0 ? 'Feedback available' : 'Feedback will appear here') + '</div>';
-    html += '</div>';
-
-    // Vocal Progress card
-    html += '<div class="sv-card" onclick="svShowDetail(\'wins\', ' + studentId + ')">';
-    html += '<div class="sv-card-label">Vocal Progress</div>';
-    html += '<div class="sv-card-value">' + (wins.length > 0 ? wins.length + ' win' + (wins.length !== 1 ? 's' : '') : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (wins.length > 0 ? escapeHtml(wins[0].breakthroughs.substring(0, 80)) + '...' : 'Breakthroughs will appear here') + '</div>';
-    html += '</div>';
-
-    html += '</div>'; // close sv-grid
-    html += '<div id="sv-detail-area"></div>';
-
-    // Announcements
-    html += '<div class="sv-announcements"><h3>Announcements</h3>';
-    ANNOUNCEMENTS.forEach(a => {
-        html += '<div class="sv-ann-card' + (a.pinned ? ' sv-ann-pinned' : '') + '">';
-        html += '<div class="sv-ann-title">' + escapeHtml(a.title) + '</div>';
-        html += '<div class="sv-ann-meta">' + escapeHtml(a.type) + (a.pinned ? ' | Pinned' : '') + ' | ' + formatShortDate(a.date) + '</div>';
-        html += '<div class="sv-ann-body">' + escapeHtml(a.body) + '</div>';
-        html += '</div>';
-    });
-    html += '</div>';
-
-    body.innerHTML = html;
-    body._svStudentId = studentId;
-    svCurrentDetail = null;
-}
-
-function svShowDetail(type, studentId) {
-    const area = document.getElementById('sv-detail-area');
-    if (svCurrentDetail === type) { area.innerHTML = ''; svCurrentDetail = null; return; }
-    svCurrentDetail = type;
-
-    const logs = (LESSON_LOGS[studentId] || []).filter(l => l.approved);
-    const rep = REPERTOIRE.filter(r => r.student_id === studentId);
-    const reflection = REFLECTIONS[studentId];
-    const plan = PRACTICE_PLANS[studentId];
-    const perfNotes = PERFORMANCE_NOTES[studentId] || [];
-    const juryFb = JURY_FEEDBACK[studentId] || [];
-    const wins = logs.filter(l => l.breakthroughs);
-
-    let html = '<div class="sv-detail-wrap">';
-    html += '<button style="margin-bottom: 1rem; font-size: 12px; padding: 0.35rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius, 2px); background: #fff; cursor: pointer; font-family: inherit;" onclick="document.getElementById(\'sv-detail-area\').innerHTML=\'\'; svCurrentDetail=null;">Back to Dashboard</button>';
-
-    if (type === 'lesson') {
-        html += '<h2>Lesson Debriefs</h2>';
-        if (logs.length === 0) {
-            html += '<p style="color: var(--text-muted);">No lesson debriefs available yet.</p>';
-        } else {
-            logs.forEach(l => {
-                html += '<div style="margin-bottom: 2rem; padding: 2rem 2.5rem; border: 1px solid var(--border-color); border-radius: 2px; background: var(--bg-light, #fff);">';
-                html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(l.date)) + '</p>';
-
-                // Section 1: What We Worked On
-                html += '<h3>What We Worked On</h3>';
-                if (l.repertoire_worked && l.repertoire_worked.length > 0) {
-                    html += '<ul>';
-                    l.repertoire_worked.forEach(r => { html += '<li>' + escapeHtml(typeof r === 'string' ? r.split(' (')[0] : r) + '</li>'; });
-                    html += '</ul>';
-                }
-                if (l.exercises && l.exercises.length > 0) {
-                    html += '<p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p><ul>';
-                    l.exercises.forEach(ex => {
-                        let desc = escapeHtml(ex.name || 'Unnamed');
-                        if (ex.functional_purpose) desc += ': ' + escapeHtml(ex.functional_purpose);
-                        html += '<li>' + desc + '</li>';
-                    });
-                    html += '</ul>';
-                }
-
-                // Section 2: What Shifted
-                if (l.breakthroughs) {
-                    html += '<h3>What Shifted</h3>';
-                    html += markdownToHtml(l.breakthroughs);
-                }
-
-                // Section 3: Where You Are (no exercise categories visible to student)
-                if (l.hand_observations) {
-                    html += '<h3>Where You Are</h3>';
-                    html += markdownToHtml(l.hand_observations);
-                }
-
-                // Section 4: What's Next
-                if (l.next_steps) {
-                    html += '<h3>What\'s Next</h3>';
-                    html += markdownToHtml(l.next_steps);
-                }
-
-                html += '<p style="margin-top: 1.5rem; font-style: italic; color: var(--text-muted);">Prof. G</p>';
-                html += '</div>';
-            });
-        }
-    } else if (type === 'feedback') {
-        html += '<h2>Performance Feedback</h2>';
-        html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Notes from dress rehearsals, hearings, juries, and other performance events.</p>';
-        if (perfNotes.length === 0 && juryFb.length === 0) {
-            html += '<p style="color: var(--text-muted);">No performance feedback yet.</p>';
-        } else {
-            perfNotes.forEach(pn => {
-                html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<h3 style="font-size: 1rem; font-weight: 500;">' + escapeHtml(pn.event) + '</h3>';
-                html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(pn.date)) + '</p>';
-                pn.notes.split(/\n\n+/).filter(p => p.trim()).forEach(p => {
-                    html += '<p style="margin-bottom: 0.5rem;">' + escapeHtml(p.trim()) + '</p>';
-                });
-                html += '</div>';
-            });
-            if (juryFb.length > 0) {
-                html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<h3 style="font-size: 1rem; font-weight: 500;">Mid-Semester Hearing</h3>';
-                html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(juryFb[0].date)) + '</p>';
-                juryFb.forEach(fb => {
-                    html += '<div style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color);">';
-                    html += '<p style="font-weight: 500; font-size: 14px;">' + escapeHtml(fb.panelist) + '</p>';
-                    html += '<p style="font-size: 14px;">' + escapeHtml(fb.comments) + '</p>';
-                    html += '</div>';
-                });
-                html += '</div>';
-            }
-        }
-    } else if (type === 'plan') {
-        html += '<h2>Practice Plans</h2>';
-        if (!plan) {
-            html += '<p style="color: var(--text-muted);">No practice plans available yet.</p>';
-        } else {
-            html += '<div style="margin-bottom: 2rem; padding: 2rem 2.5rem; border: 1px solid var(--border-color); border-radius: 2px; background: var(--bg-light, #fff);">';
-            html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(plan.date_generated)) + '</p>';
-            html += '<div class="brief-content">' + markdownToHtml(plan.content) + '</div>';
-            html += '</div>';
-        }
-    } else if (type === 'reflection') {
-        html += '<h2>Reflections</h2>';
-        if (!reflection) {
-            html += '<p style="color: var(--text-muted);">No reflections submitted yet.</p>';
-        } else {
-            html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
-            html += '<p><strong>' + escapeHtml(formatDate(reflection.date_submitted)) + '</strong></p>';
-            html += '<p style="font-size: 13px; color: var(--text-muted);">Voice feeling: ' + reflection.voice_feeling + '/10 | Connection: ' + reflection.engagement + '/10</p>';
-            if (reflection.notes) html += '<p style="margin-top: 0.5rem;">' + escapeHtml(reflection.notes) + '</p>';
-            html += '</div>';
-        }
-    } else if (type === 'repertoire') {
-        html += '<h2>Active Repertoire</h2>';
-        if (rep.length === 0) {
-            html += '<p style="color: var(--text-muted);">No repertoire entries yet.</p>';
-        } else {
-            html += '<div class="table-scroll"><table class="data-table"><thead><tr><th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th></tr></thead><tbody>';
-            rep.forEach(r => {
-                html += '<tr><td><strong>' + escapeHtml(r.title) + '</strong></td><td>' + escapeHtml(r.composer) + '</td><td>' + escapeHtml(r.style) + '</td><td>' + escapeHtml(r.phase) + '</td></tr>';
-            });
-            html += '</tbody></table></div>';
-        }
-    } else if (type === 'wins') {
-        html += '<h2>Vocal Progress</h2>';
-        html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Breakthroughs, wins, and milestones from lessons and studio work.</p>';
-        if (wins.length === 0) {
-            html += '<p style="color: var(--text-muted);">No breakthroughs recorded yet. They will appear here as your work develops.</p>';
-        } else {
-            wins.forEach(l => {
-                html += '<div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(formatShortDate(l.date)) + '</p>';
-                html += '<p>' + escapeHtml(l.breakthroughs) + '</p>';
-                html += '</div>';
-            });
-        }
-    }
-
-    html += '</div>';
-    area.innerHTML = html;
-    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// Close student view with Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.getElementById('page-student-view').style.display === 'block') {
-        closeStudentView();
-    }
-});
-
-// ============================================================
-// APPROVE HANDLER (Demo)
-// ============================================================
-
-document.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('btn-approve')) return;
-    e.stopPropagation();
-    const btn = e.target;
-    const lessonId = btn.dataset.lessonId;
-
-    // Find and mark as approved in local data
-    Object.values(LESSON_LOGS).forEach(logs => {
-        logs.forEach(l => {
-            if (l.id === lessonId) l.approved = true;
-        });
-    });
-
-    btn.textContent = 'Approved';
-    btn.style.background = 'rgba(90, 138, 90, 0.12)';
-    btn.style.color = '#5a8a5a';
-    btn.style.cursor = 'default';
-    btn.classList.remove('btn-approve');
-    btn.classList.add('approved-badge');
-
-    showToast('Lesson approved. Practice plan will generate shortly.');
-});
-
-// ============================================================
-// INIT
-// ============================================================
-
-renderStudio();
+    div.className = 'ann';
+    const meta = document.createElement('p');
+    meta.className = 'm-meta';
+    meta.textContent = 'Just now';
+    const p = document.createElement('p');
+    p.textContent = text;
+    div.appendChild(meta); div.appendChild(p);
+    list.insertBefore(div, list.firstChild);
+    ta.value = '';
+    showToast('Posted to all student dashboards');
+  });
 </script>
 
 </body>

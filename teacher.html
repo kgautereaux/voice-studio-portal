@@ -1673,12 +1673,13 @@ async function renderInbox() {
     const nameOf = id => { const st = students.find(x => x.id === id); return st ? st.name : null; };
     const since = addDaysStr(todayStr(), -14);
 
-    const [reflRes, diaryRes, ckRes, repRes, thrRes] = await Promise.all([
+    const [reflRes, diaryRes, ckRes, repRes, thrRes, disRes] = await Promise.all([
         sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').gte('date_submitted', since).order('date_submitted', { ascending: false }),
         sb.from('voice_use_logs').select('*').gte('log_date', since).order('log_date', { ascending: false }).limit(120),
         sb.from('voses_checkins').select('*').gte('month', since.slice(0, 7) + '-01'),
         sb.from('repertoire').select('*').gte('created_at', since).order('created_at', { ascending: false }),
         sb.from('thread_replies').select('*').order('created_at'),
+        sb.from('inbox_dismissals').select('*'),
     ]);
     const threads = thrRes.data || [];
     const repliesFor = (t, id) => threads.filter(x => x.anchor_type === t && x.anchor_id === id);
@@ -1717,13 +1718,21 @@ async function renderInbox() {
             body: '<p>"' + escapeHtml(r.title) + '"' + (r.composer ? ' (' + escapeHtml(r.composer) + ')' : '') + '</p>' });
     });
 
+    const dismissals = {};
+    (disRes.data || []).forEach(d => { dismissals[d.anchor_type + '|' + d.anchor_id] = d.dismissed_at; });
     items.forEach(it => {
         const reps = repliesFor(it.type, it.id);
         it.replies = reps;
         it.lastDate = reps.length ? String(reps[reps.length - 1].created_at).slice(0, 10) : it.date;
         it.unanswered = !reps.some(r => r.author === 'teacher');
         it.unreadStudent = reps.some(r => r.author === 'student' && !r.read_by_teacher);
+        const dis = dismissals[it.type + '|' + it.id];
+        it.dismissed = !!dis && !reps.some(r => r.author === 'student' && r.created_at > dis);
     });
+    const visible = items.filter(it => !it.dismissed);
+    const dismissedCount = items.length - visible.length;
+    items.length = 0;
+    visible.forEach(it => items.push(it));
     items.sort((a, b) => b.lastDate < a.lastDate ? -1 : 1).reverse();
     items.sort((a, b) => (b.unanswered || b.unreadStudent ? 1 : 0) - (a.unanswered || a.unreadStudent ? 1 : 0));
 
@@ -1755,8 +1764,10 @@ async function renderInbox() {
         html += '<textarea class="inbox-reply-text" rows="1" style="flex: 1; font: inherit; font-size: 14px; padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Reply..."></textarea>';
         html += '<button class="btn-studio-action inbox-reply-btn" data-idx="' + idx + '">Reply</button></div>';
         html += '<p class="text-muted" style="font-size: 12px; margin: 0.4rem 0 0;">Appears in their portal next to this item; they can reply back here.</p>';
+        html += '<div style="margin-top: 0.6rem; text-align: right;"><button class="btn-studio-action inbox-dismiss" data-idx="' + idx + '" style="opacity: 0.75;">Dismiss</button></div>';
         html += '</div></div>';
     });
+    if (dismissedCount) html += '<p class="text-muted" style="font-size: 12.5px;">' + dismissedCount + ' dismissed item' + (dismissedCount === 1 ? '' : 's') + ' hidden. Dismissed items return if the student replies.</p>';
     container.innerHTML = html;
     window.__inboxItems = items;
 
@@ -1772,6 +1783,19 @@ async function renderInbox() {
                 it.unreadStudent = false;
                 updateInboxBadge();
             }
+        });
+    });
+    container.querySelectorAll('.inbox-dismiss').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const it = window.__inboxItems[btn.dataset.idx];
+            const { error } = await sb.from('inbox_dismissals').upsert(
+                { anchor_type: it.type, anchor_id: it.id, dismissed_at: new Date().toISOString() },
+                { onConflict: 'anchor_type,anchor_id' });
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            await sb.from('thread_replies').update({ read_by_teacher: true })
+                .eq('anchor_type', it.type).eq('anchor_id', it.id).eq('author', 'student');
+            showToast('Dismissed');
+            renderInbox();
         });
     });
     container.querySelectorAll('.inbox-reply-btn').forEach(btn => {

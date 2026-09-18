@@ -1529,9 +1529,10 @@ function wireHubActions() {
     container.addEventListener('click', async e => {
         const t = e.target;
         if (t.classList.contains('plan-start')) {
+            // Juries are the Saturday before finals week.
             const { error } = await sb.from('jury_plans').insert({
                 student_id: t.dataset.studentId, program_key: t.dataset.pk,
-                semester: 'Fall 2026', status: 'planning',
+                semester: 'Fall 2026', status: 'planning', jury_date: '2026-12-05',
             });
             if (error) { showToast('Error: ' + error.message, 'error'); return; }
             showToast('Jury plan started');
@@ -2192,6 +2193,7 @@ async function renderStudio() {
             const sels = allJurySelections.filter(x => x.jury_plan_id === plan.id);
             const filled = slots.filter(sl => sels.some(x => x.requirement_slot === sl && x.status === 'accepted')).length;
             html += '<p style="font-size: 13px; margin: 0 0 0.5rem;"><strong>' + filled + ' of ' + slots.length + ' slots filled</strong> · ' + escapeHtml(plan.program_key.replace(/_/g, ' ')) + (plan.jury_date ? ' · jury ' + formatShortDate(plan.jury_date) : '') + '</p>';
+            if (plan.notes) html += '<p style="font-size: 12.5px; color: var(--text-muted); margin: 0 0 0.5rem;">' + escapeHtml(plan.notes) + '</p>';
             slots.forEach(sl => {
                 const sel = sels.find(x => x.requirement_slot === sl && x.status === 'accepted');
                 html += '<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0.7rem; border: 1px ' + (sel ? 'solid' : 'dashed') + ' var(--border-color); border-radius: 5px; margin-bottom: 0.35rem; font-size: 13px; flex-wrap: wrap;">';

@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Studio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ground: #faf9f7;
+    --surface: #ffffff;
+    --ink: #2d2a2c;
+    --muted: #8a8286;
+    --line: #e8e3e0;
+    --teacher: #6c495b;
+    --teacher-soft: #f3ecf0;
+    --student: #5f7055;
+    --student-soft: #eef1ea;
+    --good: #4a7c59;
+    --chip: #f1edea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+
+  .view-as-banner {
+    background: var(--teacher); color: var(--ground); text-align: center;
+    font-size: 13px; padding: 0.45rem 1rem;
+  }
+  .view-as-banner a { color: var(--ground); }
+
+  nav { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50; }
+  .nav-inner {
+    max-width: 1060px; margin: 0 auto; padding: 0 1.25rem;
+    display: flex; align-items: center; gap: 1.5rem; height: 58px;
+  }
+  .wordmark { font-weight: 700; letter-spacing: 0.14em; font-size: 13px; text-transform: uppercase; white-space: nowrap; }
+  .tabs { display: flex; gap: 0.25rem; flex: 1; }
+  .tab {
+    border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 500;
+    padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--teacher); border-radius: 4px 4px 0 0; }
+  .signout { font-size: 12.5px; color: var(--muted); background: none; border: 0; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .signout:hover { color: var(--ink); }
+  @media (max-width: 700px) {
+    .nav-inner { gap: 0.7rem; padding: 0 0.9rem; overflow-x: auto; }
+    .tab { padding: 0.45rem 0.5rem; }
+  }
+
+  main { max-width: 1060px; margin: 0 auto; padding: 2.25rem 1.25rem 5rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h1 { font-size: 1.7rem; font-weight: 600; margin: 0 0 1.5rem; text-wrap: balance; }
+
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.35rem; }
+  .eyebrow.teacher { color: var(--teacher); }
+  .eyebrow.student { color: var(--student); }
+
+  .loop { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+  @media (max-width: 800px) { .loop { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.4rem 1.5rem; }
+  .panel.teacher { border-top: 3px solid var(--teacher); }
+  .panel.student { border-top: 3px solid var(--student); }
+  .panel.neutral { border-top: 3px solid var(--line); }
+  .panel h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.2rem; }
+  .panel .meta { font-size: 12.5px; color: var(--muted); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
+  .panel h3 { font-size: 13px; font-weight: 600; margin: 1.3rem 0 0.4rem; }
+  .panel p { margin: 0 0 0.75rem; font-size: 14px; }
+  .panel ul { margin: 0 0 0.75rem; padding-left: 1.1rem; font-size: 14px; }
+  .panel li { margin-bottom: 0.35rem; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 0.3rem; }
+  label .hint { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  textarea, input[type="text"], input[type="date"], input[type="number"] {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--ground); color: var(--ink);
+    font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; margin-bottom: 1rem; resize: vertical;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--student); outline-offset: 1px; }
+
+  .btn { border: 0; border-radius: 4px; font: inherit; font-size: 14px; font-weight: 600; padding: 0.55rem 1.2rem; cursor: pointer; }
+  .btn.student-bg { background: var(--student); color: var(--ground); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .chip-set { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+  .chip-opt {
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12.5px; padding: 0.3rem 0.75rem; border-radius: 999px; cursor: pointer;
+  }
+  .chip-opt:hover { color: var(--ink); }
+  .chip-opt.on { background: var(--student-soft); color: var(--student); border-color: var(--student); font-weight: 600; }
+  .chip-opt:focus-visible { outline: 2px solid var(--student); outline-offset: 2px; }
+
+  .submitted { background: var(--student-soft); border-radius: 6px; padding: 1rem 1.1rem; font-size: 14px; }
+  .submitted .meta { margin-bottom: 0.5rem; }
+  .submitted p { margin: 0 0 0.6rem; }
+
+  .check-item { display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 0.65rem; font-size: 14px; }
+  .check-item input { margin-top: 0.25rem; accent-color: var(--teacher); }
+  .check-item .why { color: var(--muted); font-size: 12.5px; display: block; }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 800px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.3rem 1.4rem; cursor: pointer; transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--muted); }
+  .card .pair { display: flex; gap: 0.75rem; margin-top: 0.9rem; }
+  .half { flex: 1; border-radius: 5px; padding: 0.7rem 0.85rem; font-size: 13px; }
+  .half.t { background: var(--teacher-soft); }
+  .half.s { background: var(--student-soft); }
+  .half .state { font-weight: 600; display: block; }
+  .half .state.due { color: var(--teacher); }
+  .half .state.done { color: var(--good); }
+
+  .history { margin-top: 1.5rem; }
+  .history h3 { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .week-total { font-size: 13px; font-weight: 600; margin: 0 0 0.4rem; color: var(--student); font-variant-numeric: tabular-nums; }
+  .hist-row {
+    display: flex; gap: 0.75rem; font-size: 13.5px; padding: 0.5rem 0;
+    border-top: 1px solid var(--line); align-items: baseline;
+  }
+  .hist-row .d { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.2em; flex-shrink: 0; }
+  button.hist-row.linked {
+    width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0;
+    font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  button.hist-row.linked.current .d { color: var(--teacher); font-weight: 700; }
+  button.hist-row.linked.current .open-hint { opacity: 1; color: var(--teacher); }
+  .open-hint { margin-left: auto; color: var(--muted); font-size: 12px; opacity: 0; transition: opacity 0.12s; white-space: nowrap; }
+  button.hist-row.linked:hover .open-hint, button.hist-row.linked:focus-visible .open-hint { opacity: 1; color: var(--teacher); }
+  @media (hover: none) { .open-hint { opacity: 1; } }
+  .lesson-list { max-height: 280px; overflow-y: auto; }
+
+  .full-plan { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+  .full-plan summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--teacher); }
+  .full-plan p { margin-top: 0.75rem; }
+  .full-plan ul { font-size: 14px; }
+
+  .load-grid { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; margin-bottom: 0.25rem; }
+  @media (max-width: 500px) { .load-grid { grid-template-columns: 1fr; gap: 0; } }
+
+  .bi-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+  .bi-row:last-of-type { margin-bottom: 1rem; }
+  .bi-anchor { font-size: 11.5px; color: var(--muted); width: 4.6em; flex-shrink: 0; }
+  .bi-anchor.left { text-align: right; }
+  .scale-6 { display: flex; gap: 3px; flex-shrink: 0; }
+  .s6 {
+    width: 27px; height: 27px; border-radius: 4px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--muted); cursor: pointer;
+    font: inherit; font-size: 12px; font-variant-numeric: tabular-nums; padding: 0;
+  }
+  .s6:hover { color: var(--ink); border-color: var(--muted); }
+  .s6.on { background: var(--student); color: var(--ground); border-color: var(--student); font-weight: 600; }
+  .s6:focus-visible { outline: 2px solid var(--student); outline-offset: 2px; }
+
+  .rep-card { border: 1px solid var(--line); border-radius: 6px; padding: 0.9rem 1rem; margin-bottom: 0.9rem; }
+  .rep-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  .rep-status {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 0.15rem 0.6rem; white-space: nowrap;
+  }
+  .rep-status.ip { background: var(--teacher-soft); color: var(--teacher); }
+  .rep-status.as { background: var(--chip); color: var(--muted); }
+  .rep-status.pr { background: var(--student-soft); color: var(--good); }
+  .rep-sub { font-size: 12.5px; color: var(--muted); margin: 0.15rem 0 0.6rem; }
+  .rep-sub a { color: var(--teacher); }
+  .phase-rail { display: flex; gap: 4px; margin-bottom: 0.35rem; }
+  .phase-rail .ph {
+    height: 10px; flex: 1; border-radius: 3px; background: var(--line);
+    border: 0; padding: 0; cursor: pointer; font: inherit;
+  }
+  .phase-rail .ph.done { background: var(--student); }
+  .phase-rail .ph.cur { background: var(--student); opacity: 0.45; }
+  .phase-rail .ph:hover { background: var(--student); opacity: 0.7; }
+  .phase-rail .ph:focus-visible { outline: 2px solid var(--student); outline-offset: 2px; }
+  .rep-phase { font-size: 12.5px; color: var(--muted); margin: 0; font-variant-numeric: tabular-nums; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.25rem; }
+  @media (max-width: 800px) { .stats { grid-template-columns: 1fr; } }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.1rem 1.3rem; }
+  .stat .n { font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 12.5px; color: var(--muted); }
+
+  .due-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--teacher); margin-left: 5px; vertical-align: 2px; }
+  .checkin-badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    background: var(--teacher-soft); color: var(--teacher);
+    border-radius: 999px; padding: 0.15rem 0.6rem; white-space: nowrap;
+  }
+  .checkin-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  .voses-head { display: flex; justify-content: flex-end; padding-bottom: 0.25rem; }
+  .voses-anchors { width: 177px; display: flex; justify-content: space-between; font-size: 10.5px; line-height: 1.25; color: var(--muted); }
+  .voses-anchors span:last-child { text-align: right; }
+  @media (max-width: 560px) { .voses-head { justify-content: flex-start; } }
+  .voses-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.45rem 0; border-top: 1px solid var(--line); font-size: 13.5px;
+  }
+  .voses-row:first-child { border-top: 0; }
+  @media (max-width: 560px) { .voses-row { flex-direction: column; align-items: flex-start; gap: 0.3rem; } }
+
+  .toast {
+    position: fixed; right: 1.1rem; bottom: 5.2rem; z-index: 210;
+    background: var(--ink); color: var(--ground); font-size: 13px;
+    padding: 0.55rem 0.9rem; border-radius: 6px; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; max-width: 280px;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Feedback widget (injected by js/feedback-widget.js) */
+  .feedback-fab {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; width: 48px; height: 48px;
+    border-radius: 50%; background: var(--teacher); color: var(--ground); border: none;
+    cursor: pointer; font-size: 20px; line-height: 1; z-index: 200;
+    box-shadow: 0 2px 12px rgba(44, 36, 32, 0.2);
+  }
+  .feedback-fab.open { transform: rotate(45deg); background: var(--muted); }
+  .feedback-panel {
+    position: fixed; bottom: 5rem; right: 1.5rem; width: 320px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 24px rgba(44,36,32,0.15);
+    padding: 1.5rem; z-index: 199; display: none;
+  }
+  .feedback-panel.visible { display: block; }
+  .feedback-panel h3 { margin: 0 0 0.5rem; font-size: 15px; }
+  .feedback-panel p { font-size: 13px; color: var(--muted); }
+  .feedback-panel textarea { min-height: 80px; }
+  .feedback-panel .btn-primary { background: var(--teacher); color: var(--ground); border: 0; border-radius: 4px; font: inherit; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="view-as-banner" id="view-as-banner" style="display: none;">
+  Viewing as <b id="view-as-name">student</b> · read only · <a href="teacher.html">back to Studio</a>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <span class="wordmark">Voice Studio</span>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-page="dashboard">Dashboard</button>
+      <button class="tab" data-page="lesson">Lesson</button>
+      <button class="tab" data-page="practice">Practice</button>
+      <button class="tab" data-page="repertoire">Repertoire</button>
+      <button class="tab" data-page="analytics">Analytics<span class="due-dot" id="checkin-dot" hidden></span></button>
+    </div>
+    <button class="signout" id="signout-btn">Sign out</button>
+  </div>
+</nav>
+
+<main id="main" hidden>
+
+  <section class="page active" id="page-dashboard">
+    <h1 id="welcome-h1">Welcome</h1>
+    <div class="cards">
+      <div class="card" data-page="lesson" tabindex="0" role="button" aria-label="Open Lesson">
+        <p class="eyebrow teacher">Lesson loop</p>
+        <strong id="dash-lesson-date">–</strong>
+        <div class="pair">
+          <div class="half t"><span class="state done" id="dash-debrief-state">–</span>Prof. G's record of the lesson</div>
+          <div class="half s"><span class="state" id="dash-lr-state">–</span>Your reflection</div>
+        </div>
+      </div>
+      <div class="card" data-page="practice" tabindex="0" role="button" aria-label="Open Practice">
+        <p class="eyebrow student">Practice loop</p>
+        <strong>Last 7 days</strong>
+        <div class="pair">
+          <div class="half t"><span class="state" id="dash-plan-state">–</span><span id="dash-plan-sub">Current practice plan</span></div>
+          <div class="half s"><span class="state" id="dash-log-state">–</span><span id="dash-log-sub">Voice-use log</span></div>
+        </div>
+      </div>
+      <div class="card" data-page="repertoire" tabindex="0" role="button" aria-label="Open Repertoire">
+        <p class="eyebrow teacher">Repertoire</p>
+        <strong id="dash-rep-count">–</strong>
+        <div class="pair">
+          <div class="half t"><span class="state" id="dash-rep-state">–</span><span id="dash-rep-sub"></span></div>
+          <div class="half s"><span class="state">Suggest a piece</span>Your voice in the rep list</div>
+        </div>
+      </div>
+      <div class="card" data-page="analytics" tabindex="0" role="button" aria-label="Open Analytics">
+        <p class="eyebrow student">Analytics</p>
+        <strong id="dash-month">–</strong>
+        <div class="pair">
+          <div class="half t"><span class="state" id="dash-jury-state">–</span><span id="dash-jury-sub"></span></div>
+          <div class="half s"><span class="state" id="dash-ck-state">–</span>Singing-VoSES, monthly</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-lesson">
+    <h1>Lesson</h1>
+    <div class="loop">
+      <div class="panel teacher">
+        <p class="eyebrow teacher">From Prof. G</p>
+        <div id="debrief-panel"><p class="meta">No approved lessons yet.</p></div>
+      </div>
+      <div class="panel student">
+        <p class="eyebrow student">Your reflection</p>
+        <div id="reflect-panel"></div>
+      </div>
+    </div>
+    <div class="history">
+      <h3>Lessons</h3>
+      <div class="lesson-list" id="lesson-list"></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-practice">
+    <h1>Practice</h1>
+    <div class="loop">
+      <div class="panel teacher">
+        <p class="eyebrow teacher">From Prof. G</p>
+        <h2>Current practice plan</h2>
+        <p class="meta" id="plan-meta"></p>
+        <div id="plan-checklist"><p class="meta">No approved practice plan yet.</p></div>
+        <details class="full-plan" id="full-plan-details" hidden>
+          <summary>Read the full practice plan</summary>
+          <div id="full-plan-content"></div>
+        </details>
+      </div>
+      <div class="panel student">
+        <p class="eyebrow student">Your practice log</p>
+        <h2>Log voice use</h2>
+        <p class="meta">One quick entry per day you sang. Choir, rehearsals, and gigs count too.</p>
+        <form id="log-form">
+          <label id="day-label">When</label>
+          <div class="chip-set" id="day-set" role="radiogroup" aria-labelledby="day-label">
+            <button type="button" class="chip-opt on" data-day="0">Today</button>
+            <button type="button" class="chip-opt" data-day="1">Yesterday</button>
+            <button type="button" class="chip-opt" data-day="pick">Pick a date</button>
+          </div>
+          <input type="date" id="log-date" hidden>
+          <label id="kind-label">What kind of singing</label>
+          <div class="chip-set" id="kind-set" role="radiogroup" aria-labelledby="kind-label">
+            <button type="button" class="chip-opt on" data-kind="practice">Practice</button>
+            <button type="button" class="chip-opt" data-kind="choir">Choir</button>
+            <button type="button" class="chip-opt" data-kind="rehearsal">Rehearsal</button>
+            <button type="button" class="chip-opt" data-kind="performance">Performance</button>
+            <button type="button" class="chip-opt" data-kind="other">Other</button>
+          </div>
+          <div class="load-grid">
+            <div>
+              <label for="minutes">How long
+                <span class="hint">Minutes of actual singing.</span></label>
+              <input type="text" id="minutes" inputmode="numeric" placeholder="e.g. 15" style="max-width: 6em;">
+            </div>
+            <div>
+              <label id="load-label">How did it sit in the voice?</label>
+              <div class="chip-set" id="load-set" role="radiogroup" aria-labelledby="load-label">
+                <button type="button" class="chip-opt" data-load="easeful">Easeful</button>
+                <button type="button" class="chip-opt" data-load="moderately_taxing">Moderately taxing</button>
+                <button type="button" class="chip-opt" data-load="taxing">Taxing</button>
+              </div>
+            </div>
+          </div>
+          <label for="focus">What did you sing?
+            <span class="hint">Check exercises and repertoire on the plan and they appear here. Add anything else you sang, even if we did not cover it in lesson.</span></label>
+          <textarea id="focus" rows="2" placeholder="From the plan, from choir folders, from anywhere..."></textarea>
+          <label id="cond-label">Voice condition
+            <span class="hint">Rate each pair, 1 to 5 toward the easy side. Your condition score is the average of the three.</span></label>
+          <div id="cond-scales" aria-labelledby="cond-label"></div>
+          <label for="noticed">Anything you noticed? <span class="hint">Optional. Warmth, brightness, ease, a win, anything that shifted.</span></label>
+          <textarea id="noticed" rows="2"></textarea>
+          <button type="submit" class="btn student-bg">Add to log</button>
+        </form>
+        <div class="history">
+          <h3>Last 7 days</h3>
+          <p class="week-total" id="week-total"></p>
+          <div id="log-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-repertoire">
+    <h1>Repertoire</h1>
+    <div class="loop">
+      <div class="panel neutral">
+        <h2>Active pieces</h2>
+        <p class="meta">Tap a segment on a piece's rail to update its learning phase.</p>
+        <div id="rep-list"><p class="meta">No repertoire tracked yet.</p></div>
+        <details class="full-plan" id="past-rep-details" hidden>
+          <summary>Past repertoire</summary>
+          <div id="past-rep-list"></div>
+        </details>
+      </div>
+      <div class="panel student">
+        <p class="eyebrow student">Your voice in the rep list</p>
+        <h2>Suggest a piece</h2>
+        <p class="meta">What do you want to sing?</p>
+        <form id="suggest-form">
+          <label for="sug-title">Piece</label>
+          <input type="text" id="sug-title">
+          <label for="sug-source">Composer or show</label>
+          <input type="text" id="sug-source">
+          <button type="submit" class="btn student-bg">Add to my list</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-analytics">
+    <h1>Analytics</h1>
+
+    <div class="panel student" id="checkin-panel" style="margin-bottom: 1.25rem;">
+      <div class="checkin-head">
+        <div>
+          <p class="eyebrow student">Monthly voice check-in</p>
+          <h2>How is singing feeling this month?</h2>
+        </div>
+        <span class="checkin-badge" id="checkin-badge">–</span>
+      </div>
+      <p class="meta">Once a month · about 5 minutes · 18 statements, rated 1 (totally disagree) to 6 (totally agree)</p>
+      <form id="checkin-form">
+        <div class="voses-head" aria-hidden="true">
+          <div class="voses-anchors"><span>Totally<br>disagree</span><span>Totally<br>agree</span></div>
+        </div>
+        <div id="voses-items"></div>
+        <p class="meta" style="margin: 0.9rem 0 0.75rem;">Singing Voice Function Self-Efficacy Scale
+          (Singing-VoSES), L&atilde;, Fiuza, Ram&iacute;rez &amp; Ardura, 2023.</p>
+        <button type="submit" class="btn student-bg" id="checkin-submit">Submit check-in</button>
+      </form>
+      <div class="submitted" id="checkin-done" hidden>
+        <p class="meta" id="checkin-done-meta"></p>
+        <p id="checkin-summary"></p>
+      </div>
+    </div>
+
+    <div class="loop" style="margin-bottom: 1.25rem;">
+      <div class="panel teacher">
+        <p class="eyebrow teacher">Semester goals</p>
+        <h2 id="goals-title">Goals</h2>
+        <div id="goals-content"><p class="meta">No semester goals recorded yet.</p></div>
+      </div>
+      <div class="panel neutral">
+        <h2>Juries</h2>
+        <div id="jury-content"><p class="meta">No jury records yet.</p></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n" id="stat-minutes">0</div><div class="l">Singing minutes, last 7 days</div></div>
+      <div class="stat"><div class="n" id="stat-entries">0</div><div class="l">Log entries, last 7 days</div></div>
+      <div class="stat"><div class="n" id="stat-cond">–</div><div class="l">Average voice condition, last 4 weeks</div></div>
+    </div>
+
+    <div class="panel neutral" style="margin-bottom: 1.25rem;">
+      <h2>Load and voice condition</h2>
+      <p class="meta">Daily, last two weeks. Singing minutes above; condition (1 to 5) below, one dot per logged day.
+        Condition: average of the easeful/effortful, stable/unstable, and flexible/rigid ratings.</p>
+      <div id="strips-chart"><p class="meta">Log entries will appear here.</p></div>
+    </div>
+
+    <div class="panel neutral" style="margin-bottom: 1.25rem;">
+      <h2>Condition by singing time</h2>
+      <p class="meta">Each dot is one logged day</p>
+      <div id="scatter-chart"><p class="meta">Log entries with minutes and condition will appear here.</p></div>
+    </div>
+
+    <div class="panel neutral">
+      <h2>Check-in trend</h2>
+      <p class="meta">Average agreement by area (1 to 6), monthly</p>
+      <div id="voses-chart"><p class="meta">Your monthly check-ins will chart here once there are two or more.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SUPABASE_URL = 'https://ukvkljztinkzmkbtsfuo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k';
+const TEACHER_EMAILS = ['kayla@studio.kaylagautereaux.com'];
+
+let sb = null;
+let currentUser = null;
+let viewAsStudentId = null;
+let D = {};  // all loaded data
+
+function dataStudentId() { return viewAsStudentId || (currentUser && currentUser.id); }
+function readOnly() { return !!viewAsStudentId; }
+
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+
+function fmtDate(d, opts) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US',
+    opts || { month: 'short', day: 'numeric' });
+}
+function isoDaysAgo(n) {
+  const d = new Date(); d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+// ============ INIT ============
+async function initApp() {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { data: { session } } = await sb.auth.getSession();
+
+  const viewAsParam = new URLSearchParams(window.location.search).get('view_as');
+  if (session && viewAsParam && TEACHER_EMAILS.includes((session.user.email || '').toLowerCase())) {
+    currentUser = session.user;
+    viewAsStudentId = viewAsParam;
+    document.getElementById('view-as-banner').style.display = '';
+    await loadAll();
+    const nameEl = document.getElementById('view-as-name');
+    if (nameEl && D.student) nameEl.textContent = D.student.name;
+    renderAll();
+    document.getElementById('main').hidden = false;
+    return;
+  }
+
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+
+  const { data: me } = await sb.from('students')
+    .select('consent_accepted_at').eq('id', currentUser.id).single();
+  if (!me || !me.consent_accepted_at) { window.location.href = 'consent.html'; return; }
+
+  await loadAll();
+  renderAll();
+  document.getElementById('main').hidden = false;
+
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') window.location.href = 'login.html';
+  });
+}
+
+async function loadAll() {
+  const sid = dataStudentId();
+  const [student, lessons, plans, reflections, diary, checkins, rep, jury] = await Promise.all([
+    sb.from('students').select('*').eq('id', sid).single(),
+    sb.from('lesson_logs')
+      .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, motor_learning_phase, breakthroughs, plan_for_next_lesson')
+      .eq('student_id', sid).eq('approved', true).order('date', { ascending: false }).limit(40),
+    sb.from('practice_plans').select('*').eq('student_id', sid)
+      .in('status', ['approved', 'delivered']).order('date_generated', { ascending: false }).limit(3),
+    sb.from('reflections').select('*').eq('student_id', sid)
+      .eq('entry_type', 'lesson_reflection').order('date_submitted', { ascending: false }).limit(40),
+    sb.from('voice_use_logs').select('*').eq('student_id', sid)
+      .order('log_date', { ascending: false }).limit(400),
+    sb.from('voses_checkins').select('*').eq('student_id', sid).order('month'),
+    sb.from('repertoire').select('*').eq('student_id', sid).order('timeline'),
+    sb.from('jury_feedback').select('*').eq('student_id', sid).order('date', { ascending: false }),
+  ]);
+  D = {
+    student: student.data,
+    lessons: lessons.data || [],
+    plans: plans.data || [],
+    reflections: reflections.data || [],
+    diary: diary.data || [],
+    checkins: checkins.data || [],
+    rep: (rep.data || []).filter(r => ['assigned', 'in_progress', 'performance_ready'].includes(r.status)),
+    pastRep: (rep.data || []).filter(r => r.status === 'shelved'),
+    jury: jury.data || [],
+  };
+  D.selectedLesson = D.lessons.length ? D.lessons[0].id : null;
+}
+
+// ============ NAV ============
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('[data-page]').forEach(el => {
+  el.addEventListener('click', () => showPage(el.dataset.page));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') showPage(el.dataset.page); });
+});
+document.getElementById('signout-btn').addEventListener('click', async () => {
+  if (readOnly()) { window.location.href = 'teacher.html'; return; }
+  await sb.auth.signOut();
+  window.location.href = 'login.html';
+});
+
+// ============ HELPERS: reflection-to-lesson pairing ============
+function reflectionForLesson(lesson) {
+  // A reflection belongs to the most recent lesson on or before its submission.
+  const idx = D.lessons.findIndex(l => l.id === lesson.id);
+  const nextDate = idx > 0 ? D.lessons[idx - 1].date : '9999-12-31';
+  return D.reflections.find(r => {
+    const d = String(r.date_submitted).slice(0, 10);
+    return d >= lesson.date && d < nextDate;
+  }) || null;
+}
+
+// ============ RENDER ============
+function renderAll() {
+  renderDashboard();
+  renderLessonRoom();
+  renderPractice();
+  renderRepertoire();
+  renderAnalytics();
+}
+
+function renderDashboard() {
+  document.getElementById('welcome-h1').textContent =
+    'Welcome, ' + ((D.student && D.student.name) || '').split(' ')[0];
+
+  const latest = D.lessons[0];
+  document.getElementById('dash-lesson-date').textContent = latest ? fmtDate(latest.date, { weekday: 'short', month: 'short', day: 'numeric' }) : 'No lessons yet';
+  document.getElementById('dash-debrief-state').textContent = latest ? 'Debrief ready' : '–';
+  const lr = document.getElementById('dash-lr-state');
+  if (latest) {
+    const done = !!reflectionForLesson(latest);
+    lr.textContent = done ? 'Reflection submitted' : 'Reflection due';
+    lr.classList.toggle('done', done);
+    lr.classList.toggle('due', !done);
+  }
+
+  const plan = D.plans[0];
+  document.getElementById('dash-plan-state').textContent = plan ? 'Plan ready' : 'No plan yet';
+  if (plan) {
+    const src = D.lessons.find(l => l.id === plan.lesson_log_id);
+    document.getElementById('dash-plan-sub').textContent = src ? 'Based on your ' + fmtDate(src.date) + ' lesson' : 'Current practice plan';
+  }
+  const week = D.diary.filter(e => e.log_date >= isoDaysAgo(6));
+  const mins = week.reduce((a, e) => a + (e.minutes || 0), 0);
+  document.getElementById('dash-log-state').textContent = week.length + (week.length === 1 ? ' entry' : ' entries');
+  document.getElementById('dash-log-sub').textContent = mins + ' min of singing';
+
+  document.getElementById('dash-rep-count').textContent = D.rep.length + ' active ' + (D.rep.length === 1 ? 'piece' : 'pieces');
+  const due = D.rep.filter(r => r.timeline).sort((a, b) => a.timeline < b.timeline ? -1 : 1)[0];
+  document.getElementById('dash-rep-state').textContent =
+    D.rep.filter(r => r.status === 'in_progress').length + ' in progress';
+  document.getElementById('dash-rep-sub').textContent = due ? 'Next due ' + fmtDate(due.timeline) : '';
+
+  const now = new Date();
+  document.getElementById('dash-month').textContent = now.toLocaleDateString('en-US', { month: 'long' });
+  const lastJury = D.jury[0];
+  document.getElementById('dash-jury-state').textContent = lastJury ? 'Last jury ' + fmtDate(lastJury.date) : 'No juries yet';
+  document.getElementById('dash-jury-sub').textContent = lastJury ? (lastJury.outcome || '') : '';
+  const ckDone = checkinDoneThisMonth();
+  const ck = document.getElementById('dash-ck-state');
+  ck.textContent = ckDone ? 'Check-in done' : 'Check-in due';
+  ck.classList.toggle('done', ckDone);
+  ck.classList.toggle('due', !ckDone);
+  document.getElementById('checkin-dot').hidden = ckDone;
+}
+
+// ---- Lesson room ----
+function debriefHtml(l) {
+  const dateStr = fmtDate(l.date, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const rep = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
+  let html = `<h2>${dateStr}</h2><p class="meta">${l.duration_minutes ? l.duration_minutes + ' minutes' : ''}</p>`;
+  if (rep.length) {
+    html += '<h3>What we worked on</h3><ul>';
+    for (const r of rep) html += `<li>${escapeHtml(r)}</li>`;
+    html += '</ul>';
+  }
+  if (l.head_observations) html += `<h3>Intention + learning</h3><p>${escapeHtml(l.head_observations)}</p>`;
+  if (l.heart_observations) html += `<h3>Expression</h3><p>${escapeHtml(l.heart_observations)}</p>`;
+  if (l.hand_observations) html += `<h3>Function</h3><p>${escapeHtml(l.hand_observations)}</p>`;
+  if (l.warmth_brightness_notes) html += `<h3>Warmth + brightness</h3><p>${escapeHtml(l.warmth_brightness_notes)}</p>`;
+  if (l.breakthroughs) html += `<h3>Breakthroughs</h3><p>${escapeHtml(l.breakthroughs)}</p>`;
+  if (l.ease_assessment) html += `<h3>Ease</h3><p>${escapeHtml(l.ease_assessment)}</p>`;
+  if (l.plan_for_next_lesson) html += `<h3>What we are working toward</h3><p>${escapeHtml(l.plan_for_next_lesson)}</p>`;
+  html += '<p class="meta" style="margin-top: 1rem;">Prof. G</p>';
+  return html;
+}
+
+function renderLessonRoom() {
+  const list = document.getElementById('lesson-list');
+  if (!D.lessons.length) {
+    list.innerHTML = '<p class="meta">No approved lessons yet.</p>';
+    document.getElementById('reflect-panel').innerHTML = '';
+    return;
+  }
+  list.innerHTML = D.lessons.map(l => {
+    const r = reflectionForLesson(l);
+    const cur = l.id === D.selectedLesson ? ' current' : '';
+    return `<button class="hist-row linked${cur}" data-lesson="${l.id}">
+      <span class="d">${fmtDate(l.date)}</span>
+      <span>Debrief posted · ${r ? 'reflection submitted' : 'reflection due'}</span>
+      <span class="open-hint">Open pairing</span></button>`;
+  }).join('');
+  list.querySelectorAll('button.hist-row').forEach(b => {
+    b.addEventListener('click', () => {
+      D.selectedLesson = b.dataset.lesson;
+      renderLessonRoom();
+      document.querySelector('#page-lesson .loop').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  const lesson = D.lessons.find(l => l.id === D.selectedLesson) || D.lessons[0];
+  document.getElementById('debrief-panel').innerHTML = debriefHtml(lesson);
+  renderReflectPanel(lesson);
+}
+
+function renderReflectPanel(lesson) {
+  const panel = document.getElementById('reflect-panel');
+  const existing = reflectionForLesson(lesson);
+  if (existing) {
+    panel.innerHTML = `<div class="submitted">
+      <p class="meta">Submitted ${fmtDate(String(existing.date_submitted).slice(0, 10), { month: 'long', day: 'numeric' })}</p>
+      ${existing.lesson_takeaways ? '<p><strong>Takeaways:</strong> ' + escapeHtml(existing.lesson_takeaways) + '</p>' : ''}
+      ${existing.risk_taken ? '<p><strong>Risk taken:</strong> ' + escapeHtml(existing.risk_taken) + '</p>' : ''}
+      ${existing.questions ? '<p><strong>Questions or goals:</strong> ' + escapeHtml(existing.questions) + '</p>' : ''}
+    </div>`;
+    return;
+  }
+  const isLatest = lesson.id === D.lessons[0].id;
+  if (!isLatest) {
+    panel.innerHTML = '<p class="meta">No reflection was submitted for this lesson.</p>';
+    return;
+  }
+  panel.innerHTML = `
+    <h2>Reflect on this lesson</h2>
+    <p class="meta">Best done while the lesson is fresh</p>
+    <form id="reflection-form">
+      <label for="takeaways">Takeaways
+        <span class="hint">The concepts, sensations, moments, or wins from this lesson you want to remember. What clicked?</span></label>
+      <textarea id="takeaways" rows="4"></textarea>
+      <label for="risk">Where did you take a risk in this lesson?
+        <span class="hint">Something unfamiliar you tried, or something you let change how you sang.</span></label>
+      <textarea id="risk" rows="2"></textarea>
+      <label for="questions">Questions or goals for the next lessons</label>
+      <textarea id="questions" rows="2"></textarea>
+      <button type="submit" class="btn student-bg">Submit reflection</button>
+    </form>`;
+  document.getElementById('reflection-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (readOnly()) { showToast('Read-only view: submissions are disabled.'); return; }
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    const { error } = await sb.from('reflections').insert({
+      student_id: currentUser.id,
+      entry_type: 'lesson_reflection',
+      lesson_takeaways: document.getElementById('takeaways').value.trim() || null,
+      risk_taken: document.getElementById('risk').value.trim() || null,
+      questions: document.getElementById('questions').value.trim() || null,
+    });
+    if (error) { showToast('Error: ' + error.message); btn.disabled = false; return; }
+    showToast('Reflection submitted');
+    await loadAll();
+    renderAll();
+    showPage('lesson');
+  });
+}
+
+// ---- Practice room ----
+const planChecks = [];
+function renderPractice() {
+  const plan = D.plans[0];
+  const checklist = document.getElementById('plan-checklist');
+  const details = document.getElementById('full-plan-details');
+  planChecks.length = 0;
+  if (!plan) { checklist.innerHTML = '<p class="meta">No approved practice plan yet.</p>'; details.hidden = true; }
+  else {
+    const src = D.lessons.find(l => l.id === plan.lesson_log_id);
+    document.getElementById('plan-meta').textContent =
+      src ? 'Based on your ' + fmtDate(src.date, { month: 'long', day: 'numeric' }) + ' lesson' : '';
+    let ex = plan.exercises;
+    if (typeof ex === 'string') { try { ex = JSON.parse(ex); } catch (e) { ex = []; } }
+    let rf = plan.repertoire_focus;
+    if (typeof rf === 'string') { try { rf = JSON.parse(rf); } catch (e) { rf = []; } }
+    let html = '';
+    if (ex && ex.length) {
+      html += '<h3>Exercises</h3>';
+      ex.forEach((x, i) => {
+        const id = 'ex' + i;
+        planChecks.push({ id, label: x.name || 'Exercise' });
+        html += `<div class="check-item"><input type="checkbox" id="${id}">
+          <label for="${id}" style="font-weight: 500;">${escapeHtml(x.name || 'Exercise')}
+          ${x.functional_purpose ? '<span class="why">' + escapeHtml(x.functional_purpose) + '</span>' : ''}</label></div>`;
+      });
+    }
+    const titles = (rf || []).map(r => (r && r.title) || '').filter(t => t && t.length > 2);
+    if (titles.length) {
+      html += '<h3>Repertoire</h3>';
+      titles.forEach((t, i) => {
+        const id = 'rf' + i;
+        planChecks.push({ id, label: t });
+        html += `<div class="check-item"><input type="checkbox" id="${id}">
+          <label for="${id}" style="font-weight: 500;">${escapeHtml(t)}</label></div>`;
+      });
+    }
+    checklist.innerHTML = html || '<p class="meta">Plan received; see the full text below.</p>';
+    document.getElementById('full-plan-content').innerHTML = markdownToHtml(plan.content || '');
+    details.hidden = false;
+
+    const focusEl = document.getElementById('focus');
+    const manual = { value: focusEl.value };
+    focusEl.addEventListener('input', () => { manual.value = focusEl.value; });
+    planChecks.forEach(({ id }) => {
+      document.getElementById(id).addEventListener('change', () => {
+        const picked = planChecks.filter(c => document.getElementById(c.id).checked).map(c => c.label);
+        const m = manual.value.trim();
+        focusEl.value = [picked.join(', '), m].filter(Boolean).join(m && picked.length ? ' · ' : '');
+      });
+    });
+  }
+  buildCondScales();
+  wireLogForm();
+  renderDiaryList();
+}
+
+const COND_PAIRS = [['Effortful', 'Easeful'], ['Unstable', 'Stable'], ['Rigid', 'Flexible']];
+const condAnswers = [0, 0, 0];
+function buildCondScales() {
+  const wrap = document.getElementById('cond-scales');
+  if (wrap.childElementCount) return;
+  COND_PAIRS.forEach(([neg, pos], i) => {
+    const row = document.createElement('div');
+    row.className = 'bi-row';
+    const left = document.createElement('span');
+    left.className = 'bi-anchor left'; left.textContent = neg;
+    const scale = document.createElement('div');
+    scale.className = 'scale-6';
+    scale.setAttribute('role', 'radiogroup');
+    scale.setAttribute('aria-label', neg + ' 1 to ' + pos + ' 5');
+    for (let v = 1; v <= 5; v++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 's6'; b.textContent = v;
+      b.setAttribute('aria-label', neg + '/' + pos + ', rating ' + v + ' of 5');
+      b.addEventListener('click', () => {
+        condAnswers[i] = v;
+        [...scale.children].forEach((sb2, j) => sb2.classList.toggle('on', j === v - 1));
+      });
+      scale.appendChild(b);
+    }
+    const right = document.createElement('span');
+    right.className = 'bi-anchor'; right.textContent = pos;
+    row.appendChild(left); row.appendChild(scale); row.appendChild(right);
+    wrap.appendChild(row);
+  });
+}
+
+let logFormWired = false;
+function wireLogForm() {
+  if (logFormWired) return;
+  logFormWired = true;
+  ['#day-set', '#kind-set', '#load-set'].forEach(sel => {
+    document.querySelectorAll(sel + ' .chip-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll(sel + ' .chip-opt').forEach(b => b.classList.toggle('on', b === btn));
+        if (sel === '#day-set') {
+          document.getElementById('log-date').hidden = btn.dataset.day !== 'pick';
+        }
+      });
+    });
+  });
+  document.getElementById('log-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (readOnly()) { showToast('Read-only view: submissions are disabled.'); return; }
+    const day = document.querySelector('#day-set .chip-opt.on');
+    let logDate;
+    if (day && day.dataset.day === 'pick') {
+      logDate = document.getElementById('log-date').value;
+      if (!logDate) { showToast('Pick a date for this entry.'); return; }
+    } else {
+      logDate = isoDaysAgo(parseInt((day && day.dataset.day) || '0', 10));
+    }
+    const kind = document.querySelector('#kind-set .chip-opt.on');
+    const load = document.querySelector('#load-set .chip-opt.on');
+    const minutes = parseInt(document.getElementById('minutes').value, 10);
+    const rated = condAnswers.filter(v => v > 0);
+    const row = {
+      student_id: currentUser.id,
+      log_date: logDate,
+      kind: kind ? kind.dataset.kind : 'practice',
+      minutes: isNaN(minutes) ? null : minutes,
+      load: load ? load.dataset.load : null,
+      focus: document.getElementById('focus').value.trim() || null,
+      notes: document.getElementById('noticed').value.trim() || null,
+      cond_ease: condAnswers[0] || null,
+      cond_stability: condAnswers[1] || null,
+      cond_flexibility: condAnswers[2] || null,
+    };
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    const { error } = await sb.from('voice_use_logs').insert(row);
+    btn.disabled = false;
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Logged');
+    document.getElementById('log-form').reset();
+    condAnswers.fill(0);
+    document.querySelectorAll('#cond-scales .s6.on').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('#load-set .chip-opt.on').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('#day-set .chip-opt').forEach(b => b.classList.toggle('on', b.dataset.day === '0'));
+    document.querySelectorAll('#kind-set .chip-opt').forEach(b => b.classList.toggle('on', b.dataset.kind === 'practice'));
+    document.getElementById('log-date').hidden = true;
+    planChecks.forEach(c => { const el = document.getElementById(c.id); if (el) el.checked = false; });
+    await loadAll();
+    renderAll();
+    showPage('practice');
+  });
+}
+
+const LOAD_LABELS = { easeful: 'easeful', moderately_taxing: 'moderately taxing', taxing: 'taxing' };
+function entryCondition(e) {
+  const vals = [e.cond_ease, e.cond_stability, e.cond_flexibility].filter(v => v);
+  return vals.length === 3 ? vals.reduce((a, b) => a + b, 0) / 3 : null;
+}
+function renderDiaryList() {
+  const week = D.diary.filter(e => e.log_date >= isoDaysAgo(6));
+  const mins = week.reduce((a, e) => a + (e.minutes || 0), 0);
+  document.getElementById('week-total').textContent =
+    week.length + (week.length === 1 ? ' entry' : ' entries') + ' · ' + mins + ' min of singing';
+  const list = document.getElementById('log-list');
+  const recent = D.diary.slice(0, 14);
+  list.innerHTML = recent.length ? recent.map(e => {
+    const bits = [e.kind.charAt(0).toUpperCase() + e.kind.slice(1)];
+    if (e.minutes) bits.push(e.minutes + ' min');
+    if (e.load) bits.push(LOAD_LABELS[e.load] || e.load);
+    if (e.focus) bits.push(escapeHtml(e.focus));
+    const c = entryCondition(e);
+    if (c) bits.push('condition ' + c.toFixed(1) + '/5');
+    return `<div class="hist-row"><span class="d">${fmtDate(e.log_date)}</span><span>${bits.join(' · ')}</span></div>`;
+  }).join('') : '<p class="meta">No entries yet.</p>';
+}
+
+// ---- Repertoire ----
+const PHASES = [
+  ['translation_characterization', 'Translation + Characterization'],
+  ['text_rhythm', 'Text + Rhythm'],
+  ['melody_text_rhythm', 'Melody + Text + Rhythm'],
+  ['characterization_integration', 'Characterization Integration'],
+  ['memorization', 'Memorization'],
+  ['performance_ready', 'Performance Ready'],
+];
+const STATUS_LABELS = { assigned: ['Assigned', 'as'], in_progress: ['In progress', 'ip'], performance_ready: ['Performance ready', 'pr'] };
+
+function renderRepertoire() {
+  const wrap = document.getElementById('rep-list');
+  if (!D.rep.length) { wrap.innerHTML = '<p class="meta">No repertoire tracked yet.</p>'; }
+  else {
+    wrap.innerHTML = D.rep.map(r => {
+      const phaseIdx = Math.max(0, PHASES.findIndex(p => p[0] === r.learning_phase));
+      const [stLabel, stClass] = STATUS_LABELS[r.status] || [r.status, 'as'];
+      const due = r.timeline ? ' · due ' + fmtDate(r.timeline) : '';
+      const sheet = r.sheet_music_url && /^https?:/i.test(r.sheet_music_url)
+        ? ` · <a href="${escapeHtml(r.sheet_music_url)}" target="_blank" rel="noopener">sheet music</a>` : '';
+      const segs = PHASES.map((p, i) => {
+        const cls = i < phaseIdx ? 'ph done' : (i === phaseIdx ? 'ph cur' : 'ph');
+        return `<button type="button" class="${cls}" data-rep="${r.id}" data-idx="${i}" aria-label="${p[1]}"></button>`;
+      }).join('');
+      return `<div class="rep-card">
+        <div class="rep-head"><strong>${escapeHtml(r.title)}</strong><span class="rep-status ${stClass}">${stLabel}</span></div>
+        <p class="rep-sub">${escapeHtml(r.composer || '')}${due}${sheet}</p>
+        <div class="phase-rail" role="group" aria-label="Learning phase, tap where you are">${segs}</div>
+        <p class="rep-phase">${PHASES[phaseIdx][1]} · phase ${phaseIdx + 1} of 6</p>
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('.phase-rail .ph').forEach(seg => {
+      seg.addEventListener('click', async () => {
+        if (readOnly()) { showToast('Read-only view: changes are disabled.'); return; }
+        const idx = parseInt(seg.dataset.idx, 10);
+        const { error } = await sb.from('repertoire')
+          .update({ learning_phase: PHASES[idx][0] })
+          .eq('id', seg.dataset.rep).eq('student_id', dataStudentId());
+        if (error) { showToast('Error: ' + error.message); return; }
+        showToast('Saved: ' + PHASES[idx][1]);
+        await loadAll();
+        renderAll();
+        showPage('repertoire');
+      });
+    });
+  }
+  const past = document.getElementById('past-rep-details');
+  if (D.pastRep.length) {
+    past.hidden = false;
+    document.getElementById('past-rep-list').innerHTML =
+      '<p class="meta">' + D.pastRep.map(r => escapeHtml(r.title)).join(' · ') + '</p>';
+  } else past.hidden = true;
+}
+
+document.getElementById('suggest-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (readOnly()) { showToast('Read-only view: submissions are disabled.'); return; }
+  const title = document.getElementById('sug-title').value.trim();
+  if (!title) { showToast('Enter a piece title.'); return; }
+  const composer = document.getElementById('sug-source').value.trim();
+  const { error } = await sb.from('repertoire').insert({
+    student_id: currentUser.id,
+    title, composer: composer || null,
+    status: 'in_progress',
+    assignment_type: 'short_term',
+  });
+  if (error) { showToast('Error: ' + error.message); return; }
+  showToast('Added to your list');
+  document.getElementById('suggest-form').reset();
+  await loadAll();
+  renderAll();
+  showPage('repertoire');
+});
+
+// ---- Analytics ----
+const VOSES_ITEMS = [
+  'I can easily glide from higher to lower range.',
+  'I can sing comfortably in my middle range.',
+  'I can sing softly in my lower range.',
+  'I can sing softly in my higher range.',
+  'I can sing loudly in my lower range.',
+  'I can sing in tune in my higher range.',
+  'I can sing in tune in my lower range.',
+  'I can sing loudly in my higher range.',
+  'I can sing softly in my middle range.',
+  'I can sing in tune in my middle range.',
+  'I can sing loudly in my middle range.',
+  'I can sustain a long phrase or note in tune in my higher range.',
+  'I can sustain a long phrase or note in tune in my middle range.',
+  'I can sing comfortably in my lower range.',
+  'I can sing comfortably in my higher range.',
+  'I can easily glide from lower to higher range.',
+  'I can sing through the transitional regions of my voice with ease.',
+  'I can sustain a long phrase or note in tune in my lower range.',
+];
+// Factor assignments from Table 2 of Lã et al. (2023); item numbers 1-based.
+const VOSES_DIMS = {
+  'Higher range and transitions': [1, 4, 6, 8, 12, 15, 16, 17],
+  'Middle range': [2, 9, 10, 11, 13],
+  'Lower range': [3, 5, 7, 14, 18],
+};
+const vosesAnswers = new Array(18).fill(0);
+
+function currentMonthIso() {
+  const n = new Date();
+  return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-01';
+}
+function checkinDoneThisMonth() {
+  return D.checkins.some(c => String(c.month).slice(0, 7) === currentMonthIso().slice(0, 7));
+}
+
+function renderAnalytics() {
+  renderCheckin();
+  renderGoalsJuries();
+  renderStats();
+  renderStrips();
+  renderScatter();
+  renderVosesChart();
+}
+
+function renderCheckin() {
+  const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
+  const done = checkinDoneThisMonth();
+  document.getElementById('checkin-badge').textContent = done ? 'Done for ' + monthName : monthName + ' due';
+  document.getElementById('checkin-form').hidden = done;
+  document.getElementById('checkin-done').hidden = !done;
+  if (done) {
+    const row = D.checkins[D.checkins.length - 1];
+    document.getElementById('checkin-done-meta').textContent = monthName + ' check-in submitted';
+    document.getElementById('checkin-summary').textContent =
+      'Higher range and transitions ' + row.mean_higher + ' · Middle range ' + row.mean_middle +
+      ' · Lower range ' + row.mean_lower + ' (of 6).';
+    return;
+  }
+  const wrap = document.getElementById('voses-items');
+  if (wrap.childElementCount) return;
+  VOSES_ITEMS.forEach((text, i) => {
+    const row = document.createElement('div');
+    row.className = 'voses-row';
+    const label = document.createElement('span');
+    label.textContent = (i + 1) + '. ' + text;
+    const scale = document.createElement('div');
+    scale.className = 'scale-6';
+    scale.setAttribute('role', 'radiogroup');
+    scale.setAttribute('aria-label', 'Item ' + (i + 1) + ': 1 totally disagree to 6 totally agree');
+    for (let v = 1; v <= 6; v++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 's6'; b.textContent = v;
+      b.setAttribute('aria-label', 'Item ' + (i + 1) + ', rating ' + v);
+      b.addEventListener('click', () => {
+        vosesAnswers[i] = v;
+        [...scale.children].forEach((sb2, j) => sb2.classList.toggle('on', j === v - 1));
+      });
+      scale.appendChild(b);
+    }
+    row.appendChild(label); row.appendChild(scale);
+    wrap.appendChild(row);
+  });
+  document.getElementById('checkin-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (readOnly()) { showToast('Read-only view: submissions are disabled.'); return; }
+    const answered = vosesAnswers.filter(v => v > 0);
+    if (answered.length < 18) {
+      showToast('Answered ' + answered.length + ' of 18. All 18 make the trend meaningful.');
+      return;
+    }
+    const responses = {};
+    vosesAnswers.forEach((v, i) => responses['q' + (i + 1)] = v);
+    const means = {};
+    for (const [name, items] of Object.entries(VOSES_DIMS)) {
+      means[name] = (items.reduce((a, n) => a + vosesAnswers[n - 1], 0) / items.length).toFixed(2);
+    }
+    const btn = document.getElementById('checkin-submit');
+    btn.disabled = true;
+    const { error } = await sb.from('voses_checkins').insert({
+      student_id: currentUser.id,
+      month: currentMonthIso(),
+      responses,
+      mean_higher: means['Higher range and transitions'],
+      mean_middle: means['Middle range'],
+      mean_lower: means['Lower range'],
+    });
+    btn.disabled = false;
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Check-in saved');
+    await loadAll();
+    renderAll();
+    showPage('analytics');
+  });
+}
+
+function renderGoalsJuries() {
+  const goals = (D.student && D.student.goals || '').trim();
+  document.getElementById('goals-title').textContent =
+    new Date().getMonth() >= 7 ? 'Fall ' + new Date().getFullYear() : 'Spring ' + new Date().getFullYear();
+  if (goals) {
+    const items = goals.split(/\n+/).filter(Boolean);
+    document.getElementById('goals-content').innerHTML =
+      '<ul>' + items.map(g => '<li>' + escapeHtml(g.replace(/^[-*]\s*/, '')) + '</li>').join('') + '</ul>';
+  }
+  const jc = document.getElementById('jury-content');
+  if (D.jury.length) {
+    const byDate = {};
+    D.jury.forEach(j => {
+      const key = j.date + '|' + (j.event_type || '');
+      (byDate[key] = byDate[key] || []).push(j);
+    });
+    jc.innerHTML = Object.entries(byDate).map(([key, rows]) => {
+      const [date, type] = key.split('|');
+      const typeLabel = (type || 'jury').replace(/_/g, ' ');
+      const outcome = rows[0].outcome ? ' · ' + escapeHtml(rows[0].outcome) : '';
+      const comments = rows.filter(r => r.comments).map(r =>
+        `<p class="meta" style="margin: 0.3rem 0 0;"><strong>${escapeHtml(r.panelist_name || 'Panelist')}:</strong> ${escapeHtml(r.comments)}</p>`).join('');
+      return `<div class="hist-row" style="display: block;">
+        <span class="d">${fmtDate(date)}</span> <span style="text-transform: capitalize;">${escapeHtml(typeLabel)}</span>${outcome}
+        ${comments ? '<details class="full-plan" style="margin-top: 0.4rem; border: 0; padding: 0;"><summary>Panel comments</summary>' + comments + '</details>' : ''}
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderStats() {
+  const week = D.diary.filter(e => e.log_date >= isoDaysAgo(6));
+  document.getElementById('stat-minutes').textContent = week.reduce((a, e) => a + (e.minutes || 0), 0);
+  document.getElementById('stat-entries').textContent = week.length;
+  const month = D.diary.filter(e => e.log_date >= isoDaysAgo(27));
+  const conds = month.map(entryCondition).filter(c => c);
+  document.getElementById('stat-cond').textContent =
+    conds.length ? (conds.reduce((a, b) => a + b, 0) / conds.length).toFixed(1) : '–';
+}
+
+function renderStrips() {
+  const wrap = document.getElementById('strips-chart');
+  const byDay = {};
+  D.diary.forEach(e => {
+    if (e.log_date < isoDaysAgo(13)) return;
+    const d = byDay[e.log_date] = byDay[e.log_date] || { minutes: 0, conds: [] };
+    d.minutes += e.minutes || 0;
+    const c = entryCondition(e);
+    if (c) d.conds.push(c);
+  });
+  const dates = [];
+  for (let i = 13; i >= 0; i--) dates.push(isoDaysAgo(i));
+  if (!Object.keys(byDay).length) { wrap.innerHTML = '<p class="meta">Log entries will appear here.</p>'; return; }
+  const maxMin = Math.max(60, ...dates.map(d => (byDay[d] || {}).minutes || 0));
+  const xs = dates.map((d, i) => 40 + i * 38);
+  let svg = `<svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="Daily singing minutes and voice condition, last two weeks">
+    <text x="0" y="14" font-size="11" font-weight="600" fill="var(--muted)">SINGING MINUTES</text>
+    <line x1="0" y1="110" x2="560" y2="110" stroke="var(--line)"/>`;
+  dates.forEach((d, i) => {
+    const m = (byDay[d] || {}).minutes || 0;
+    if (m > 0) {
+      const h = Math.round(m / maxMin * 88);
+      svg += `<rect x="${xs[i] - 12}" y="${110 - h}" width="24" height="${h}" rx="2" fill="var(--student)" opacity="0.35"/>
+        <text x="${xs[i]}" y="${110 - h - 4}" font-size="8.5" fill="var(--muted)" text-anchor="middle">${m}</text>`;
+    }
+  });
+  svg += `<text x="0" y="142" font-size="11" font-weight="600" fill="var(--muted)">VOICE CONDITION (1 TO 5)</text>
+    <line x1="0" y1="225" x2="560" y2="225" stroke="var(--line)"/>
+    <line x1="0" y1="191" x2="560" y2="191" stroke="var(--line)" stroke-dasharray="3 5"/>
+    <text x="556" y="195" font-size="9" fill="var(--muted)" text-anchor="end">3</text>`;
+  dates.forEach((d, i) => {
+    const conds = (byDay[d] || {}).conds || [];
+    conds.forEach(c => {
+      const y = Math.round(225 - (c - 1) * 17);
+      svg += `<circle cx="${xs[i]}" cy="${y}" r="3.5" fill="var(--ink)"/>`;
+    });
+  });
+  svg += `<text x="${xs[0]}" y="242" font-size="10" fill="var(--muted)" text-anchor="middle">${fmtDate(dates[0])}</text>
+    <text x="${xs[7]}" y="242" font-size="10" fill="var(--muted)" text-anchor="middle">${fmtDate(dates[7])}</text>
+    <text x="${xs[13]}" y="242" font-size="10" fill="var(--muted)" text-anchor="middle">${fmtDate(dates[13])}</text></svg>`;
+  wrap.innerHTML = svg;
+}
+
+function renderScatter() {
+  const wrap = document.getElementById('scatter-chart');
+  const pts = D.diary.filter(e => e.minutes && entryCondition(e));
+  if (!pts.length) { wrap.innerHTML = '<p class="meta">Log entries with minutes and condition will appear here.</p>'; return; }
+  const maxMin = Math.max(60, ...pts.map(e => e.minutes));
+  let svg = `<svg viewBox="0 0 560 205" width="100%" height="205" role="img" aria-label="Voice condition against minutes sung, one dot per logged day">
+    <line x1="40" y1="170" x2="530" y2="170" stroke="var(--line)"/>
+    <line x1="40" y1="30" x2="40" y2="170" stroke="var(--line)"/>
+    <line x1="40" y1="100" x2="530" y2="100" stroke="var(--line)" stroke-dasharray="3 5"/>
+    <text x="34" y="174" font-size="9" fill="var(--muted)" text-anchor="end">1</text>
+    <text x="34" y="104" font-size="9" fill="var(--muted)" text-anchor="end">3</text>
+    <text x="34" y="34" font-size="9" fill="var(--muted)" text-anchor="end">5</text>`;
+  pts.forEach(e => {
+    const x = Math.round(40 + e.minutes / maxMin * 480);
+    const y = Math.round(170 - (entryCondition(e) - 1) * 35);
+    svg += `<circle cx="${x}" cy="${y}" r="4" fill="var(--student)" opacity="0.7"/>`;
+  });
+  const ticks = [Math.round(maxMin / 3), Math.round(maxMin * 2 / 3), maxMin];
+  ticks.forEach(t => {
+    const x = Math.round(40 + t / maxMin * 480);
+    svg += `<text x="${x}" y="186" font-size="10" fill="var(--muted)" text-anchor="middle">${t}</text>`;
+  });
+  svg += `<text x="285" y="202" font-size="10" fill="var(--muted)" text-anchor="middle">Minutes sung that day</text></svg>`;
+  wrap.innerHTML = svg;
+}
+
+function renderVosesChart() {
+  const wrap = document.getElementById('voses-chart');
+  const rows = D.checkins;
+  if (rows.length < 2) {
+    if (rows.length === 1) {
+      const r = rows[0];
+      wrap.innerHTML = `<p class="meta">${fmtDate(String(r.month), { month: 'long', year: 'numeric' })}:
+        higher + transitions ${r.mean_higher} · middle ${r.mean_middle} · lower ${r.mean_lower} (of 6).
+        The trend charts from your second check-in.</p>`;
+    }
+    return;
+  }
+  const xs = rows.map((_, i) => 60 + i * (460 / Math.max(1, rows.length - 1)));
+  const yFor = v => Math.round(130 - (v - 1) * 22);
+  const series = [
+    ['mean_middle', 'var(--student)', 'Middle'],
+    ['mean_lower', 'var(--range-low, #a3703f)', 'Lower'],
+    ['mean_higher', 'var(--teacher)', 'Higher +'],
+  ];
+  let svg = `<svg viewBox="0 0 560 160" width="100%" height="160" role="img" aria-label="Monthly Singing-VoSES subscale means">
+    <line x1="0" y1="140" x2="560" y2="140" stroke="var(--line)"/>`;
+  series.forEach(([key, color, label]) => {
+    const points = rows.map((r, i) => xs[i] + ',' + yFor(parseFloat(r[key]))).join(' ');
+    const last = rows[rows.length - 1];
+    svg += `<polyline fill="none" stroke="${color}" stroke-width="2.5" points="${points}"/>
+      <circle cx="${xs[xs.length - 1]}" cy="${yFor(parseFloat(last[key]))}" r="4" fill="${color}"/>
+      <text x="${xs[xs.length - 1] + 10}" y="${yFor(parseFloat(last[key])) + 4}" font-size="10.5" font-weight="600" fill="${color}">${label}</text>`;
+  });
+  rows.forEach((r, i) => {
+    svg += `<text x="${xs[i]}" y="154" font-size="10" fill="var(--muted)" text-anchor="middle">${fmtDate(String(r.month))}</text>`;
+  });
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+}
+
+// ---- markdown (compact port for plan content) ----
+function markdownToHtml(md) {
+  const lines = String(md || '').split('\n');
+  let html = '', inList = false;
+  const inline = t => escapeHtml(t)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (/^#{1,3}\s/.test(line)) {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<h3>' + inline(line.replace(/^#{1,3}\s*/, '')) + '</h3>';
+    } else if (/^[-*]\s/.test(line.trim())) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li>' + inline(line.trim().replace(/^[-*]\s*/, '')) + '</li>';
+    } else if (line.trim() === '') {
+      if (inList) { html += '</ul>'; inList = false; }
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<p>' + inline(line) + '</p>';
+    }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+
+initApp();
+</script>
+<script src="js/feedback-widget.js"></script>
+</body>
+</html>

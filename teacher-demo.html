@@ -1793,6 +1793,12 @@ function closeStudentView() {
 }
 
 function viewAsStudent(studentId) {
+    // Mirrors the live teacher page: student view IS the student portal.
+    // The demo opens the sample student dashboard (demo.html).
+    window.open('demo.html', '_blank');
+}
+
+function viewAsStudent_legacyOverlay(studentId) {
     const overlay = document.getElementById('page-student-view');
     const body = document.getElementById('sv-body');
     overlay.style.display = 'block';

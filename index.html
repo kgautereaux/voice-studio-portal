@@ -5,6 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Voice Studio — Kayla Gautereaux</title>
     <link rel="stylesheet" href="css/styles.css">
+<style>
+    /* Two-loop design language skin (site cohesion: plum + sage) */
+    :root {
+        --primary-color: #2d2a2c;
+        --text-color: #2d2a2c;
+        --text-muted: #8a8286;
+        --accent-color: #6c495b;
+        --accent-light: #f3ecf0;
+        --border-color: #e8e3e0;
+        --bg-light: #faf9f7;
+        --bg-warm: #faf9f7;
+        --bg-white: #ffffff;
+        --bg-cream: #faf9f7;
+        --success-color: #4a7c59;
+    }
+    body.landing-page { background: #faf9f7; color: #2d2a2c; }
+    nav { background: var(--bg-white); border-bottom: 1px solid var(--border-color); box-shadow: none; }
+    .nav-brand { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-color); }
+    .nav-links a { color: var(--text-muted); font-size: 13.5px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+    .nav-links a:hover { color: var(--text-color); }
+    .landing-login-link { color: var(--accent-color) !important; font-weight: 600; }
+
+    .landing-hero-kicker { color: var(--accent-color); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+    .landing-hero-name { color: var(--text-color); font-weight: 600; letter-spacing: 0; }
+    .landing-hero-rule, .landing-section-rule { background: var(--accent-color); height: 2px; opacity: 0.5; }
+    .landing-hero-tagline { color: var(--text-muted); }
+    .hero, .landing-hero { background: #faf9f7; }
+
+    .landing-btn-primary {
+        background: var(--accent-color); color: #faf9f7; border: 0; border-radius: 4px;
+        font-weight: 600; letter-spacing: 0; text-transform: none;
+    }
+    .landing-btn-primary:hover { background: #5a3c4c; color: #faf9f7; }
+    .landing-btn-secondary {
+        background: none; border: 1px solid var(--accent-color); color: var(--accent-color);
+        border-radius: 4px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    }
+    .landing-btn-secondary:hover { background: var(--accent-light); color: var(--accent-color); }
+
+    .landing-section-heading, .landing-subsection-heading { color: var(--text-color); letter-spacing: 0; }
+    .landing-section-heading { font-weight: 600; }
+    .landing-subsection-heading { font-weight: 600; color: var(--accent-color); }
+    .landing-pullquote blockquote { color: var(--accent-color); }
+    .studio-section { background: transparent; }
+    .landing-section-why { background: var(--accent-light); }
+    .card { background: var(--bg-white); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: none; }
+</style>
 </head>
 <body class="landing-page">
 

@@ -472,6 +472,12 @@
       <p class="meta">Average agreement by area (1 to 6), monthly</p>
       <div id="voses-chart"><p class="meta">Your monthly check-ins will chart here once there are two or more.</p></div>
     </div>
+
+    <div class="panel neutral" style="margin-top: 1.25rem;">
+      <h2>Your studio record</h2>
+      <p class="meta">A single document with every debrief, practice plan, reflection, log entry, check-in, and jury comment. Yours to keep, anytime.</p>
+      <button class="btn student-bg" id="export-btn" type="button">Download my studio record</button>
+    </div>
   </section>
 
 </main>
@@ -1272,6 +1278,115 @@ function renderVosesChart() {
   svg += '</svg>';
   wrap.innerHTML = svg;
 }
+
+// ---- Studio record export: everything the student can see, one document ----
+document.getElementById('export-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('export-btn');
+  btn.disabled = true;
+  btn.textContent = 'Building...';
+  try {
+    const sid = dataStudentId();
+    const [lessons, plans, reflections, diary, checkins, rep, jury] = await Promise.all([
+      sb.from('lesson_logs').select('*').eq('student_id', sid).eq('approved', true).order('date', { ascending: false }).limit(500),
+      sb.from('practice_plans').select('*').eq('student_id', sid).in('status', ['approved', 'delivered']).order('date_generated', { ascending: false }).limit(500),
+      sb.from('reflections').select('*').eq('student_id', sid).order('date_submitted', { ascending: false }).limit(500),
+      sb.from('voice_use_logs').select('*').eq('student_id', sid).order('log_date', { ascending: false }).limit(2000),
+      sb.from('voses_checkins').select('*').eq('student_id', sid).order('month'),
+      sb.from('repertoire').select('*').eq('student_id', sid).order('timeline'),
+      sb.from('jury_feedback').select('*').eq('student_id', sid).order('date', { ascending: false }),
+    ]);
+    const S = [];
+    S.push(`<h1>${escapeHtml(D.student.name)} — Studio Record</h1>`);
+    S.push(`<p class="meta">Voice Studio of Kayla Gautereaux · generated ${new Date().toISOString().slice(0, 10)}</p>`);
+    if (D.student.goals) {
+      S.push('<h2>Semester goals</h2><ul>' + String(D.student.goals).split('\n')
+        .filter(g => g.trim()).map(g => '<li>' + escapeHtml(g) + '</li>').join('') + '</ul>');
+    }
+    const L = lessons.data || [];
+    if (L.length) {
+      S.push(`<h2>Lesson debriefs (${L.length})</h2>`);
+      L.forEach(l => S.push('<div class="entry">' + debriefHtml(l) + '</div>'));
+    }
+    const R = reflections.data || [];
+    if (R.length) {
+      S.push(`<h2>Your reflections (${R.length})</h2>`);
+      R.forEach(r => {
+        const bits = ['<h3>' + escapeHtml(String(r.date_submitted).slice(0, 10)) + '</h3>'];
+        [['lesson_takeaways', 'Takeaways'], ['risk_taken', 'Risk taken'], ['questions', 'Questions or goals'],
+         ['wins', 'Wins'], ['practice_focus', 'Practice focus'], ['self_observations', 'Observations']]
+          .forEach(([f, label]) => { if (r[f]) bits.push(`<p><strong>${label}:</strong> ${escapeHtml(r[f])}</p>`); });
+        S.push('<div class="entry">' + bits.join('') + '</div>');
+      });
+    }
+    const P = plans.data || [];
+    if (P.length) {
+      S.push(`<h2>Practice plans (${P.length})</h2>`);
+      P.forEach(p => S.push('<div class="entry"><h3>' + escapeHtml(String(p.date_generated || '').slice(0, 10)) +
+        '</h3>' + markdownToHtml(p.content || '') + '</div>'));
+    }
+    const Dy = diary.data || [];
+    if (Dy.length) {
+      S.push(`<h2>Voice-use diary (${Dy.length} entries)</h2><ul>`);
+      Dy.forEach(e => {
+        const c = entryCondition(e);
+        S.push('<li>' + [escapeHtml(e.log_date), escapeHtml(e.kind),
+          e.minutes ? e.minutes + ' min' : null, e.load ? (LOAD_LABELS[e.load] || e.load) : null,
+          c ? 'condition ' + c.toFixed(1) + '/5' : null].filter(Boolean).join(' · ')
+          + (e.focus ? ' — ' + escapeHtml(e.focus) : '') + (e.notes ? ' (' + escapeHtml(e.notes) + ')' : '') + '</li>');
+      });
+      S.push('</ul>');
+    }
+    const C = checkins.data || [];
+    if (C.length) {
+      S.push('<h2>Monthly check-ins (Singing-VoSES)</h2><ul>');
+      C.forEach(c => S.push(`<li>${escapeHtml(String(c.month).slice(0, 7))}: higher + transitions ${c.mean_higher}, middle ${c.mean_middle}, lower ${c.mean_lower} (of 6)</li>`));
+      S.push('</ul>');
+    }
+    const Rp = rep.data || [];
+    if (Rp.length) {
+      S.push('<h2>Repertoire</h2><ul>');
+      Rp.forEach(r => {
+        const phase = (PHASES.find(p => p[0] === r.learning_phase) || [])[1];
+        S.push('<li><strong>' + escapeHtml(r.title) + '</strong>' + (r.composer ? ' (' + escapeHtml(r.composer) + ')' : '') +
+          (r.status ? ' · ' + escapeHtml(r.status).replace(/_/g, ' ') : '') + (phase ? ' · ' + phase : '') + '</li>');
+      });
+      S.push('</ul>');
+    }
+    const J = jury.data || [];
+    if (J.length) {
+      S.push('<h2>Jury and hearing comments</h2>');
+      J.forEach(j => S.push('<div class="entry"><h3>' + escapeHtml(j.date) + ' · ' +
+        escapeHtml((j.event_type || 'jury').replace(/_/g, ' ')) + (j.outcome ? ' · ' + escapeHtml(j.outcome) : '') + '</h3>' +
+        (j.comments ? '<p><strong>' + escapeHtml(j.panelist_name || 'Panelist') + ':</strong> ' + escapeHtml(j.comments) + '</p>' : '') + '</div>'));
+    }
+    const doc = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(D.student.name)} — Studio Record</title>
+<style>
+  body { font-family: Georgia, 'Times New Roman', serif; color: #2d2a2c; background: #fff;
+         max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; line-height: 1.6; }
+  h1 { font-size: 1.7rem; } h2 { font-size: 1.2rem; color: #6c495b; margin-top: 2.5rem;
+       border-bottom: 1px solid #e8e3e0; padding-bottom: 0.3rem; }
+  h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+  .meta { color: #8a8286; font-size: 0.9rem; }
+  .entry { margin-bottom: 1.5rem; }
+  @media print { body { padding: 0; } }
+</style></head><body>
+${S.join('\n')}
+</body></html>`;
+    const blob = new Blob([doc], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = D.student.name.replace(/ /g, '-') + '-studio-record.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Record downloaded');
+  } catch (err) {
+    showToast('Export error: ' + err.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Download my studio record';
+});
 
 // ---- markdown (compact port for plan content) ----
 function markdownToHtml(md) {

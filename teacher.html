@@ -1,1139 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Teacher Portal : Voice Studio</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* ============================================================
-           Teacher Portal Styles
-           ============================================================ */
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio — Voice Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ground: #faf9f7;
+    --surface: #ffffff;
+    --ink: #2d2a2c;
+    --muted: #8a8286;
+    --line: #e8e3e0;
+    --teacher: #6c495b;
+    --teacher-soft: #f3ecf0;
+    --student: #5f7055;
+    --student-soft: #eef1ea;
+    --good: #4a7c59;
+    --warn: #a04545;
+    --chip: #f1edea;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1e1a1d; --surface: #282329; --ink: #ece7e9; --muted: #a49aa0;
+      --line: #3a333a; --teacher: #c9a0b6; --teacher-soft: #382e35;
+      --student: #a9bb9b; --student-soft: #2e352b; --good: #8fc09b;
+      --warn: #d08585; --chip: #332d33;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1e1a1d; --surface: #282329; --ink: #ece7e9; --muted: #a49aa0;
+    --line: #3a333a; --teacher: #c9a0b6; --teacher-soft: #382e35;
+    --student: #a9bb9b; --student-soft: #2e352b; --good: #8fc09b;
+    --warn: #d08585; --chip: #332d33;
+  }
 
-        /* Nav overrides for teacher portal */
-        .teacher-nav {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .teacher-nav-links {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        .nav-item {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            cursor: pointer;
-            color: var(--text-muted);
-            padding: 0.4rem 0.75rem;
-            border-radius: var(--radius);
-            transition: all var(--transition);
-            border: none;
-            background: none;
-            font-family: inherit;
-        }
-        .nav-item:hover {
-            color: var(--text-color);
-            background: var(--bg-warm);
-        }
-        .nav-item.active {
-            color: var(--primary-color);
-            background: rgba(108, 73, 91, 0.08);
-            font-weight: 500;
-        }
-        .nav-brand {
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--primary-color);
-            letter-spacing: 0.02em;
-            margin-right: 0.5rem;
-        }
-        .nav-signout {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.35rem 0.85rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            background: #fff;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-family: inherit;
-            transition: all var(--transition);
-        }
-        .nav-signout:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif; font-size: 15px; line-height: 1.6;
+  }
+  * { box-sizing: border-box; }
 
-        /* Studio cards */
-        .studio-card {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            margin-bottom: 0.5rem;
-            background: #fff;
-            transition: box-shadow var(--transition);
-        }
-        .studio-card:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .studio-card.status-action {
-            border-left: 3px solid var(--primary-color);
-        }
-        .studio-card.status-warn {
-            border-left: 3px solid #c49a3c;
-        }
-        .studio-card.status-wait {
-            border-left: 3px solid var(--border-color);
-        }
-        .studio-card.status-ok {
-            border-left: 3px solid #5a8a5a;
-        }
-        .studio-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1.25rem;
-            cursor: pointer;
-        }
-        .studio-card-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .studio-card-name {
-            font-size: 15px;
-            color: var(--primary-color);
-        }
-        .studio-card-status {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .studio-card-right {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .studio-card-chevron {
-            font-size: 10px;
-            color: var(--text-muted);
-            transition: transform var(--transition);
-        }
-        .btn-studio-action {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.3rem 0.75rem;
-            border-radius: 3px;
-            background: var(--primary-color);
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .btn-studio-action:hover {
-            opacity: 0.85;
-        }
-        .studio-card-detail {
-            padding: 0 1.25rem 1.25rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .studio-detail-meta {
-            font-size: 13px;
-            color: var(--text-muted);
-            padding: 0.75rem 0 0.5rem;
-        }
-        .studio-section {
-            margin-top: 0.75rem;
-            padding-top: 0.5rem;
-        }
+  .proto-banner {
+    background: var(--teacher); color: var(--ground); text-align: center;
+    font-size: 12.5px; letter-spacing: 0.04em; padding: 0.45rem 1rem;
+  }
+  .proto-banner strong { letter-spacing: 0.08em; text-transform: uppercase; }
 
-        /* Workflow steps */
-        .studio-workflow {
-            margin-top: 0.5rem;
-        }
-        .workflow-step {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.3rem 0;
-            font-size: 13px;
-        }
-        .wf-icon {
-            width: 18px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        .wf-done .wf-icon { color: #5a8a5a; }
-        .wf-active .wf-icon { color: var(--primary-color); font-weight: bold; }
-        .wf-pending .wf-icon { color: var(--text-muted); }
-        .wf-label {
-            font-weight: 500;
-            min-width: 90px;
-        }
-        .wf-done .wf-label { color: var(--text-color); }
-        .wf-active .wf-label { color: var(--primary-color); }
-        .wf-pending .wf-label { color: var(--text-muted); }
-        .wf-detail {
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-        .workflow-action {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.15rem 0.5rem;
-            border-radius: 3px;
-            background: none;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-            cursor: pointer;
-            font-family: inherit;
-            margin-left: auto;
-        }
-        .workflow-action:hover {
-            background: rgba(108, 73, 91, 0.06);
-        }
+  nav { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50; }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 1.25rem;
+    display: flex; align-items: center; gap: 1.5rem; height: 58px;
+  }
+  .wordmark { font-weight: 700; letter-spacing: 0.14em; font-size: 13px; text-transform: uppercase; white-space: nowrap; }
+  .tabs { display: flex; gap: 0.25rem; flex: 1; }
+  .tab {
+    border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 500;
+    padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--teacher); outline-offset: 2px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--teacher); border-radius: 4px 4px 0 0; }
+  .badge {
+    display: inline-block; min-width: 18px; height: 18px; border-radius: 999px;
+    background: var(--teacher); color: var(--ground); font-size: 11px; font-weight: 700;
+    line-height: 18px; text-align: center; margin-left: 5px; padding: 0 4px; vertical-align: 1px;
+  }
+  .who-chip {
+    background: var(--chip); border-radius: 999px; font-size: 12.5px;
+    padding: 0.3rem 0.85rem; color: var(--muted); white-space: nowrap;
+  }
+  @media (max-width: 700px) {
+    .nav-inner { gap: 0.7rem; padding: 0 0.9rem; overflow-x: auto; }
+    .who-chip { display: none; }
+  }
 
-        /* Header block */
-        .teacher-header {
-            padding: 1.5rem 0 1rem;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-        }
-        .teacher-header h1 {
-            font-size: 1.6rem;
-            font-weight: 300;
-            margin-bottom: 0.25rem;
-        }
-        .teacher-date {
-            font-size: 13px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+  main { max-width: 1100px; margin: 0 auto; padding: 2.25rem 1.25rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h1 { font-size: 1.7rem; font-weight: 600; margin: 0 0 1.5rem; }
 
-        /* Section labels */
-        .section-label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-            margin-top: 1.5rem;
-        }
-        .section-label:first-child {
-            margin-top: 0;
-        }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.3rem 1.5rem; margin-bottom: 1.25rem; }
+  .panel h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.2rem; }
+  .panel .meta { font-size: 12.5px; color: var(--muted); margin: 0 0 0.9rem; font-variant-numeric: tabular-nums; }
+  .panel h3 { font-size: 13px; font-weight: 600; margin: 1.1rem 0 0.4rem; }
+  .panel p { margin: 0 0 0.6rem; font-size: 14px; }
 
-        /* Card system */
-        .card {
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            border-radius: var(--radius-lg);
-            margin-bottom: 1rem;
-            background: #fff;
-            overflow: hidden;
-            transition: box-shadow var(--transition);
-        }
-        .card:hover {
-            box-shadow: var(--shadow-card);
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            transition: background var(--transition);
-        }
-        .card-header:hover {
-            background: var(--bg-warm);
-        }
-        .card-name {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-        .card-meta {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .card-body {
-            display: none;
-            padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .card.expanded .card-body {
-            display: block;
-        }
-        .card-chevron {
-            font-size: 12px;
-            color: var(--text-muted);
-            transition: transform var(--transition);
-            flex-shrink: 0;
-        }
-        .card.expanded .card-chevron {
-            transform: rotate(180deg);
-        }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.35rem; }
+  .eyebrow.teacher { color: var(--teacher); }
+  .eyebrow.student { color: var(--student); }
 
-        /* Flag tags */
-        .flag-tags {
-            display: flex;
-            gap: 0.5rem;
-            margin-left: 1rem;
-            flex-wrap: wrap;
-        }
-        .flag-tag {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.15rem 0.5rem;
-            border-radius: 3px;
-            background: rgba(156, 92, 92, 0.1);
-            color: #8b4040;
-        }
+  .lesson-card { border-top: 3px solid var(--teacher); }
+  .lesson-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; }
+  .lesson-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+  .snap { font-size: 12.5px; color: var(--muted); }
+  .flag { color: var(--warn); font-weight: 600; }
+  .ask { background: var(--student-soft); border-radius: 5px; padding: 0.6rem 0.8rem; font-size: 14px; margin: 0.6rem 0; }
+  .ask b { color: var(--student); }
 
-        /* Brief content styling */
-        .brief-content h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 1.25rem 0 0.5rem;
-            padding-bottom: 0.25rem;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--primary-color);
-        }
-        .brief-content h3 {
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin: 1rem 0 0.35rem;
-            color: var(--text-color);
-        }
-        .brief-content p,
-        .brief-content li {
-            font-size: 14px;
-            line-height: 1.7;
-            color: var(--text-color);
-        }
-        .brief-content ul, .brief-content ol {
-            padding-left: 1.25rem;
-            margin: 0.5rem 0;
-        }
-        .brief-content li {
-            margin-bottom: 0.35rem;
-        }
-        .brief-content strong {
-            color: var(--primary-color);
-        }
-        .brief-content hr {
-            border: none;
-            border-top: 1px solid var(--border-color);
-            margin: 1rem 0;
-        }
-        .brief-content code {
-            background: var(--bg-warm);
-            padding: 0.1rem 0.35rem;
-            border-radius: 3px;
-            font-size: 13px;
-        }
+  /* Inbox */
+  .thread { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.8rem; overflow: hidden; }
+  .thread-head {
+    width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+    background: var(--surface); border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  .thread-head:focus-visible { outline: 2px solid var(--teacher); outline-offset: -2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teacher); flex-shrink: 0; }
+  .thread.read .dot { background: var(--line); }
+  .t-kind {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 0.12rem 0.55rem; white-space: nowrap;
+    background: var(--student-soft); color: var(--student);
+  }
+  .t-kind.rep { background: var(--chip); color: var(--muted); }
+  .t-who { font-weight: 600; }
+  .t-sum { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .t-date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .thread-body { display: none; border-top: 1px solid var(--line); padding: 1rem; }
+  .thread.open .thread-body { display: block; }
+  .msg { border-left: 3px solid var(--student-soft); padding: 0.2rem 0 0.2rem 0.85rem; margin-bottom: 0.8rem; font-size: 14px; }
+  .msg .m-meta { font-size: 12px; color: var(--muted); }
+  .msg.mine { border-left-color: var(--teacher-soft); }
+  .msg.mine .m-meta { color: var(--teacher); }
+  .reply-row { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.6rem; }
+  .reply-row textarea {
+    flex: 1; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.5rem 0.7rem; resize: vertical; min-height: 40px;
+  }
+  .reply-row textarea:focus { outline: 2px solid var(--teacher); outline-offset: 1px; }
+  .btn {
+    border: 0; border-radius: 4px; font: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 0.5rem 1rem; cursor: pointer;
+  }
+  .btn.teacher-bg { background: var(--teacher); color: var(--ground); }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
+  .btn.ghost:hover { color: var(--ink); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .notify-set { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+  .chip-opt {
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+    font: inherit; font-size: 12.5px; padding: 0.28rem 0.7rem; border-radius: 999px; cursor: pointer;
+  }
+  .chip-opt.on { background: var(--teacher-soft); color: var(--teacher); border-color: var(--teacher); font-weight: 600; }
 
-        /* Category checks */
-        .category-check {
-            display: inline-block;
-            font-size: 13px;
-            margin-right: 0.75rem;
-            margin-bottom: 0.25rem;
-            color: var(--text-muted);
-        }
-        .category-check.covered {
-            color: var(--text-color);
-        }
-        .category-check.covered::before {
-            content: "\2713 ";
-            color: #5a8a5a;
-            font-weight: 600;
-        }
-        .category-check.uncovered::before {
-            content: "\25CB ";
-            color: #c4b8ae;
-        }
+  /* Students */
+  .roster-row { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.8rem; }
+  .roster-head {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem;
+    background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  }
+  .roster-head strong { min-width: 9em; }
+  .roster-body { display: none; border-top: 1px solid var(--line); padding: 1rem; }
+  .roster-row.open .roster-body { display: block; }
 
-        /* Login */
-        .teacher-login-wrap {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 80px);
-            padding: 2rem 1.5rem;
-        }
-        .teacher-login-inner {
-            max-width: 360px;
-            width: 100%;
-            text-align: center;
-        }
-        .teacher-login-inner h2 {
-            font-weight: 300;
-            font-size: 1.8rem;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-        .teacher-login-inner p {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 2rem;
-        }
-        .teacher-login-inner .form-group {
-            text-align: left;
-            margin-bottom: 1.25rem;
-        }
-        .teacher-login-inner input[type="text"],
-        .teacher-login-inner input[type="password"] {
-            width: 100%;
-            padding: 0.75rem 0.85rem;
-            font-size: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 2px;
-            font-family: inherit;
-            transition: border-color var(--transition);
-        }
-        .teacher-login-inner input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-        .teacher-login-inner label {
-            display: block;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 0.35rem;
-        }
-        .login-error {
-            color: #8b4040;
-            font-size: 13px;
-            margin-top: 0.5rem;
-            display: none;
-        }
+  /* Repertoire board */
+  .board-student { margin-bottom: 2rem; }
+  .board-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .board-head h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+  .board-prog { font-size: 12.5px; color: var(--muted); }
+  .fill-count { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--teacher); }
+  .slot {
+    display: flex; align-items: center; gap: 0.9rem; padding: 0.6rem 0.9rem;
+    border: 1px solid var(--line); border-radius: 6px; margin-bottom: 0.45rem;
+    background: var(--surface); font-size: 13.5px; flex-wrap: wrap;
+  }
+  .slot .req { color: var(--muted); font-size: 12.5px; flex: 1 1 220px; }
+  .slot.empty { border-style: dashed; background: none; }
+  .slot .piece { font-weight: 600; }
+  .slot .phase { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mini-rail { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem; }
+  .mini-rail span { width: 12px; height: 6px; border-radius: 3px; background: var(--line); }
+  .mini-rail span.d { background: var(--student); }
+  .mini-rail span.c { background: var(--student); opacity: 0.45; }
+  .assign-form { display: none; width: 100%; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .slot.assigning .assign-form { display: flex; }
+  .assign-form input {
+    border: 1px solid var(--line); border-radius: 4px; background: var(--ground); color: var(--ink);
+    font: inherit; font-size: 13.5px; padding: 0.4rem 0.6rem; flex: 1 1 150px;
+  }
+  .pool { font-size: 12.5px; color: var(--muted); margin: 0.3rem 0 0; }
+  .pool button { font-size: 12px; }
 
-        /* Tables */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            margin: 0.5rem 0;
-        }
-        .data-table th {
-            text-align: left;
-            padding: 0.6rem 0.75rem;
-            border-bottom: 2px solid var(--border-color);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-            user-select: none;
-        }
-        .data-table th:hover {
-            color: var(--primary-color);
-        }
-        .data-table th.sorted-asc::after {
-            content: " \25B2";
-            font-size: 10px;
-        }
-        .data-table th.sorted-desc::after {
-            content: " \25BC";
-            font-size: 10px;
-        }
-        .data-table td {
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: top;
-        }
-        .data-table tbody tr:hover {
-            background: var(--bg-warm);
-        }
-        .table-scroll {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
+  /* Analytics */
+  .an-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 900px) { .an-grid { grid-template-columns: 1fr; } }
+  .an-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1rem 1.1rem; cursor: pointer; text-align: left; font: inherit; color: inherit;
+    transition: border-color 0.15s;
+  }
+  .an-card:hover { border-color: var(--muted); }
+  .an-card.flagged { border-left: 3px solid var(--warn); }
+  .an-card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 0.1rem; }
+  .an-nums { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 0.5rem; }
+  .an-delta { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .an-delta .up { color: var(--good); font-weight: 600; }
+  .an-delta .down { color: var(--warn); font-weight: 600; }
+  .an-delta .flat { color: var(--muted); }
+  .drill { margin-top: 1.5rem; }
+  .drill-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+  .drill-head h2 { margin: 0; font-size: 1.15rem; }
+  .goals-edit textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; resize: vertical;
+  }
 
-        /* Status dots */
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 0.4rem;
-        }
-        .status-dot.green { background: #5a8a5a; }
-        .status-dot.amber { background: #c49a3c; }
-        .status-dot.red { background: #9c5c5c; }
+  /* Announcements */
+  .ann { border-left: 3px solid var(--teacher-soft); padding: 0.2rem 0 0.2rem 0.85rem; margin-bottom: 0.9rem; }
+  .ann .m-meta { font-size: 12px; color: var(--muted); }
+  textarea.full {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--ground);
+    color: var(--ink); font: inherit; font-size: 14px; padding: 0.6rem 0.7rem; resize: vertical;
+  }
 
-        /* Heatmap cells */
-        .heat-cell {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-            min-width: 32px;
-        }
-        .heat-cell.heat-0 { color: #9c5c5c; background: rgba(156, 92, 92, 0.08); }
-        .heat-cell.heat-1 { color: #c49a3c; background: rgba(196, 154, 60, 0.08); }
-        .heat-cell.heat-2, .heat-cell.heat-3 { color: #5a8a5a; background: rgba(90, 138, 90, 0.08); }
+  .toast {
+    position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 210;
+    background: var(--ink); color: var(--ground); font-size: 13px;
+    padding: 0.55rem 0.9rem; border-radius: 6px; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; max-width: 300px;
+  }
+  .toast.show { opacity: 1; }
 
-        /* Filter buttons */
-        .filter-bar {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.45rem 0.85rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            background: #fff;
-            color: var(--text-color);
-            cursor: pointer;
-            transition: all var(--transition);
-            font-family: inherit;
-        }
-        .filter-btn:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-        .filter-btn.active {
-            background: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
-        }
-
-        /* Forms */
-        .form-card {
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--primary-color);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            background: #fff;
-            margin-bottom: 1.5rem;
-        }
-        .form-card h3 {
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-        .form-row {
-            margin-bottom: 1rem;
-        }
-        .form-row label {
-            display: block;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 0.35rem;
-        }
-        .form-row input[type="text"],
-        .form-row input[type="date"],
-        .form-row textarea,
-        .form-row select {
-            width: 100%;
-            padding: 0.6rem 0.75rem;
-            font-size: 14px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            font-family: inherit;
-            transition: border-color var(--transition);
-            background: #fff;
-        }
-        .form-row input:focus,
-        .form-row textarea:focus,
-        .form-row select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-        .form-row textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        .form-row-inline {
-            display: flex;
-            gap: 1rem;
-            align-items: flex-start;
-        }
-        .form-row-inline .form-row {
-            flex: 1;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem 1rem;
-            margin-top: 0.25rem;
-        }
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 13px;
-            text-transform: none;
-            letter-spacing: normal;
-            color: var(--text-color);
-            cursor: pointer;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            accent-color: var(--primary-color);
-        }
-        .form-check {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-check label {
-            display: inline;
-            font-size: 13px;
-            text-transform: none;
-            letter-spacing: normal;
-            color: var(--text-color);
-            cursor: pointer;
-        }
-
-        /* Announcement cards */
-        .announcement-card {
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            border-radius: var(--radius-lg);
-            padding: 1rem 1.5rem;
-            background: #fff;
-            margin-bottom: 0.75rem;
-            transition: box-shadow var(--transition);
-        }
-        .announcement-card:hover {
-            box-shadow: var(--shadow-card);
-        }
-        .announcement-card.pinned {
-            border-left-color: var(--primary-color);
-        }
-        .announcement-title {
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-            margin-bottom: 0.25rem;
-        }
-        .announcement-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-        .announcement-body {
-            font-size: 14px;
-            line-height: 1.7;
-        }
-        .announcement-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 0.75rem;
-        }
-        .announcement-actions button {
-            font-size: 12px;
-            padding: 0.3rem 0.65rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            background: #fff;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-family: inherit;
-            transition: all var(--transition);
-        }
-        .announcement-actions button:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-        .announcement-actions button.delete-btn:hover {
-            border-color: #9c5c5c;
-            color: #9c5c5c;
-        }
-
-        /* Event cards */
-        .event-week-label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin: 1.5rem 0 0.5rem;
-            padding-bottom: 0.35rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .event-card {
-            display: flex;
-            gap: 1rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-            font-size: 14px;
-        }
-        .event-date-col {
-            width: 90px;
-            flex-shrink: 0;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .event-type-badge {
-            display: inline-block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.1rem 0.45rem;
-            border-radius: 3px;
-            background: rgba(108, 73, 91, 0.08);
-            color: var(--primary-color);
-            margin-right: 0.5rem;
-        }
-
-        /* No data state */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: var(--text-muted);
-        }
-        .empty-state h2 {
-            font-weight: 300;
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        /* Loading */
-        .loading-text {
-            color: var(--text-muted);
-            font-size: 14px;
-            padding: 1rem 0;
-        }
-
-        /* Student detail sub-sections */
-        .detail-section {
-            margin-top: 1.25rem;
-        }
-        .detail-section h4 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            padding-bottom: 0.25rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .detail-section p, .detail-section li {
-            font-size: 14px;
-            line-height: 1.7;
-        }
-        .detail-section ul {
-            padding-left: 1.25rem;
-            margin: 0.25rem 0;
-        }
-        .detail-section li {
-            margin-bottom: 0.25rem;
-        }
-
-        /* Feedback card for juries */
-        .feedback-block {
-            border-left: 2px solid var(--accent-color);
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 0.75rem;
-            font-size: 14px;
-        }
-        .feedback-block .fb-panelist {
-            font-weight: 500;
-            color: var(--primary-color);
-            font-size: 13px;
-        }
-
-        /* Toast notifications */
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--radius);
-            font-size: 14px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        .toast.show {
-            opacity: 1;
-        }
-        .toast.success {
-            background: #5a8a5a;
-            color: #fff;
-        }
-        .toast.error {
-            background: #9c5c5c;
-            color: #fff;
-        }
-
-        /* Draft badge */
-        .draft-badge {
-            display: inline-block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.1rem 0.45rem;
-            border-radius: 3px;
-            background: rgba(196, 154, 60, 0.15);
-            color: #9a7a2a;
-        }
-
-        /* Days-since warning */
-        .days-warning { color: #9c5c5c; font-weight: 500; }
-
-        @media (max-width: 768px) {
-            .teacher-nav-links {
-                gap: 0;
-            }
-            .nav-item {
-                padding: 0.35rem 0.5rem;
-                font-size: 11px;
-            }
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-            .flag-tags {
-                margin-left: 0;
-            }
-            .form-row-inline {
-                flex-direction: column;
-                gap: 0;
-            }
-        }
-
-        /* ============================================================
-           Student View Overlay
-           ============================================================ */
-        #page-student-view {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            z-index: 1000;
-            background: var(--bg-cream, #faf8f5);
-            overflow-y: auto;
-            display: none;
-        }
-        .sv-topbar {
-            position: sticky;
-            top: 0;
-            z-index: 1001;
-            background: var(--bg-cream, #faf8f5);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0.75rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .sv-topbar-name {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-            letter-spacing: 0.02em;
-        }
-        .sv-topbar-badge {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 0.2rem 0.6rem;
-            border-radius: 3px;
-            background: rgba(108, 73, 91, 0.1);
-            color: var(--primary-color);
-            margin-left: 0.75rem;
-        }
-        .sv-body {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem 3rem;
-        }
-        .sv-welcome h1 {
-            font-size: 1.8rem;
-            font-weight: 300;
-            margin-bottom: 0.25rem;
-        }
-        .sv-welcome-sub {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 0;
-        }
-        .sv-events-banner {
-            background: var(--bg-warm, #f5f0eb);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg, 4px);
-            padding: 1rem 1.25rem;
-            margin: 1.25rem 0;
-            font-size: 14px;
-        }
-        .sv-events-banner h3 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-        .sv-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0 2rem;
-        }
-        .sv-card {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg, 4px);
-            padding: 1.5rem;
-            background: #fff;
-            cursor: pointer;
-            position: relative;
-            transition: box-shadow var(--transition);
-        }
-        .sv-card:hover {
-            box-shadow: var(--shadow-card);
-        }
-        .sv-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0.75rem;
-            right: 0.75rem;
-            width: 16px;
-            height: 16px;
-            border-right: 1.5px solid var(--border-color);
-            border-bottom: 1.5px solid var(--border-color);
-            transition: border-color 0.2s;
-        }
-        .sv-card:hover::after {
-            border-color: var(--accent-color);
-        }
-        .sv-card-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin-bottom: 0.6rem;
-        }
-        .sv-card-value {
-            font-size: 1.4rem;
-            font-weight: 300;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-        .sv-card-summary {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-        .sv-detail-wrap {
-            background: var(--bg-light, #fff);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg, 4px);
-            padding: 2rem 2.5rem;
-            margin-top: 0.5rem;
-        }
-        .sv-detail-wrap h2 {
-            margin-top: 0.5rem;
-        }
-        .sv-announcements {
-            margin-top: 2rem;
-        }
-        .sv-announcements h3 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-        }
-        .sv-ann-card {
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            border-radius: var(--radius-lg, 4px);
-            padding: 1rem 1.25rem;
-            background: #fff;
-            margin-bottom: 0.75rem;
-        }
-        .sv-ann-card.sv-ann-pinned {
-            border-left-color: var(--primary-color);
-        }
-        .sv-ann-title {
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-            margin-bottom: 0.25rem;
-        }
-        .sv-ann-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-        .sv-ann-body {
-            font-size: 14px;
-            line-height: 1.7;
-        }
-        .btn-view-student {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.4rem 0.85rem;
-            border: 1px solid var(--accent-color);
-            border-radius: var(--radius, 2px);
-            background: #fff;
-            color: var(--accent-color);
-            cursor: pointer;
-            font-family: inherit;
-            transition: all var(--transition);
-            margin-top: 1rem;
-        }
-        .btn-view-student:hover {
-            background: var(--accent-color);
-            color: #fff;
-        }
-        @media (max-width: 768px) {
-            .sv-topbar {
-                padding: 0.75rem 1rem;
-            }
-            .sv-body {
-                padding: 1rem 1rem 2rem;
-            }
-            .sv-detail-wrap {
-                padding: 1.5rem;
-            }
-            .sv-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ============================================================
-           Two-loop design language (mockup skin) — overrides above
-           ============================================================ */
-        :root {
-            --primary-color: #2d2a2c;
-            --text-color: #2d2a2c;
-            --text-muted: #8a8286;
-            --accent-color: #6c495b;
-            --accent-light: #f3ecf0;
-            --border-color: #e8e3e0;
-            --bg-light: #faf9f7;
-            --bg-warm: #faf9f7;
-            --bg-white: #ffffff;
-            --bg-cream: #faf9f7;
-            --success-color: #4a7c59;
-            --warning-color: #a04545;
-            --error-color: #a04545;
-        }
-        body { background: #faf9f7; color: #2d2a2c; }
-
-        #main-nav {
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: none;
-            position: sticky; top: 0; z-index: 50;
-        }
-        .nav-brand {
-            font-size: 13px; font-weight: 700; letter-spacing: 0.14em;
-            text-transform: uppercase; color: var(--text-color);
-        }
-        .nav-item {
-            background: none; border: 0; border-bottom: 2px solid transparent;
-            border-radius: 4px 4px 0 0; color: var(--text-muted);
-            font-size: 13.5px; font-weight: 500; padding: 0.45rem 0.8rem;
-            text-transform: none; letter-spacing: 0;
-        }
-        .nav-item:hover { color: var(--text-color); background: none; }
-        .nav-item.active {
-            color: var(--text-color); background: none;
-            border-bottom-color: var(--accent-color);
-        }
-        .nav-signout {
-            background: none; border: 0; color: var(--text-muted);
-            font-size: 12.5px; text-transform: none; letter-spacing: 0;
-        }
-        .nav-signout:hover { color: var(--text-color); background: none; }
-
-        .teacher-header h1 { font-size: 1.7rem; font-weight: 600; letter-spacing: 0; color: var(--text-color); }
-        .teacher-date { color: var(--text-muted); font-size: 14px; }
-
-        .card, .studio-card {
-            background: var(--bg-white);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            box-shadow: none;
-        }
-        .card:hover, .studio-card:hover { box-shadow: none; border-color: var(--text-muted); }
-        .studio-card.status-action { border-left: 3px solid var(--accent-color); }
-        .studio-card.status-warn { border-left: 3px solid var(--warning-color); }
-        .studio-card.status-wait { border-left: 1px solid var(--border-color); }
-        .studio-card-name { font-weight: 600; }
-        .studio-card-status { color: var(--text-muted); font-size: 12.5px; }
-
-        .section-label {
-            font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
-            text-transform: uppercase; color: var(--accent-color);
-        }
-        .studio-detail-meta { color: var(--text-muted); font-size: 12.5px; }
-
-        .btn-studio-action, .workflow-action {
-            background: none; border: 1px solid var(--border-color); border-radius: 4px;
-            color: var(--text-muted); font-size: 12.5px; font-weight: 600;
-            padding: 0.35rem 0.8rem; cursor: pointer; text-transform: none; letter-spacing: 0;
-        }
-        .btn-studio-action:hover, .workflow-action:hover {
-            color: var(--text-color); background: none; border-color: var(--text-muted);
-        }
-        .btn-studio-action[data-action-type="review-log"],
-        .inbox-reply-btn, .goals-save, .plan-start {
-            background: var(--accent-color); border-color: var(--accent-color); color: #faf9f7;
-        }
-        .btn-studio-action[data-action-type="review-log"]:hover,
-        .inbox-reply-btn:hover, .goals-save:hover, .plan-start:hover {
-            background: #5a3c4c; color: #faf9f7;
-        }
-
-        #page-today textarea, #page-inbox textarea, #page-studio textarea,
-        #page-today input[type="text"], #page-inbox input[type="text"] {
-            background: var(--bg-light); border: 1px solid var(--border-color);
-            border-radius: 4px; color: var(--text-color);
-        }
-        .loading-text { color: var(--text-muted); }
-    </style>
+  /* ---- legacy token aliases for ported machinery ---- */
+  :root {
+    --primary-color: #2d2a2c; --text-color: #2d2a2c; --text-muted: #8a8286;
+    --accent-color: #6c495b; --accent-light: #f3ecf0; --border-color: #e8e3e0;
+    --bg-light: #faf9f7; --bg-warm: #faf9f7; --bg-white: #ffffff; --bg-cream: #faf9f7;
+    --success-color: #4a7c59; --warning-color: #a04545; --error-color: #a04545;
+  }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.3rem 1.4rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.4rem; }
+  .btn-studio-action, .workflow-action, .btn {
+    background: none; border: 1px solid var(--line); border-radius: 4px;
+    color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 600;
+    padding: 0.35rem 0.8rem; cursor: pointer;
+  }
+  .btn-studio-action:hover, .btn:hover { color: var(--ink); border-color: var(--muted); }
+  .btn-primary, .btn-approve,
+  .btn-studio-action[data-action-type="review-log"], .inbox-reply-btn, .goals-save, .plan-start {
+    background: var(--teacher); border-color: var(--teacher); color: var(--ground);
+  }
+  .btn-primary:hover, .btn-approve:hover,
+  .btn-studio-action[data-action-type="review-log"]:hover, .inbox-reply-btn:hover,
+  .goals-save:hover, .plan-start:hover { background: #5a3c4c; border-color: #5a3c4c; color: var(--ground); }
+  .btn-small { font-size: 12px; padding: 0.25rem 0.6rem; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teacher); margin-bottom: 0.5rem; }
+  .text-muted { color: var(--muted); }
+  .loading-text { color: var(--muted); }
+  .empty-state { text-align: center; color: var(--muted); padding: 3rem 1rem; }
+  input[type="text"], input[type="password"], input[type="date"], textarea, select {
+    width: 100%; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--ground); color: var(--ink); font: inherit; font-size: 14px; padding: 0.55rem 0.7rem;
+  }
+  textarea:focus, input:focus, select:focus { outline: 2px solid var(--teacher); outline-offset: 1px; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 0.3rem; }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+  .category-check { display: flex; align-items: center; gap: 0.4rem; font-size: 13.5px; }
+  input[type="checkbox"] { width: auto; accent-color: var(--teacher); }
+  .slot-form { display: none; width: 100%; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .slot-form.open { display: flex; }
+  .slot-form input { flex: 1 1 150px; font-size: 13.5px; padding: 0.4rem 0.6rem; }
+  #artifact-modal > div, #log-review-overlay > div {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    max-width: 760px; margin: 4vh auto; max-height: 90vh; overflow-y: auto; padding: 1.75rem 2rem;
+  }
+  .lesson-log-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .log-edit-field { margin-bottom: 1rem; }
+  .log-edit-field label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teacher); margin-bottom: 0.3rem; }
+  .log-edit-field textarea { min-height: 70px; }
+  .detail-section { margin-bottom: 1.25rem; }
+  .detail-section h3, .brief-content h3 { font-size: 13px; font-weight: 600; margin: 1rem 0 0.4rem; }
+  .plan-date { color: var(--muted); font-size: 12.5px; }
+  .plan-signoff { color: var(--muted); font-style: italic; margin-top: 1rem; }
+  .fb-panelist { font-weight: 600; }
+  .feedback-block { border-left: 3px solid var(--teacher-soft); padding-left: 0.85rem; margin-bottom: 0.8rem; }
+  .draft-badge { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 0.12rem 0.55rem; background: var(--chip); color: var(--muted); }
+  .teacher-login-wrap { min-height: calc(100vh - 58px); display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem; }
+  .teacher-login-inner { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 2rem; }
+  .teacher-login-inner h2 { font-size: 1.2rem; margin: 0 0 0.25rem; }
+  .teacher-login-inner p { color: var(--muted); font-size: 13.5px; margin: 0 0 1.25rem; }
+  .login-error { color: var(--warn); font-size: 13px; margin-top: 0.75rem; }
+  .roster-flag { border-left: 3px solid var(--warn); }
+  .culture-rail { display: inline-flex; }
+</style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav id="main-nav" style="display: none;">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="teacher-nav">
-            <span class="nav-brand">Voice Studio</span>
-            <div class="teacher-nav-links">
-                <button class="nav-item active" data-nav="today">Today</button>
-                <button class="nav-item" data-nav="inbox">Inbox<span id="inbox-badge" style="display: none; min-width: 18px; height: 18px; border-radius: 999px; background: var(--accent-color); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; margin-left: 5px; padding: 0 4px; display: none;"></span></button>
-                <button class="nav-item" data-nav="studio">Students</button>
-                <button class="nav-item" data-nav="announcements">Announcements</button>
-            </div>
-        </div>
-        <button class="nav-signout" onclick="signOut()">Sign Out</button>
-    </div>
-</nav>
-
-<main class="container">
-
-<!-- LOGIN -->
 <div id="page-login" style="display: none;">
     <div class="teacher-login-wrap">
         <div class="teacher-login-inner">
@@ -1155,81 +310,57 @@
     </div>
 </div>
 
-<!-- STUDIO -->
-<div id="page-today" style="display: none;">
-    <div class="teacher-header">
-        <h1 id="today-greeting">Today</h1>
-        <div class="teacher-date" id="today-date"></div>
+<nav id="main-nav" style="display: none;">
+  <div class="nav-inner">
+    <span class="wordmark">Studio Desk</span>
+    <div class="tabs">
+      <button class="tab nav-item active" data-nav="today">Today</button>
+      <button class="tab nav-item" data-nav="inbox">Inbox<span id="inbox-badge" class="badge" style="display: none;"></span></button>
+      <button class="tab nav-item" data-nav="studio">Students</button>
+      <button class="tab nav-item" data-nav="announcements">Announcements</button>
     </div>
+    <button class="nav-signout signout" onclick="signOut()">Sign out</button>
+  </div>
+</nav>
+
+<main>
+  <div id="page-today" style="display: none;">
+    <h1 id="today-greeting">Today</h1>
+    <p class="meta" id="today-date" style="color: var(--muted); margin: -1rem 0 1.5rem;"></p>
     <div id="today-content"></div>
-</div>
+  </div>
 
-<div id="page-inbox" style="display: none;">
-    <div class="teacher-header">
-        <h1>Inbox</h1>
-    </div>
+  <div id="page-inbox" style="display: none;">
+    <h1>Inbox</h1>
     <div id="inbox-content"></div>
-</div>
+  </div>
 
-<div id="page-studio" style="display: none;">
-    <div class="teacher-header">
-        <h1 id="studio-greeting">Studio</h1>
-        <div class="teacher-date" id="studio-date"></div>
-    </div>
+  <div id="page-studio" style="display: none;">
+    <h1>Students</h1>
     <div id="studio-content"></div>
-</div>
+  </div>
 
-<!-- STUDENTS -->
-<div id="page-students" style="display: none;">
-    <div class="teacher-header">
-        <h1>Students</h1>
-        <div class="teacher-date">Full studio roster</div>
+  <div id="page-announcements" style="display: none;">
+    <h1>Announcements</h1>
+    <div class="panel">
+      <h2>Post to the studio</h2>
+      <p class="meta">Appears on every student's dashboard; they get an email</p>
+      <form id="ann-form">
+        <input type="text" id="ann-title" placeholder="Title (optional)" style="margin-bottom: 0.6rem;">
+        <textarea id="ann-body" rows="3" placeholder="Studio class Friday at 4 in T405..."></textarea>
+        <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.6rem;">
+          <button type="submit" class="btn teacher-bg">Post</button>
+          <label style="font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; margin: 0;">Expires <input type="date" id="ann-expires" style="width: auto;"></label>
+        </div>
+      </form>
     </div>
-    <div id="students-content"></div>
-</div>
-
-<!-- REPERTOIRE -->
-<div id="page-repertoire" style="display: none;">
-    <div class="teacher-header">
-        <h1>Repertoire</h1>
-        <div class="teacher-date">All active repertoire across the studio</div>
+    <div class="panel">
+      <h2>Posted</h2>
+      <div id="ann-list"></div>
     </div>
-    <div id="repertoire-content"></div>
-</div>
-
-<!-- ANNOUNCEMENTS -->
-<div id="page-announcements" style="display: none;">
-    <div class="teacher-header">
-        <h1>Announcements</h1>
-        <div class="teacher-date">Create and manage studio announcements</div>
-    </div>
-    <div id="announcements-content"></div>
-</div>
-
-<!-- EVENTS -->
-<div id="page-events" style="display: none;">
-    <div class="teacher-header">
-        <h1>Events</h1>
-        <div class="teacher-date">Upcoming performances, juries, and recent feedback</div>
-    </div>
-    <div id="events-content"></div>
-</div>
-
+  </div>
 </main>
 
-<!-- Student View Overlay -->
-<div id="page-student-view">
-    <div class="sv-topbar">
-        <div>
-            <span class="sv-topbar-name" id="sv-student-name"></span>
-            <span class="sv-topbar-badge">Student View</span>
-        </div>
-        <button class="nav-signout" onclick="closeStudentView()">Back to Teacher View</button>
-    </div>
-    <div class="sv-body" id="sv-body"></div>
-</div>
-
-<!-- Artifact Viewer Modal (read-only: plans, reflections, forecasts) -->
 <div id="artifact-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background: rgba(0,0,0,0.4);">
     <div style="position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(90vw, 600px); max-height: 96vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
         <div id="artifact-modal-body"></div>
@@ -1243,10 +374,10 @@
     </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
+
 // ============================================================
 // CONFIG
 // ============================================================
@@ -1379,7 +510,7 @@ async function signOut() {
 // PAGE SWITCHING
 // ============================================================
 
-const PAGE_IDS = ['today', 'inbox', 'studio', 'students', 'repertoire', 'announcements', 'events'];
+const PAGE_IDS = ['today', 'inbox', 'studio', 'announcements'];
 
 function showLogin() {
     document.getElementById('main-nav').style.display = 'none';
@@ -1405,11 +536,8 @@ function navigateTo(page) {
     const loaders = {
         today: renderTodayPage,
         inbox: renderInbox,
-        studio: renderStudio,
-        students: renderStudents,
-        repertoire: renderRepertoire,
-        announcements: renderAnnouncements,
-        events: renderEvents
+        studio: renderStudentsHub,
+        announcements: renderAnnouncementsDesk
     };
     if (loaders[page]) loaders[page]();
 }
@@ -1615,65 +743,60 @@ function inlineFormat(text) {
 // TODAY
 // ============================================================
 
-function wireHubActions() {
-    const container = document.getElementById('studio-content');
-    if (container.dataset.hubWired) return;
-    container.dataset.hubWired = '1';
-    container.addEventListener('click', async e => {
-        const t = e.target;
-        if (t.classList.contains('plan-start')) {
-            // Juries are the Saturday before finals week.
-            const { error } = await sb.from('jury_plans').insert({
-                student_id: t.dataset.studentId, program_key: t.dataset.pk,
-                semester: 'Fall 2026', status: 'planning', jury_date: '2026-12-05',
-            });
-            if (error) { showToast('Error: ' + error.message, 'error'); return; }
-            showToast('Jury plan started');
-            renderStudio();
-        } else if (t.classList.contains('slot-assign')) {
-            const title = prompt('Piece title for "' + t.dataset.slot + '":');
-            if (!title) return;
-            const composer = prompt('Composer or show (optional):') || null;
-            const { error } = await sb.from('jury_selections').insert({
-                jury_plan_id: t.dataset.planId, requirement_slot: t.dataset.slot,
-                title: title.trim(), composer, status: 'accepted', proposed_by: 'teacher',
-            });
-            if (error) { showToast('Error: ' + error.message, 'error'); return; }
-            showToast('Assigned');
-            renderStudio();
-        } else if (t.classList.contains('slot-change')) {
-            const title = prompt('New piece title (replaces the current one):');
-            if (!title) return;
-            const composer = prompt('Composer or show (optional):') || null;
-            const { error } = await sb.from('jury_selections')
-                .update({ title: title.trim(), composer }).eq('id', t.dataset.selId);
-            if (error) { showToast('Error: ' + error.message, 'error'); return; }
-            showToast('Changed');
-            renderStudio();
-        } else if (t.classList.contains('slot-clear')) {
-            const { error } = await sb.from('jury_selections')
-                .update({ status: 'dropped' }).eq('id', t.dataset.selId);
-            if (error) { showToast('Error: ' + error.message, 'error'); return; }
-            showToast('Slot cleared');
-            renderStudio();
-        } else if (t.classList.contains('slot-accept')) {
-            const slot = prompt('Which slot does this piece fill?');
-            if (!slot) return;
-            const { error } = await sb.from('jury_selections')
-                .update({ status: 'accepted', requirement_slot: slot.trim() }).eq('id', t.dataset.selId);
-            if (error) { showToast('Error: ' + error.message, 'error'); return; }
-            showToast('Accepted into slot');
-            renderStudio();
-        } else if (t.classList.contains('goals-save')) {
-            const ta = container.querySelector('textarea.goals-text[data-student-id="' + t.dataset.studentId + '"]');
-            const { error } = await sb.from('students')
-                .update({ goals: ta.value }).eq('id', t.dataset.studentId);
-            if (error) { showToast('Error: ' + error.message, 'error'); return; }
-            studentsCache = null;
-            showToast('Goals saved to their Analytics page');
-        }
-    });
+
+const JURY_SLOTS = {
+    MFA_MT_Vocal_Pedagogy: ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song'],
+    MM_Vocal_Pedagogy: ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4'],
+    BFA_MT_Year1: ['Legit selection', '32-bar cut', 'Additional selection'],
+    BFA_MT_Sophomore: ['Legit selection', '32-bar cut', 'Additional selection', 'Wildcard'],
+    BFA_MT_Junior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
+    BFA_MT_Senior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
+};
+function programKeyFor(student) {
+    const p = (student.degree_program || '').toLowerCase();
+    if (p.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
+    if (p.includes('mm')) return 'MM_Vocal_Pedagogy';
+    if (p.includes('bfa')) return 'BFA_MT_Junior';
+    return null;
 }
+const REP_PHASES = [
+    ['translation_characterization', 'Translation + Characterization'],
+    ['text_rhythm', 'Text + Rhythm'],
+    ['melody_text_rhythm', 'Melody + Text + Rhythm'],
+    ['characterization_integration', 'Characterization Integration'],
+    ['memorization', 'Memorization'],
+    ['performance_ready', 'Performance Ready'],
+];
+function hubMiniRail(phaseIdx) {
+    let out = '<span style="display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem;">';
+    for (let i = 0; i < 6; i++) {
+        const bg = i < phaseIdx ? 'var(--accent-color)' : (i === phaseIdx ? 'var(--accent-color); opacity: 0.45' : 'var(--border-color)');
+        out += '<span style="width: 12px; height: 6px; border-radius: 3px; background: ' + bg + ';"></span>';
+    }
+    return out + '</span>';
+}
+function hubStrips(mins, cond) {
+    const xs = i => 40 + i * 38;
+    const maxM = Math.max(60, ...mins);
+    let svg = '<svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="Daily minutes and condition, two weeks">';
+    svg += '<text x="0" y="14" font-size="11" font-weight="600" fill="var(--text-muted)">SINGING MINUTES</text>';
+    svg += '<line x1="0" y1="110" x2="560" y2="110" stroke="var(--border-color)"/>';
+    mins.forEach((m, i) => {
+        if (!m) return;
+        const bh = Math.round(m / maxM * 88);
+        svg += '<rect x="' + (xs(i) - 12) + '" y="' + (110 - bh) + '" width="24" height="' + bh + '" rx="2" fill="var(--accent-color)" opacity="0.3"/>';
+        svg += '<text x="' + xs(i) + '" y="' + (110 - bh - 4) + '" font-size="8.5" fill="var(--text-muted)" text-anchor="middle">' + m + '</text>';
+    });
+    svg += '<text x="0" y="142" font-size="11" font-weight="600" fill="var(--text-muted)">VOICE CONDITION (1 TO 5)</text>';
+    svg += '<line x1="0" y1="225" x2="560" y2="225" stroke="var(--border-color)"/>';
+    svg += '<line x1="0" y1="191" x2="560" y2="191" stroke="var(--border-color)" stroke-dasharray="3 5"/>';
+    cond.forEach((c, i) => {
+        if (c == null) return;
+        svg += '<circle cx="' + xs(i) + '" cy="' + Math.round(225 - (c - 1) * 17) + '" r="3.5" fill="var(--primary-color)"/>';
+    });
+    return svg + '</svg>';
+}
+
 
 async function renderTodayPage() {
     const container = document.getElementById('today-content');
@@ -1758,6 +881,7 @@ function addDaysStr(dateStr, days) {
 // ============================================================
 // INBOX
 // ============================================================
+
 
 async function renderInbox() {
     const container = document.getElementById('inbox-content');
@@ -1925,22 +1049,13 @@ async function updateInboxBadge() {
 }
 
 // ---- Students hub helpers: jury slots, charts, goals ----
-const JURY_SLOTS = {
-    MFA_MT_Vocal_Pedagogy: ['Golden Age MT', 'Ballad', 'Up-tempo', 'Jazz/Folk/Rock/Pop', 'Contemporary MT (post-2000)', 'English art song'],
-    MM_Vocal_Pedagogy: ['Operatic aria', 'MT standard (belt or legit)', 'Art song 1', 'Art song 2', 'Art song 3', 'Art song 4'],
-    BFA_MT_Year1: ['Legit selection', '32-bar cut', 'Additional selection'],
-    BFA_MT_Sophomore: ['Legit selection', '32-bar cut', 'Additional selection', 'Wildcard'],
-    BFA_MT_Junior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
-    BFA_MT_Senior: ['32-bar cut', 'Additional selection', 'Wildcard', 'Legit selection'],
-};
-function programKeyFor(student) {
-    const p = (student.degree_program || '').toLowerCase();
-    if (p.includes('mfa')) return 'MFA_MT_Vocal_Pedagogy';
-    if (p.includes('mm')) return 'MM_Vocal_Pedagogy';
-    if (p.includes('bfa')) return 'BFA_MT_Junior';
-    return null;
-}
-const REP_PHASES = [
+
+
+// ============================================================
+// STUDENTS HUB (Studio Desk roster)
+// ============================================================
+
+const DESK_PHASES = [
     ['translation_characterization', 'Translation + Characterization'],
     ['text_rhythm', 'Text + Rhythm'],
     ['melody_text_rhythm', 'Melody + Text + Rhythm'],
@@ -1948,525 +1063,291 @@ const REP_PHASES = [
     ['memorization', 'Memorization'],
     ['performance_ready', 'Performance Ready'],
 ];
-function hubMiniRail(phaseIdx) {
-    let out = '<span style="display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 0.4rem;">';
+
+function deskMiniStrip(mins, conds) {
+    const w = 220, hh = 54;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + hh + '" width="220" height="' + hh + '" aria-hidden="true" style="flex-shrink: 0;">';
+    const maxM = Math.max(60, ...mins);
+    mins.forEach((m, i) => {
+        if (!m) return;
+        const bh = Math.round(m / maxM * 26);
+        svg += '<rect x="' + (4 + i * 15.4) + '" y="' + (28 - bh) + '" width="10" height="' + bh + '" rx="1.5" fill="var(--student)" opacity="0.35"/>';
+    });
+    conds.forEach((c, i) => {
+        if (c == null) return;
+        svg += '<circle cx="' + (9 + i * 15.4) + '" cy="' + Math.round(52 - (c - 1) * 4.5) + '" r="2.2" fill="var(--ink)"/>';
+    });
+    svg += '<line x1="0" y1="29" x2="' + w + '" y2="29" stroke="var(--line)"/></svg>';
+    return svg;
+}
+
+function deskRail(phaseIdx) {
+    let out = '<span class="mini-rail">';
     for (let i = 0; i < 6; i++) {
-        const bg = i < phaseIdx ? 'var(--accent-color)' : (i === phaseIdx ? 'var(--accent-color); opacity: 0.45' : 'var(--border-color)');
-        out += '<span style="width: 12px; height: 6px; border-radius: 3px; background: ' + bg + ';"></span>';
+        out += '<span class="' + (i < phaseIdx ? 'd' : (i === phaseIdx ? 'c' : '')) + '"></span>';
     }
     return out + '</span>';
 }
-function hubStrips(mins, cond) {
-    const xs = i => 40 + i * 38;
-    const maxM = Math.max(60, ...mins);
-    let svg = '<svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="Daily minutes and condition, two weeks">';
-    svg += '<text x="0" y="14" font-size="11" font-weight="600" fill="var(--text-muted)">SINGING MINUTES</text>';
-    svg += '<line x1="0" y1="110" x2="560" y2="110" stroke="var(--border-color)"/>';
-    mins.forEach((m, i) => {
-        if (!m) return;
-        const bh = Math.round(m / maxM * 88);
-        svg += '<rect x="' + (xs(i) - 12) + '" y="' + (110 - bh) + '" width="24" height="' + bh + '" rx="2" fill="var(--accent-color)" opacity="0.3"/>';
-        svg += '<text x="' + xs(i) + '" y="' + (110 - bh - 4) + '" font-size="8.5" fill="var(--text-muted)" text-anchor="middle">' + m + '</text>';
-    });
-    svg += '<text x="0" y="142" font-size="11" font-weight="600" fill="var(--text-muted)">VOICE CONDITION (1 TO 5)</text>';
-    svg += '<line x1="0" y1="225" x2="560" y2="225" stroke="var(--border-color)"/>';
-    svg += '<line x1="0" y1="191" x2="560" y2="191" stroke="var(--border-color)" stroke-dasharray="3 5"/>';
-    cond.forEach((c, i) => {
-        if (c == null) return;
-        svg += '<circle cx="' + xs(i) + '" cy="' + Math.round(225 - (c - 1) * 17) + '" r="3.5" fill="var(--primary-color)"/>';
-    });
-    return svg + '</svg>';
-}
 
-async function renderStudio() {
+async function renderStudentsHub() {
     const container = document.getElementById('studio-content');
-    wireHubActions();
-    container.innerHTML = '<p class="loading-text">Loading studio...</p>';
-
-    // Greeting
-    document.getElementById('studio-greeting').textContent = getGreeting();
-    document.getElementById('studio-date').textContent = formatDate(todayStr());
+    container.innerHTML = '<p class="loading-text">Loading students...</p>';
+    wireHubHandlers();
 
     const students = await getStudents();
     const today = todayStr();
+    const since14 = addDaysStr(today, -13);
 
-    // Calculate Monday of this week
-    const now = new Date(today + 'T12:00:00');
-    const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() + mondayOffset);
-    const weekStartStr = weekStart.toLocaleDateString('en-CA');
+    const [logsR, plansR, reflR, diaryR, ckR, repR, jpR, jsR, archR] = await Promise.all([
+        sb.from('lesson_logs').select('id, student_id, date, approved, repertoire_worked').order('date', { ascending: false }),
+        sb.from('practice_plans').select('id, student_id, lesson_log_id, status').order('date_generated', { ascending: false }),
+        sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').order('date_submitted', { ascending: false }),
+        sb.from('voice_use_logs').select('*').gte('log_date', since14),
+        sb.from('voses_checkins').select('*'),
+        sb.from('repertoire').select('*'),
+        sb.from('jury_plans').select('*'),
+        sb.from('jury_selections').select('*'),
+        sb.from('students').select('*').neq('status', 'active').order('name'),
+    ]);
+    const logs = logsR.data || [], plans = plansR.data || [], refls = reflR.data || [];
+    const diary = diaryR.data || [], cks = ckR.data || [], reps = repR.data || [];
+    const jplans = jpR.data || [], jsels = jsR.data || [], archived = archR.data || [];
 
-    // Fetch all data in parallel
-    let allLogs, allPlans, allReflections, allBriefs, allStudioFb, allJuryPlans, allJurySelections;
-    try {
-        const results = await Promise.all([
-            sb.from('lesson_logs').select('id, student_id, date, approved, has_transcript, repertoire_worked, exercise_categories_addressed').order('date', { ascending: false }),
-            sb.from('practice_plans').select('id, student_id, lesson_log_id, status, content, date_generated').order('date_generated', { ascending: false }),
-            sb.from('reflections').select('*').order('date_submitted', { ascending: false }),
-            sb.from('pre_lesson_briefs').select('id, student_id, date, full_brief, lesson_plan').order('date', { ascending: false }),
-            sb.from('studio_class_feedback').select('student_id, studio_class_date, repertoire_performed').order('studio_class_date', { ascending: false }),
-            sb.from('jury_plans').select('*'),
-            sb.from('jury_selections').select('*'),
-            sb.from('voice_use_logs').select('*').order('log_date', { ascending: false }).limit(600),
-            sb.from('voses_checkins').select('*'),
-            sb.from('repertoire').select('*')
-        ]);
-        allLogs = results[0].data || [];
-        allPlans = results[1].data || [];
-        allReflections = results[2].data || [];
-        allBriefs = results[3].data || [];
-        allStudioFb = results[4].data || [];
-        allJuryPlans = results[5].data || [];
-        allJurySelections = results[6].data || [];
-        var allDiary = results[7].data || [];
-        var allCheckins = results[8].data || [];
-        var studentsRepCache = {};
-        (results[9].data || []).forEach(r => {
-            (studentsRepCache[r.student_id] = studentsRepCache[r.student_id] || []).push(r);
-        });
-    } catch (err) {
-        console.error('[Studio] fetch error:', err);
-        container.innerHTML = '<p class="text-muted">Error loading studio data.</p>';
-        return;
-    }
+    const logsBy = {}, replBy = {}, repBy = {};
+    logs.forEach(l => (logsBy[l.student_id] = logsBy[l.student_id] || []).push(l));
+    refls.forEach(r => (replBy[r.student_id] = replBy[r.student_id] || []).push(r));
+    reps.forEach(r => (repBy[r.student_id] = repBy[r.student_id] || []).push(r));
 
-    // Two-loop data: last-7-day diary aggregates and monthly check-in status
-    const sevenAgo = new Date(now); sevenAgo.setDate(now.getDate() - 6);
-    const sevenAgoStr = sevenAgo.toLocaleDateString('en-CA');
-    const diaryByStudent = {};
-    allDiary.forEach(e => {
-        if (e.log_date < sevenAgoStr) return;
-        const d = diaryByStudent[e.student_id] = diaryByStudent[e.student_id] ||
-            { n: 0, min: 0, conds: [], flags: [] };
-        d.n += 1;
-        d.min += e.minutes || 0;
-        const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
-        const cond = cv.every(v => v) ? cv.reduce((x, y) => x + y, 0) / 3 : null;
-        if (cond) d.conds.push(cond);
-        if (e.minutes >= 90 && cond && cond <= 2.5) {
-            d.flags.push(e.log_date + ': ' + e.minutes + ' min with condition ' + cond.toFixed(1) + '/5');
-        }
-    });
-    Object.values(diaryByStudent).forEach(d => {
-        d.condAvg = d.conds.length ? d.conds.reduce((x, y) => x + y, 0) / d.conds.length : null;
-        if (d.condAvg && d.condAvg <= 2.5) d.flags.unshift('Average condition ' + d.condAvg.toFixed(1) + '/5 this week');
-    });
-    const thisMonth = today.slice(0, 7);
-    const vosesDoneIds = new Set(allCheckins.filter(c => String(c.month).slice(0, 7) === thisMonth).map(c => c.student_id));
-    const latestReflByStudent = {};
-    allReflections.forEach(r => {
-        if (r.entry_type === 'lesson_reflection' && !latestReflByStudent[r.student_id]) {
-            latestReflByStudent[r.student_id] = r;
-        }
-    });
-    function snapshotLine(sid) {
-        const d = diaryByStudent[sid];
-        const parts = [];
-        if (d) {
-            parts.push(d.n + (d.n === 1 ? ' log' : ' logs') + ' · ' + d.min + ' min');
-            if (d.condAvg) parts.push('condition ' + d.condAvg.toFixed(1) + '/5');
-        } else {
-            parts.push('no logs this week');
-        }
-        parts.push(vosesDoneIds.has(sid) ? 'check-in done' : 'check-in due');
-        let line = parts.join(' · ');
-        if (d && d.flags.length) {
-            line += ' · <span style="color: #a04545; font-weight: 600;">' + d.flags.length +
-                (d.flags.length === 1 ? ' flag' : ' flags') + '</span>';
-        }
-        return line;
-    }
-
-    // Build per-student lookup maps
-    const logsByStudent = {};
-    allLogs.forEach(l => {
-        if (!logsByStudent[l.student_id]) logsByStudent[l.student_id] = [];
-        logsByStudent[l.student_id].push(l);
-    });
-
-    const plansByLogId = {};
-    allPlans.forEach(p => { if (p.lesson_log_id) plansByLogId[p.lesson_log_id] = p; });
-
-    const plansByStudent = {};
-    allPlans.forEach(p => {
-        if (!plansByStudent[p.student_id]) plansByStudent[p.student_id] = [];
-        plansByStudent[p.student_id].push(p);
-    });
-
-    const reflectionsByStudent = {};
-    allReflections.forEach(r => {
-        if (!reflectionsByStudent[r.student_id]) reflectionsByStudent[r.student_id] = [];
-        reflectionsByStudent[r.student_id].push(r);
-    });
-
-    const briefsByStudent = {};
-    allBriefs.forEach(b => {
-        if (!briefsByStudent[b.student_id]) briefsByStudent[b.student_id] = [];
-        briefsByStudent[b.student_id].push(b);
-    });
-
-    const studioFbByStudent = {};
-    allStudioFb.forEach(f => {
-        if (!studioFbByStudent[f.student_id]) studioFbByStudent[f.student_id] = [];
-        studioFbByStudent[f.student_id].push(f);
-    });
-
-    const juryPlanByStudent = {};
-    allJuryPlans.forEach(jp => { juryPlanByStudent[jp.student_id] = jp; });
-
-    const jurySelByPlan = {};
-    allJurySelections.forEach(s => {
-        if (!jurySelByPlan[s.jury_plan_id]) jurySelByPlan[s.jury_plan_id] = [];
-        jurySelByPlan[s.jury_plan_id].push(s);
-    });
-
-    // Compute pipeline status for each student
-    function computeStatus(student) {
-        const logs = logsByStudent[student.id] || [];
-        const latestLog = logs[0] || null;
-        const latestPlan = (plansByStudent[student.id] || [])[0] || null;
-        const latestReflection = (reflectionsByStudent[student.id] || [])[0] || null;
-        const latestBrief = (briefsByStudent[student.id] || [])[0] || null;
-        const latestStudioFb = (studioFbByStudent[student.id] || [])[0] || null;
-
-        const hasPlanForLatestLog = latestLog ? !!plansByLogId[latestLog.id] : false;
-        const hasReflectionSinceLesson = latestLog && latestReflection
-            ? latestReflection.date_submitted >= latestLog.date
-            : false;
-        const hasForecastSinceLesson = latestLog && latestBrief
-            ? latestBrief.date >= latestLog.date
-            : false;
-
-        // Determine the most urgent status
-        let urgency = 10; // lower = more urgent
-        let message = 'All caught up';
-        let action = null;
-        let actionType = null;
-        let actionId = null;
-        let statusClass = 'status-ok';
-
-        if (!latestLog || daysBetween(latestLog.date, today) > 21) {
-            urgency = 6;
-            message = 'No recent lessons';
-            statusClass = 'status-warn';
-        }
-
-        if (latestLog && !latestLog.approved) {
-            urgency = 1;
-            message = 'Log needs review (' + formatShortDate(latestLog.date) + ')';
-            action = 'Review';
-            actionType = 'review-log';
-            actionId = latestLog.id;
-            statusClass = 'status-action';
-        } else if (latestLog && latestLog.approved && !hasPlanForLatestLog) {
-            urgency = 3;
-            message = 'Practice plan pending';
-            statusClass = 'status-wait';
-        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && !hasReflectionSinceLesson) {
-            const dayNum = now.getDay();
-            if (dayNum >= 4) {
-                urgency = 4;
-                message = 'Reflection overdue';
-                statusClass = 'status-warn';
-            } else {
-                urgency = 7;
-                message = 'Awaiting reflection';
-                statusClass = 'status-wait';
-            }
-        } else if (latestLog && latestLog.approved && hasPlanForLatestLog && hasReflectionSinceLesson) {
-            urgency = 10;
-            message = 'All caught up';
-            statusClass = 'status-ok';
-        }
-
-        return {
-            urgency, message, action, actionType, actionId, statusClass,
-            latestLog, latestPlan, latestReflection, latestBrief, latestStudioFb,
-            logs: logs.slice(0, 3),
-            hasPlanForLatestLog, hasReflectionSinceLesson, hasForecastSinceLesson
-        };
-    }
-
-    // Compute and sort
-    const studentStatuses = students.map(s => ({
-        student: s,
-        status: computeStatus(s)
-    })).sort((a, b) => a.status.urgency - b.status.urgency);
-
-    // Render
     let html = '';
+    students.forEach(s => {
+        const myLogs = logsBy[s.id] || [];
+        const latest = myLogs[0];
+        const myRefl = (replBy[s.id] || []);
+        const reflAfter = latest ? myRefl.find(r => String(r.date_submitted).slice(0, 10) >= latest.date) : null;
 
-    // Today's lessons digest: students with a pre-lesson brief dated today
-    const todaysBriefs = allBriefs.filter(b => b.date === today);
-    if (todaysBriefs.length) {
-        html += '<div style="background: var(--bg-white); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); border-radius: 6px; padding: 1.1rem 1.3rem; margin-bottom: 1.5rem;">';
-        html += '<div class="section-label">Today&#39;s Lessons</div>';
-        todaysBriefs.forEach(b => {
-            const stu = students.find(x => x.id === b.student_id);
-            if (!stu) return;
-            const refl = latestReflByStudent[stu.id];
-            html += '<div style="padding: 0.6rem 0; border-top: 1px solid var(--border-color);">';
-            html += '<strong>' + escapeHtml(stu.name) + '</strong> ';
-            html += '<button class="btn-studio-action" data-action-type="view-forecast" data-action-id="' + b.id + '" data-student-id="' + stu.id + '" style="float: right;">Open forecast</button>';
-            html += '<span style="display: block; font-size: 12.5px; color: var(--text-muted);">' + snapshotLine(stu.id) + '</span>';
-            if (refl && refl.questions) html += '<p style="font-size: 13px; margin: 0.3rem 0 0;"><strong>They ask:</strong> ' + escapeHtml(refl.questions) + '</p>';
-            const dg = diaryByStudent[stu.id];
-            if (dg) dg.flags.forEach(f => { html += '<p style="font-size: 13px; margin: 0.2rem 0 0; color: #a04545;"><strong>Flag:</strong> ' + escapeHtml(f) + '</p>'; });
-            html += '</div>';
+        const myDiary = diary.filter(e => e.student_id === s.id);
+        const dayIdx = {};
+        for (let i = 0; i < 14; i++) dayIdx[addDaysStr(today, i - 13)] = i;
+        const mins = new Array(14).fill(0), conds = new Array(14).fill(null);
+        const flags = [];
+        let weekN = 0, weekMin = 0; const weekConds = [];
+        myDiary.forEach(e => {
+            const idx = dayIdx[e.log_date];
+            const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
+            const c = cv.every(v => v) ? cv.reduce((x, y) => x + y, 0) / 3 : null;
+            if (idx != null) { mins[idx] += e.minutes || 0; if (c) conds[idx] = c; }
+            if (e.log_date >= addDaysStr(today, -6)) {
+                weekN++; weekMin += e.minutes || 0; if (c) weekConds.push(c);
+                if (e.minutes >= 90 && c && c <= 2.5) flags.push(e.log_date + ': ' + e.minutes + ' min with condition ' + c.toFixed(1) + '/5');
+            }
         });
-        html += '</div>';
-    }
+        const weekAvg = weekConds.length ? weekConds.reduce((x, y) => x + y, 0) / weekConds.length : null;
+        if (weekAvg && weekAvg <= 2.5) flags.unshift('Average condition ' + weekAvg.toFixed(1) + '/5 this week');
 
-    studentStatuses.forEach(({ student, status }) => {
-        const s = student;
-        const st = status;
-        const cardId = 'studio-card-' + s.id;
-        const detailId = 'studio-detail-' + s.id;
+        const snapParts = [];
+        if (latest) snapParts.push('Last lesson ' + formatShortDate(latest.date) + (latest.approved ? '' : ' · log needs review'));
+        snapParts.push(reflAfter ? 'reflection submitted' : 'reflection due');
+        snapParts.push(weekN ? weekN + (weekN === 1 ? ' log' : ' logs') + ' · ' + weekMin + ' min' : 'no logs this week');
+        if (weekAvg) snapParts.push('condition ' + weekAvg.toFixed(1) + '/5');
+        const snap = snapParts.join(' · ') + (flags.length ? ' · <span class="flag">' + flags.length + (flags.length === 1 ? ' flag' : ' flags') + '</span>' : '');
 
-        // Collapsed card
-        html += '<div class="studio-card ' + st.statusClass + '" id="' + cardId + '">';
-        html += '<div class="studio-card-header" data-student-id="' + s.id + '" data-detail-id="' + detailId + '">';
-        html += '<div class="studio-card-left">';
-        html += '<strong class="studio-card-name">' + escapeHtml(s.name) + '</strong>';
-        html += '<span class="studio-card-status">' + escapeHtml(st.message) + '</span>';
-        html += '<span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 0.15rem;">' + snapshotLine(s.id) + '</span>';
-        html += '</div>';
-        html += '<div class="studio-card-right">';
-        if (st.action) {
-            html += '<button class="btn-studio-action" data-action-type="' + st.actionType + '" data-action-id="' + st.actionId + '" data-student-id="' + s.id + '">' + escapeHtml(st.action) + '</button>';
-        }
-        html += '<span class="studio-card-chevron">&#9660;</span>';
-        html += '</div>';
-        html += '</div>';
-
-        // Expanded detail (hidden by default)
-        html += '<div class="studio-card-detail" id="' + detailId + '" style="display: none;">';
-
-        // Student info line
-        html += '<div class="studio-detail-meta">';
-        html += escapeHtml((s.voice_type || '') + (s.voice_type && s.degree_program ? ', ' : '') + (s.degree_program || ''));
-        if (st.latestLog) html += '<span style="float: right;">Last lesson: ' + escapeHtml(formatShortDate(st.latestLog.date)) + '</span>';
-        html += '</div>';
-
-        // Since last lesson: reflection content, diary, flags (two-loop data)
-        const refl = latestReflByStudent[s.id];
-        const dsum = diaryByStudent[s.id];
-        html += '<div class="studio-section">';
-        html += '<div class="section-label">Since Last Lesson</div>';
-        if (refl && st.hasReflectionSinceLesson) {
-            if (refl.questions) html += '<p style="font-size: 13px;"><strong>Their questions/goals:</strong> ' + escapeHtml(refl.questions) + '</p>';
-            if (refl.risk_taken) html += '<p style="font-size: 13px;"><strong>Risk taken:</strong> ' + escapeHtml(refl.risk_taken) + '</p>';
-            if (refl.lesson_takeaways) html += '<p style="font-size: 13px;"><strong>Takeaways:</strong> ' + escapeHtml(String(refl.lesson_takeaways).slice(0, 240)) + (String(refl.lesson_takeaways).length > 240 ? '...' : '') + '</p>';
-        } else {
-            html += '<p style="font-size: 13px; color: var(--text-muted);">No reflection yet.</p>';
-        }
-        if (dsum) {
-            html += '<p style="font-size: 13px;"><strong>Week:</strong> ' + dsum.n + ' entries · ' + dsum.min + ' min' + (dsum.condAvg ? ' · condition ' + dsum.condAvg.toFixed(1) + '/5' : '') + '</p>';
-            dsum.flags.forEach(f => { html += '<p style="font-size: 13px; color: #a04545;"><strong>Flag:</strong> ' + escapeHtml(f) + '</p>'; });
-        }
-        html += '</div>';
-
-        // Workflow steps
-        html += '<div class="studio-workflow">';
-        html += '<div class="section-label">Workflow</div>';
-
-        // 1. Lesson
-        const hasLesson = !!st.latestLog;
-        html += renderWorkflowStep(hasLesson, 'Lesson', hasLesson ? formatShortDate(st.latestLog.date) : 'No recent lesson', null);
-
-        // 2. Transcript
-        const hasTranscript = st.latestLog && st.latestLog.has_transcript;
-        html += renderWorkflowStep(hasTranscript, 'Transcript', hasTranscript ? 'Generated' : (hasLesson ? 'Not yet generated' : ''), null);
-
-        // 3. Log
-        html += renderWorkflowStep(hasLesson, 'Lesson Log', hasLesson ? 'Generated' : '', hasLesson ? { label: 'View', type: 'view-log', id: st.latestLog.id } : null);
-
-        // 4. Approved
-        const isApproved = st.latestLog && st.latestLog.approved;
-        if (hasLesson && !isApproved) {
-            html += renderWorkflowStep(false, 'Approval', 'Needs review', { label: 'Review + Approve', type: 'review-log', id: st.latestLog.id }, true);
-        } else {
-            html += renderWorkflowStep(isApproved, 'Approval', isApproved ? 'Approved' : '', null);
-        }
-
-        // 5. Practice Plan
-        html += renderWorkflowStep(st.hasPlanForLatestLog, 'Practice Plan', st.hasPlanForLatestLog ? 'Sent to student' : (isApproved ? 'Pending generation' : 'Waiting on approval'), st.hasPlanForLatestLog ? { label: 'View', type: 'view-plan', id: st.latestLog.id } : null);
-
-        // 6. Reflection
-        html += renderWorkflowStep(st.hasReflectionSinceLesson, 'Reflection', st.hasReflectionSinceLesson ? ('Submitted ' + formatShortDate(st.latestReflection.date_submitted)) : 'Not submitted', st.hasReflectionSinceLesson ? { label: 'View', type: 'view-reflection', id: st.latestReflection.id } : null);
-
-        // 7. Forecast
-        html += renderWorkflowStep(st.hasForecastSinceLesson, 'Forecast', st.hasForecastSinceLesson ? ('Generated ' + formatShortDate(st.latestBrief.date)) : 'Not yet generated', st.hasForecastSinceLesson ? { label: 'View', type: 'view-forecast', id: st.latestBrief.id } : null);
-
-        html += '</div>';
-
-        // ---- Jury slots (fall plan; from jury_plans + jury_selections) ----
-        const plan = allJuryPlans.find(p => p.student_id === s.id && p.semester === 'Fall 2026');
-        html += '<div class="studio-section"><div class="section-label">Jury Slots — Fall 2026</div>';
+        // Jury plan
+        const plan = jplans.find(p => p.student_id === s.id && p.semester === 'Fall 2026');
+        let juryHtml = '';
         if (plan) {
             const slots = JURY_SLOTS[plan.program_key] || ['Selection 1', 'Selection 2', 'Selection 3'];
-            const sels = allJurySelections.filter(x => x.jury_plan_id === plan.id);
+            const sels = jsels.filter(x => x.jury_plan_id === plan.id);
             const filled = slots.filter(sl => sels.some(x => x.requirement_slot === sl && x.status === 'accepted')).length;
-            html += '<p style="font-size: 13px; margin: 0 0 0.5rem;"><strong>' + filled + ' of ' + slots.length + ' slots filled</strong> · ' + escapeHtml(plan.program_key.replace(/_/g, ' ')) + (plan.jury_date ? ' · jury ' + formatShortDate(plan.jury_date) : '') + '</p>';
-            if (plan.notes) html += '<p style="font-size: 12.5px; color: var(--text-muted); margin: 0 0 0.5rem;">' + escapeHtml(plan.notes) + '</p>';
-            slots.forEach(sl => {
+            juryHtml += '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Repertoire · ' + filled + ' of ' + slots.length + ' jury slots filled</h3>';
+            juryHtml += '<p class="meta" style="margin: 0 0 0.5rem;">' + escapeHtml(plan.program_key.replace(/_/g, ' ')) + (plan.jury_date ? ' · jury ' + formatShortDate(plan.jury_date) : '') + (plan.notes ? ' · ' + escapeHtml(plan.notes) : '') + '</p>';
+            slots.forEach((sl, slotIdx) => {
                 const sel = sels.find(x => x.requirement_slot === sl && x.status === 'accepted');
-                html += '<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0.7rem; border: 1px ' + (sel ? 'solid' : 'dashed') + ' var(--border-color); border-radius: 5px; margin-bottom: 0.35rem; font-size: 13px; flex-wrap: wrap;">';
-                html += '<span style="color: var(--text-muted); flex: 1 1 180px;">' + escapeHtml(sl) + '</span>';
+                const fid = 'sf-' + plan.id + '-' + slotIdx;
+                juryHtml += '<div class="slot' + (sel ? '' : ' empty') + '">';
+                juryHtml += '<span class="req">' + escapeHtml(sl) + '</span>';
                 if (sel) {
-                    const rep = studentsRepCache[s.id] && studentsRepCache[s.id].find(r => r.title && sel.title && r.title.toLowerCase() === sel.title.toLowerCase());
-                    const phaseIdx = rep ? Math.max(0, REP_PHASES.findIndex(p => p[0] === rep.learning_phase)) : null;
-                    html += '<strong>"' + escapeHtml(sel.title) + '"' + (sel.composer ? ' (' + escapeHtml(sel.composer) + ')' : '') + '</strong>';
-                    if (phaseIdx != null) html += hubMiniRail(phaseIdx) + '<span style="font-size: 12px; color: var(--text-muted);">' + REP_PHASES[phaseIdx][1] + '</span>';
-                    html += '<button class="btn-studio-action slot-change" data-sel-id="' + sel.id + '">Change</button>';
-                    html += '<button class="btn-studio-action slot-clear" data-sel-id="' + sel.id + '">Clear</button>';
+                    const rr = (repBy[s.id] || []).find(r => r.title && sel.title && r.title.toLowerCase() === sel.title.toLowerCase());
+                    const pi = rr ? Math.max(0, DESK_PHASES.findIndex(p => p[0] === rr.learning_phase)) : null;
+                    juryHtml += '<span class="piece">"' + escapeHtml(sel.title) + '"' + (sel.composer ? ' (' + escapeHtml(sel.composer) + ')' : '') + '</span>';
+                    if (pi != null) juryHtml += deskRail(pi) + '<span class="phase">' + DESK_PHASES[pi][1] + '</span>';
+                    juryHtml += '<button class="btn ghost slot-open" data-fid="' + fid + '">Change</button>';
+                    juryHtml += '<div class="slot-form" id="' + fid + '"><input type="text" class="sf-t" value="' + escapeHtml(sel.title) + '" placeholder="Title"><input type="text" class="sf-c" value="' + escapeHtml(sel.composer || '') + '" placeholder="Composer or show"><button class="btn teacher-bg slot-change" data-sel-id="' + sel.id + '" data-fid="' + fid + '">Replace</button><button class="btn ghost slot-clear" data-sel-id="' + sel.id + '">Clear slot</button></div>';
                 } else {
-                    html += '<button class="btn-studio-action slot-assign" data-plan-id="' + plan.id + '" data-slot="' + escapeHtml(sl) + '">Assign piece</button>';
+                    juryHtml += '<button class="btn ghost slot-open" data-fid="' + fid + '">Assign piece</button>';
+                    juryHtml += '<div class="slot-form" id="' + fid + '"><input type="text" class="sf-t" placeholder="Title"><input type="text" class="sf-c" placeholder="Composer or show"><button class="btn teacher-bg slot-assign" data-plan-id="' + plan.id + '" data-slot="' + escapeHtml(sl) + '" data-fid="' + fid + '">Assign</button></div>';
                 }
-                html += '</div>';
+                juryHtml += '</div>';
             });
             const pool = sels.filter(x => x.status === 'proposed');
             if (pool.length) {
-                html += '<p style="font-size: 12.5px; color: var(--text-muted); margin: 0.4rem 0 0;">Proposed: ' + pool.map(x =>
-                    '"' + escapeHtml(x.title) + '" <button class="btn-studio-action slot-accept" data-sel-id="' + x.id + '" data-plan-id="' + plan.id + '" style="font-size: 11px; padding: 0.15rem 0.5rem;">Accept into slot</button>').join(' · ') + '</p>';
+                juryHtml += '<p class="pool">Proposed: ' + pool.map(x =>
+                    '"' + escapeHtml(x.title) + '" <button class="btn ghost slot-accept" data-sel-id="' + x.id + '" style="font-size: 11px; padding: 0.15rem 0.5rem;">Accept into slot</button>').join(' · ') + '</p>';
             }
         } else {
             const pk = programKeyFor(s);
-            html += pk
-                ? '<button class="btn-studio-action plan-start" data-student-id="' + s.id + '" data-pk="' + pk + '">Start Fall 2026 jury plan (' + pk.replace(/_/g, ' ') + ')</button>'
-                : '<p class="text-muted" style="font-size: 13px;">No jury requirements mapped for ' + escapeHtml(s.degree_program || 'this program') + '.</p>';
+            juryHtml += '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Repertoire</h3>';
+            juryHtml += pk
+                ? '<button class="btn teacher-bg plan-start" data-student-id="' + s.id + '" data-pk="' + pk + '">Start Fall 2026 jury plan (' + pk.replace(/_/g, ' ') + ')</button>'
+                : '<p class="meta">No jury requirements mapped for ' + escapeHtml(s.degree_program || 'this program') + '.</p>';
         }
-        html += '</div>';
 
-        // ---- Analytics (daily strips from the diary; VoSES month means) ----
-        const myDiary = allDiary.filter(e => e.student_id === s.id && e.log_date >= addDaysStr(today, -13));
+        // Analytics
+        let anHtml = '';
         if (myDiary.length) {
-            const dayIdx = {};
-            for (let i = 0; i < 14; i++) dayIdx[addDaysStr(today, i - 13)] = i;
-            const mins = new Array(14).fill(0);
-            const conds = new Array(14).fill(null);
-            myDiary.forEach(e => {
-                const i = dayIdx[e.log_date];
-                if (i == null) return;
-                mins[i] += e.minutes || 0;
-                const cv = [e.cond_ease, e.cond_stability, e.cond_flexibility];
-                if (cv.every(v => v)) conds[i] = cv.reduce((x, y) => x + y, 0) / 3;
-            });
-            html += '<div class="studio-section"><div class="section-label">Analytics</div>' + hubStrips(mins, conds);
-            const myCk = allCheckins.filter(c => c.student_id === s.id).sort((a2, b2) => String(a2.month) < String(b2.month) ? -1 : 1);
+            anHtml += '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Analytics</h3>' + hubStrips(mins, conds);
+            const myCk = cks.filter(c => c.student_id === s.id).sort((a, b) => String(a.month) < String(b.month) ? -1 : 1);
             if (myCk.length) {
                 const last = myCk[myCk.length - 1];
-                html += '<p style="font-size: 13px; margin: 0.5rem 0 0;"><strong>Singing-VoSES ' + escapeHtml(String(last.month).slice(0, 7)) + ':</strong> higher + transitions ' + last.mean_higher + ' · middle ' + last.mean_middle + ' · lower ' + last.mean_lower + ' (of 6)</p>';
+                anHtml += '<p style="font-size: 13px; margin: 0.5rem 0 0;"><strong>Singing-VoSES ' + escapeHtml(String(last.month).slice(0, 7)) + ':</strong> higher + transitions ' + last.mean_higher + ' · middle ' + last.mean_middle + ' · lower ' + last.mean_lower + ' (of 6)</p>';
             }
-            html += '</div>';
         }
 
-        // ---- Semester goals (editable) ----
-        html += '<div class="studio-section"><div class="section-label">Semester Goals</div>';
-        html += '<textarea class="goals-text" data-student-id="' + s.id + '" rows="3" style="width: 100%; font: inherit; font-size: 13.5px; padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 4px;">' + escapeHtml(s.goals || '') + '</textarea>';
-        html += '<button class="btn-studio-action goals-save" data-student-id="' + s.id + '" style="margin-top: 0.4rem;">Save goals</button>';
-        html += '</div>';
-
-        // Studio class
-        if (st.latestStudioFb) {
-            html += '<div class="studio-section">';
-            html += '<div class="section-label">Studio Class</div>';
-            html += '<p style="font-size: 13px;">' + escapeHtml(formatShortDate(st.latestStudioFb.studio_class_date));
-            if (st.latestStudioFb.repertoire_performed) html += ': ' + escapeHtml(st.latestStudioFb.repertoire_performed);
-            html += '</p></div>';
-        }
-
-        // Recent lessons
-        if (st.logs.length > 0) {
-            html += '<div class="studio-section">';
-            html += '<div class="section-label">Recent Lessons</div>';
-            st.logs.forEach(l => {
-                let repSummary = '';
-                try {
-                    const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : (l.repertoire_worked || []);
-                    repSummary = rw.map(r => typeof r === 'string' ? r.split('**')[1] || r.substring(0, 40) : (r.title || '')).filter(Boolean).join(', ').substring(0, 60);
-                } catch(e) {}
-                const catCount = (l.exercise_categories_addressed || []).length;
-                html += '<div style="font-size: 13px; margin-bottom: 0.25rem;">';
-                html += '<strong>' + escapeHtml(formatShortDate(l.date)) + '</strong>';
-                if (repSummary) html += ' ' + escapeHtml(repSummary);
-                html += '<span style="color: var(--text-muted); margin-left: 0.5rem;">' + catCount + ' categories</span>';
-                html += '</div>';
-            });
-            html += '</div>';
-        }
-
-        // Jury status
-        const jp = juryPlanByStudent[s.id];
-        const pk = programKeyFromDegree(s.degree_program);
-        const reqSlots = (pk && JURY_REQUIREMENTS[pk]) ? JURY_REQUIREMENTS[pk] : [];
-        if (reqSlots.length > 0) {
-            const sels = jp ? (jurySelByPlan[jp.id] || []) : [];
-            const approvedCount = sels.filter(sel => sel.status === 'accepted').length;
-            html += '<div class="studio-section">';
-            html += '<div class="section-label">Jury</div>';
-            html += '<p style="font-size: 13px;">' + approvedCount + ' / ' + reqSlots.length + ' slots filled</p>';
-            html += '</div>';
-        }
-
-        // View as Student
-        html += '<div style="margin-top: 0.75rem;">';
-        html += '<button onclick="viewAsStudent(\'' + s.id + '\')" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: 3px; background: none; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; font-family: inherit;">View as Student</button>';
-        html += '</div>';
-
-        html += '</div>'; // studio-card-detail
-        html += '</div>'; // studio-card
-    });
-
-    container.innerHTML = html;
-
-    // Expand/collapse handlers
-    container.querySelectorAll('.studio-card-header').forEach(el => {
-        el.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-studio-action')) return;
-            const detailId = el.dataset.detailId;
-            const detail = document.getElementById(detailId);
-            const chevron = el.querySelector('.studio-card-chevron');
-            if (detail) {
-                const isOpen = detail.style.display !== 'none';
-                detail.style.display = isOpen ? 'none' : 'block';
-                if (chevron) chevron.innerHTML = isOpen ? '&#9660;' : '&#9650;';
-            }
+        // History (teacher layer)
+        let histHtml = '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Lesson history</h3>';
+        myLogs.slice(0, 6).forEach(l => {
+            let repw = l.repertoire_worked;
+            if (typeof repw === 'string') { try { repw = JSON.parse(repw); } catch (e) { repw = []; } }
+            const sum = (repw && repw.length ? repw.map(x => String(x).split(':')[0].replace(/\*/g, '').slice(0, 30)).slice(0, 2).join(', ') + ' · ' : '') + (l.approved ? 'approved' : 'draft, needs review');
+            histHtml += '<div class="hist-row" style="align-items: center;"><span class="d">' + formatShortDate(l.date) + '</span><span style="flex: 1;">' + escapeHtml(sum) + '</span>';
+            histHtml += '<button class="btn ' + (l.approved ? 'ghost' : 'teacher-bg') + ' hist-review" data-lesson-id="' + l.id + '" data-student-id="' + s.id + '">' + (l.approved ? 'View log' : 'Review + Approve') + '</button></div>';
         });
+
+        const row = '<div class="roster-row' + (flags.length ? ' roster-flag' : '') + '">' +
+            '<button class="roster-head" style="flex-wrap: wrap;">' +
+            '<strong>' + escapeHtml(s.name) + '</strong>' +
+            '<span class="snap" style="flex: 1 1 240px;">' + snap + '</span>' +
+            deskMiniStrip(mins, conds) +
+            '</button>' +
+            '<div class="roster-body">' +
+            (reflAfter && reflAfter.questions ? '<div class="ask"><b>They ask:</b> ' + escapeHtml(reflAfter.questions) + '</div>' : '') +
+            flags.map(f => '<p class="flag" style="font-size: 13.5px; margin: 0 0 0.3rem;">' + escapeHtml(f) + '</p>').join('') +
+            (reflAfter && reflAfter.risk_taken ? '<p style="font-size: 13.5px;"><strong>Risk taken:</strong> ' + escapeHtml(reflAfter.risk_taken) + '</p>' : '') +
+            juryHtml + anHtml +
+            '<h3 style="font-size: 13px; margin: 1.3rem 0 0.4rem;">Semester goals</h3>' +
+            '<div class="goals-edit"><textarea rows="3" class="goals-text" data-student-id="' + s.id + '">' + escapeHtml(s.goals || '') + '</textarea>' +
+            '<div style="margin-top: 0.4rem;"><button class="btn teacher-bg goals-save" data-student-id="' + s.id + '">Save goals</button></div></div>' +
+            histHtml +
+            '<div style="display: flex; gap: 0.5rem; margin-top: 1rem;">' +
+            '<button class="btn ghost view-portal" data-student-id="' + s.id + '">View portal</button>' +
+            '<button class="btn ghost goto-inbox">Reply in inbox</button>' +
+            '</div></div></div>';
+        html += row;
     });
 
-    // Action button handlers
-    container.querySelectorAll('.btn-studio-action').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleStudioAction(btn.dataset.actionType, btn.dataset.actionId, btn.dataset.studentId);
+    if (archived.length) {
+        html += '<details style="margin-top: 1.5rem;"><summary style="cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">Archived (' + archived.length + ')</summary>';
+        archived.forEach(a => {
+            const n = (logsBy[a.id] || []).length;
+            html += '<div class="roster-row" style="margin-top: 0.6rem;"><div class="roster-head" style="cursor: default;"><strong>' + escapeHtml(a.name) + '</strong><span class="snap">' + n + ' lessons on record</span><button class="btn ghost view-portal" data-student-id="' + a.id + '" style="margin-left: auto;">View portal</button></div></div>';
         });
-    });
-
-    // Workflow step click handlers
-    container.querySelectorAll('.workflow-action').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleStudioAction(btn.dataset.type, btn.dataset.id, btn.dataset.studentId);
-        });
-    });
-}
-
-function renderWorkflowStep(done, label, detail, action, isActive) {
-    const icon = done ? '&#10003;' : (isActive ? '&#9658;' : '&middot;');
-    const cls = done ? 'wf-done' : (isActive ? 'wf-active' : 'wf-pending');
-    let html = '<div class="workflow-step ' + cls + '">';
-    html += '<span class="wf-icon">' + icon + '</span>';
-    html += '<span class="wf-label">' + escapeHtml(label) + '</span>';
-    if (detail) html += '<span class="wf-detail">' + escapeHtml(detail) + '</span>';
-    if (action) {
-        html += '<button class="workflow-action" data-type="' + action.type + '" data-id="' + action.id + '">' + escapeHtml(action.label) + '</button>';
+        html += '</details>';
     }
-    html += '</div>';
-    return html;
+
+    container.innerHTML = html || '<div class="empty-state"><h2>No active students</h2></div>';
 }
+
+let hubWired = false;
+function wireHubHandlers() {
+    if (hubWired) return;
+    hubWired = true;
+    const container = document.getElementById('studio-content');
+    container.addEventListener('click', async e => {
+        const t = e.target;
+        if (t.closest('.roster-head') && !t.closest('button.btn')) {
+            const row = t.closest('.roster-row');
+            if (row && !row.closest('details')) row.classList.toggle('open');
+            return;
+        }
+        if (t.classList.contains('slot-open')) {
+            const f = document.getElementById(t.dataset.fid);
+            if (f) f.classList.toggle('open');
+        } else if (t.classList.contains('slot-assign') || t.classList.contains('slot-change')) {
+            const f = document.getElementById(t.dataset.fid);
+            const title = f.querySelector('.sf-t').value.trim();
+            if (!title) { showToast('Enter a title.'); return; }
+            const composer = f.querySelector('.sf-c').value.trim() || null;
+            let error;
+            if (t.classList.contains('slot-assign')) {
+                ({ error } = await sb.from('jury_selections').insert({
+                    jury_plan_id: t.dataset.planId, requirement_slot: t.dataset.slot,
+                    title, composer, status: 'accepted', proposed_by: 'teacher' }));
+            } else {
+                ({ error } = await sb.from('jury_selections').update({ title, composer }).eq('id', t.dataset.selId));
+            }
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast(t.classList.contains('slot-assign') ? 'Assigned' : 'Changed');
+            renderStudentsHub();
+        } else if (t.classList.contains('slot-clear')) {
+            const { error } = await sb.from('jury_selections').update({ status: 'dropped' }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('Slot cleared');
+            renderStudentsHub();
+        } else if (t.classList.contains('slot-accept')) {
+            const slot = prompt('Which requirement slot does this piece fill? (exactly as listed)');
+            if (!slot) return;
+            const { error } = await sb.from('jury_selections').update({ status: 'accepted', requirement_slot: slot.trim() }).eq('id', t.dataset.selId);
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('Accepted into slot');
+            renderStudentsHub();
+        } else if (t.classList.contains('plan-start')) {
+            const { error } = await sb.from('jury_plans').insert({
+                student_id: t.dataset.studentId, program_key: t.dataset.pk,
+                semester: 'Fall 2026', status: 'planning', jury_date: '2026-12-05' });
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('Jury plan started');
+            renderStudentsHub();
+        } else if (t.classList.contains('goals-save')) {
+            const ta = container.querySelector('textarea.goals-text[data-student-id="' + t.dataset.studentId + '"]');
+            const { error } = await sb.from('students').update({ goals: ta.value }).eq('id', t.dataset.studentId);
+            if (error) { showToast('Error: ' + error.message); return; }
+            studentsCache = null;
+            showToast('Goals saved to their Analytics page');
+        } else if (t.classList.contains('hist-review')) {
+            handleStudioAction('review-log', t.dataset.lessonId, t.dataset.studentId);
+        } else if (t.classList.contains('view-portal')) {
+            window.open('dashboard.html?view_as=' + t.dataset.studentId, '_blank');
+        } else if (t.classList.contains('goto-inbox')) {
+            navigateTo('inbox');
+        }
+    });
+}
+function renderStudio() { return renderStudentsHub(); }
+
+// ============================================================
+// ANNOUNCEMENTS (Studio Desk)
+// ============================================================
+
+async function renderAnnouncementsDesk() {
+    const list = document.getElementById('ann-list');
+    list.innerHTML = '<p class="loading-text">Loading...</p>';
+    const { data } = await sb.from('studio_announcements').select('*').order('created_at', { ascending: false }).limit(30);
+    const anns = data || [];
+    list.innerHTML = anns.length ? anns.map(a =>
+        '<div class="hist-row" style="display: block;">' +
+        '<p class="meta" style="margin: 0 0 0.15rem;">' + formatShortDate(String(a.created_at).slice(0, 10)) +
+        (a.expires_at ? ' · expires ' + formatShortDate(a.expires_at) : '') +
+        ' <button class="btn ghost ann-del" data-id="' + a.id + '" style="float: right; font-size: 11px; padding: 0.15rem 0.5rem;">Delete</button></p>' +
+        (a.title ? '<p style="margin: 0; font-weight: 600;">' + escapeHtml(a.title) + '</p>' : '') +
+        '<p style="margin: 0; font-size: 14px;">' + escapeHtml(a.body || '') + '</p></div>').join('')
+        : '<p class="meta">Nothing posted.</p>';
+    list.querySelectorAll('.ann-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this announcement?')) return;
+        await sb.from('studio_announcements').delete().eq('id', b.dataset.id);
+        renderAnnouncementsDesk();
+    }));
+}
+document.getElementById('ann-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const title = document.getElementById('ann-title').value.trim();
+    const body = document.getElementById('ann-body').value.trim();
+    const expires = document.getElementById('ann-expires').value || null;
+    if (!body) { showToast('Write the announcement.'); return; }
+    const { error } = await sb.from('studio_announcements').insert({ title: title || null, body, expires_at: expires });
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Posted to all student dashboards; emails go out within five minutes');
+    document.getElementById('ann-form').reset();
+    renderAnnouncementsDesk();
+});
 
 async function handleStudioAction(type, id, studentId) {
     if (type === 'review-log' || type === 'view-log') {
@@ -2540,8 +1421,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Keep old function name references for backward compatibility
-async function renderToday() { await renderStudio(); }
-async function renderPulse() { await renderStudio(); }
 
 // Old renderToday/renderPulse code has been removed. renderStudio replaces both.
 
@@ -2550,1288 +1429,6 @@ async function renderPulse() { await renderStudio(); }
 // STUDENTS VIEW
 // ============================================================
 
-async function renderStudents() {
-    const container = document.getElementById('students-content');
-    container.innerHTML = '<p class="loading-text">Loading roster...</p>';
-
-    const students = await getStudents();
-
-    // Get lesson counts, last dates, and draft counts
-    const { data: lessonsData } = await sb.from('lesson_logs')
-        .select('student_id, date, approved')
-        .order('date', { ascending: false });
-
-    const lessonCountMap = {};
-    const lastLessonMap = {};
-    const draftCountMap = {};
-    (lessonsData || []).forEach(l => {
-        if (!lessonCountMap[l.student_id]) lessonCountMap[l.student_id] = 0;
-        lessonCountMap[l.student_id]++;
-        if (!lastLessonMap[l.student_id]) lastLessonMap[l.student_id] = l.date;
-        if (!l.approved) {
-            if (!draftCountMap[l.student_id]) draftCountMap[l.student_id] = 0;
-            draftCountMap[l.student_id]++;
-        }
-    });
-
-    let html = '';
-    students.forEach(s => {
-        const count = lessonCountMap[s.id] || 0;
-        const lastDate = lastLessonMap[s.id];
-        const drafts = draftCountMap[s.id] || 0;
-        html += '<div class="card" data-student-id="' + s.id + '">';
-        html += '<div class="card-header">';
-        html += '<div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">';
-        html += '<span class="card-name">' + escapeHtml(s.name) + '</span>';
-        if (drafts > 0) {
-            html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(156, 92, 92, 0.12); color: #8b4040;">' + drafts + ' draft' + (drafts > 1 ? 's' : '') + ' pending</span>';
-        }
-        html += '<span class="card-meta">' + escapeHtml((s.voice_type || '') + (s.degree_program ? ', ' + s.degree_program : '')) + '</span>';
-        html += '<span class="card-meta">' + count + ' lessons' + (lastDate ? ' | Last: ' + formatShortDate(lastDate) : '') + '</span>';
-        html += '</div>';
-        html += '<span class="card-chevron">\u25BC</span>';
-        html += '</div>';
-        html += '<div class="card-body"><p class="loading-text">Click to load details...</p></div>';
-        html += '</div>';
-    });
-
-    if (students.length === 0) {
-        html = '<div class="empty-state"><h2>No active students</h2></div>';
-    }
-
-    // Archived students: full history retained, portal still viewable
-    const { data: archived } = await sb.from('students').select('*')
-        .neq('status', 'active').order('name');
-    if (archived && archived.length) {
-        html += '<details style="margin-top: 2rem;"><summary style="cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Archived (' + archived.length + ')</summary>';
-        archived.forEach(a2 => {
-            html += '<div style="display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.2rem; border-bottom: 1px solid var(--border-color); font-size: 14px;">';
-            html += '<strong>' + escapeHtml(a2.name) + '</strong>';
-            html += '<span style="color: var(--text-muted); font-size: 12.5px;">' + escapeHtml((lessonCountMap[a2.id] || 0) + ' lessons on record') + '</span>';
-            html += '<button class="btn-view-student" style="margin-left: auto;" onclick="window.open(\'dashboard.html?view_as=' + a2.id + '\')">View Portal</button>';
-            html += '</div>';
-        });
-        html += '</details>';
-    }
-
-    container.innerHTML = html;
-
-    // Lazy-load student details on expand
-    container.querySelectorAll('.card-header').forEach(el => {
-        el.addEventListener('click', async () => {
-            const card = el.closest('.card');
-            const wasExpanded = card.classList.contains('expanded');
-            card.classList.toggle('expanded');
-
-            if (!wasExpanded && card.dataset.loaded !== 'true') {
-                card.dataset.loaded = 'true';
-                const sid = card.dataset.studentId;
-                try {
-                    await loadStudentDetail(card.querySelector('.card-body'), sid);
-                } catch (err) {
-                    console.error('Error loading student detail:', err);
-                    card.querySelector('.card-body').innerHTML = '<p style="color: #8b4040;">Error loading details: ' + escapeHtml(err.message) + '</p>';
-                }
-            }
-        });
-    });
-}
-
-async function loadStudentDetail(bodyEl, studentId) {
-    bodyEl.innerHTML = '<p class="loading-text">Loading...</p>';
-
-    const [repRes, lessonsRes, reflRes, juryRes] = await Promise.all([
-        sb.from('repertoire').select('*').eq('student_id', studentId).order('title'),
-        sb.from('lesson_logs').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(10),
-        sb.from('reflections').select('*').eq('student_id', studentId).order('date_submitted', { ascending: false }).limit(1),
-        sb.from('jury_feedback').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(5)
-    ]);
-
-    const rep = repRes.data || [];
-    const lessons = lessonsRes.data || [];
-    const reflection = (reflRes.data || [])[0];
-    const juries = juryRes.data || [];
-
-    let html = '<div class="brief-content">';
-
-    // Repertoire & Jury Plan (integrated)
-    const studentRec = (await sb.from('students').select('*').eq('id', studentId).single()).data;
-    const programKey = studentRec ? (studentRec.program_key || programKeyFromDegree(studentRec.degree_program)) : null;
-    const jurySlots = (programKey && JURY_REQUIREMENTS[programKey]) ? JURY_REQUIREMENTS[programKey] : [];
-
-    const { data: juryPlansData } = await sb.from('jury_plans').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(1);
-    const juryPlan = (juryPlansData || [])[0];
-    let jurySelections = [];
-    if (juryPlan) {
-        const { data: selData } = await sb.from('jury_selections').select('*').eq('jury_plan_id', juryPlan.id).order('requirement_slot');
-        jurySelections = selData || [];
-    }
-
-    // Build a map: title (lowercase) → jury selection info
-    const juryByTitle = {};
-    jurySelections.forEach(s => {
-        if (s.title) juryByTitle[s.title.toLowerCase()] = s;
-    });
-
-    html += '<div class="detail-section"><h4>Repertoire & Jury Plan</h4>';
-
-    // Jury plan summary header
-    if (juryPlan) {
-        const statusLabel = (juryPlan.status || 'planning').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const filledCount = jurySelections.filter(s => s.status === 'accepted' || s.status === 'confirmed' || s.status === 'approved').length;
-        const proposedCount = jurySelections.filter(s => s.status === 'proposed').length;
-        html += '<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 0.75rem;">';
-        html += '<strong>Jury:</strong> ' + escapeHtml(statusLabel);
-        html += ' · ' + filledCount + '/' + jurySlots.length + ' slots filled';
-        if (proposedCount > 0) html += ' · ' + proposedCount + ' pending';
-        if (juryPlan.jury_date) html += ' · Date: ' + escapeHtml(formatShortDate(juryPlan.jury_date));
-        if (juryPlan.status === 'exempt') html += ' · ' + escapeHtml(juryPlan.exemption_reason || 'Exempt');
-        html += '</div>';
-    }
-
-    if (rep.length === 0 && jurySelections.length === 0) {
-        html += '<p style="color: var(--text-muted);">No repertoire entries.</p>';
-    } else {
-        html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-        html += '<th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th><th>Status</th><th>Jury Slot</th>';
-        html += '</tr></thead><tbody>';
-
-        // Track which jury selections are represented in rep
-        const juryTitlesShown = new Set();
-
-        rep.forEach(r => {
-            const jurySel = juryByTitle[(r.title || '').toLowerCase()];
-            if (jurySel) juryTitlesShown.add(jurySel.id);
-
-            html += '<tr>';
-            html += '<td>' + escapeHtml(r.title) + '</td>';
-            html += '<td>' + escapeHtml(r.composer || '') + '</td>';
-            html += '<td>' + escapeHtml(r.style || '') + '</td>';
-            html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
-            html += '<td>' + escapeHtml(r.status || '') + '</td>';
-            html += '<td>';
-            if (jurySel && jurySel.status !== 'dropped') {
-                html += '<span style="font-size: 11px;">' + escapeHtml(jurySel.requirement_slot || '') + '</span> ';
-                if (jurySel.status === 'approved' || jurySel.status === 'accepted' || jurySel.status === 'confirmed') {
-                    html += '<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-                } else if (jurySel.status === 'proposed') {
-                    html += '<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
-                    if (jurySel.proposed_by === 'student') {
-                        html += ' <button class="btn-jury-approve" data-sel-id="' + jurySel.id + '" style="font-size: 10px; padding: 0.15rem 0.4rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
-                    }
-                }
-            }
-            html += '</td>';
-            html += '</tr>';
-        });
-
-        // Show jury selections not yet in the repertoire table
-        jurySelections.filter(s => !juryTitlesShown.has(s.id) && s.status !== 'dropped').forEach(sel => {
-            html += '<tr style="color: var(--text-muted); font-style: italic;">';
-            html += '<td>' + escapeHtml(sel.title || '') + '</td>';
-            html += '<td>' + escapeHtml(sel.composer || '') + '</td>';
-            html += '<td></td><td></td><td></td>';
-            html += '<td>';
-            html += '<span style="font-size: 11px;">' + escapeHtml(sel.requirement_slot || '') + '</span> ';
-            if (sel.status === 'proposed') {
-                html += '<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(196, 154, 60, 0.15); color: #9a7a2a;">Proposed</span>';
-                if (sel.proposed_by === 'student') {
-                    html += ' <button class="btn-jury-approve" data-sel-id="' + sel.id + '" style="font-size: 10px; padding: 0.15rem 0.4rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
-                }
-            }
-            html += '</td>';
-            html += '</tr>';
-        });
-
-        // Show unfilled jury slots
-        if (juryPlan && juryPlan.status !== 'exempt') {
-            const filledSlots = new Set(jurySelections.filter(s => s.status !== 'dropped').map(s => s.requirement_slot));
-            jurySlots.filter(slot => !filledSlots.has(slot)).forEach(slot => {
-                html += '<tr style="color: var(--text-muted);">';
-                html += '<td colspan="5"></td>';
-                html += '<td><span style="font-size: 11px;">' + escapeHtml(slot) + '</span> <span style="font-size: 10px; font-style: italic;">unfilled</span></td>';
-                html += '</tr>';
-            });
-        }
-
-        html += '</tbody></table></div>';
-
-        // Unified "Add a Piece" form with optional jury slot
-        html += '<div class="form-card" style="margin-top: 1rem;"><h3>Add a Piece</h3>';
-        html += '<form class="teacher-add-piece-form" data-student-id="' + studentId + '"' + (juryPlan ? ' data-plan-id="' + juryPlan.id + '"' : '') + '>';
-        html += '<div class="form-row-inline">';
-        html += '<div class="form-row"><label>Title</label><input type="text" name="piece-title" required></div>';
-        html += '<div class="form-row"><label>Composer</label><input type="text" name="piece-composer"></div>';
-        html += '</div>';
-        html += '<div class="form-row-inline">';
-        html += '<div class="form-row"><label>Style</label>';
-        html += '<select name="piece-style"><option value="">Select...</option>';
-        html += '<option value="classical">Classical</option><option value="MT">Musical Theater</option>';
-        html += '<option value="pop-rock">Pop/Rock</option><option value="jazz">Jazz</option>';
-        html += '<option value="folk">Folk</option><option value="art song">Art Song</option>';
-        html += '<option value="other">Other</option></select></div>';
-        if (juryPlan && juryPlan.status !== 'exempt') {
-            html += '<div class="form-row"><label>Jury Slot</label><select name="piece-jury-slot">';
-            html += '<option value="">Not for jury</option>';
-            jurySlots.forEach(s => { html += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
-            html += '</select></div>';
-        }
-        html += '</div>';
-        html += '<button type="submit" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit; margin-top: 0.5rem;">Add</button>';
-        html += '</form></div>';
-    }
-    html += '</div>';
-
-    // Lessons with approve flow and full content
-    html += '<div class="detail-section"><h4>Lesson Logs (' + lessons.length + ')</h4>';
-    if (lessons.length === 0) {
-        html += '<p style="color: var(--text-muted);">No lessons recorded.</p>';
-    } else {
-        lessons.forEach(l => {
-            const approved = l.approved;
-            const lid = 'lesson-detail-' + l.id;
-            html += '<div style="margin-bottom: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius);">';
-            // Header row (clickable to expand)
-            html += '<div class="lesson-log-header" data-target="' + lid + '" style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'var(--bg-warm)\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<div style="display: flex; align-items: center; gap: 0.75rem;">';
-            html += '<strong style="font-size: 14px;">' + escapeHtml(formatShortDate(l.date)) + '</strong>';
-            if (l.repertoire_worked) {
-                const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked) : l.repertoire_worked;
-                if (Array.isArray(rw) && rw.length > 0) {
-                    const titles = rw.map(r => typeof r === 'string' ? r.split(' — ')[0].split(' -- ')[0] : (r.title || '')).filter(Boolean);
-                    html += '<span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(titles.join(', ').substring(0, 80)) + '</span>';
-                }
-            }
-            html += '</div>';
-            html += '<div style="display: flex; align-items: center; gap: 0.5rem;">';
-            if (approved) {
-                html += '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 3px; background: rgba(90, 138, 90, 0.12); color: #5a8a5a;">Approved</span>';
-            } else {
-                html += '<button class="btn-approve" data-lesson-id="' + l.id + '" data-student-id="' + studentId + '" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; border-radius: 3px; background: var(--primary-color); color: #fff; border: none; cursor: pointer; font-family: inherit;">Approve</button>';
-            }
-            html += '<span style="font-size: 11px; color: var(--text-muted);">&#9660;</span>';
-            html += '</div></div>';
-            // Expandable detail
-            html += '<div id="' + lid + '" style="display: none; padding: 0 1rem 1rem; border-top: 1px solid var(--border-color); font-size: 13px; line-height: 1.7;">';
-            // Render all available fields
-            const fields = [
-                { key: 'head_observations', label: 'Head (Intention)' },
-                { key: 'heart_observations', label: 'Heart (Expression)' },
-                { key: 'hand_observations', label: 'Hand (Function)' },
-                { key: 'warmth_brightness_notes', label: 'Warmth/Brightness/Buzziness' },
-                { key: 'motor_learning_phase', label: 'Motor Learning Phase' },
-                { key: 'ease_assessment', label: 'Ease Assessment' },
-                { key: 'breakthroughs', label: 'Breakthroughs / What Shifted' },
-                { key: 'pivots', label: 'Pivots' },
-                { key: 'next_steps', label: 'Next Steps' },
-                { key: 'plan_for_next_lesson', label: 'Plan for Next Lesson' },
-            ];
-            fields.forEach(f => {
-                const val = l[f.key];
-                if (val && val.trim()) {
-                    html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">' + f.label + '</strong>';
-                    html += '<div style="margin-top: 0.25rem;">' + markdownToHtml(val) + '</div></div>';
-                }
-            });
-            // Exercises
-            if (l.exercises) {
-                const exArr = typeof l.exercises === 'string' ? JSON.parse(l.exercises) : l.exercises;
-                if (Array.isArray(exArr) && exArr.length > 0) {
-                    html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">Exercises (' + exArr.length + ')</strong>';
-                    exArr.forEach(ex => {
-                        html += '<div style="margin: 0.5rem 0 0.5rem 0.75rem; padding-left: 0.75rem; border-left: 2px solid var(--border-color);">';
-                        html += '<strong>' + escapeHtml(ex.name || 'Unnamed') + '</strong>';
-                        if (ex.pattern) html += '<br><span style="color: var(--text-muted);">' + escapeHtml(ex.pattern) + '</span>';
-                        if (ex.functional_purpose) html += '<br>' + escapeHtml(ex.functional_purpose);
-                        if (ex.category) html += '<br><span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">' + escapeHtml(ex.category) + '</span>';
-                        html += '</div>';
-                    });
-                    html += '</div>';
-                }
-            }
-            // Categories
-            if (l.exercise_categories_addressed && l.exercise_categories_addressed.length > 0) {
-                html += '<div style="margin-top: 0.75rem;"><strong style="color: var(--primary-color);">Categories</strong><div style="margin-top: 0.25rem;">';
-                ALL_CATEGORIES.forEach(c => {
-                    const covered = l.exercise_categories_addressed.includes(c);
-                    html += '<span class="category-check ' + (covered ? 'covered' : 'uncovered') + '">' + (CATEGORY_LABELS[c] || c) + '</span>';
-                });
-                html += '</div></div>';
-            }
-            html += '</div></div>';
-        });
-    }
-    html += '</div>';
-
-    // Add lesson expand/collapse handlers after render
-    setTimeout(() => {
-        document.querySelectorAll('.lesson-log-header').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-approve')) return;
-                const target = document.getElementById(el.dataset.target);
-                if (target) target.style.display = target.style.display === 'none' ? 'block' : 'none';
-            });
-        });
-    }, 100);
-
-    // Motor learning phase from most recent lesson
-    if (lessons.length > 0 && lessons[0].motor_learning_phase) {
-        html += '<div class="detail-section"><h4>Motor Learning Phase</h4>';
-        html += '<p>' + escapeHtml(lessons[0].motor_learning_phase) + '</p>';
-        html += '</div>';
-    }
-
-    // Latest reflection
-    html += '<div class="detail-section"><h4>Latest Reflection</h4>';
-    if (!reflection) {
-        html += '<p style="color: var(--text-muted);">No reflections submitted.</p>';
-    } else {
-        html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(formatShortDate(reflection.date_submitted)) + '</p>';
-        if (reflection.practice_summary) html += '<p>' + escapeHtml(reflection.practice_summary) + '</p>';
-        if (reflection.self_observations) html += '<p>' + escapeHtml(reflection.self_observations) + '</p>';
-        const scores = [];
-        if (reflection.voice_feeling) scores.push('Voice feeling: ' + reflection.voice_feeling + '/10');
-        if (reflection.artistic_confidence) scores.push('Artistic confidence: ' + reflection.artistic_confidence + '/10');
-        if (reflection.engagement) scores.push('Engagement: ' + reflection.engagement + '/10');
-        if (scores.length) html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(scores.join(' | ')) + '</p>';
-        if (reflection.questions) html += '<p><strong>Questions:</strong> ' + escapeHtml(reflection.questions) + '</p>';
-        if (reflection.wins) html += '<p><strong>Wins:</strong> ' + escapeHtml(reflection.wins) + '</p>';
-    }
-    html += '</div>';
-
-    // Jury / hearing feedback
-    if (juries.length > 0) {
-        html += '<div class="detail-section"><h4>Jury / Hearing Feedback</h4>';
-        juries.forEach(j => {
-            html += '<div class="feedback-block">';
-            html += '<p class="fb-panelist">' + escapeHtml(j.panelist_name || 'Unknown Panelist') + (j.panelist_role ? ' (' + escapeHtml(j.panelist_role) + ')' : '') + '</p>';
-            html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(j.event_type || '') + ' on ' + escapeHtml(formatShortDate(j.date)) + (j.outcome ? ' : ' + escapeHtml(j.outcome) : '') + '</p>';
-            if (j.comments) html += '<p>' + escapeHtml(j.comments) + '</p>';
-            html += '</div>';
-        });
-        html += '</div>';
-    }
-
-    // Category coverage (last 3 lessons)
-    if (lessons.length > 0) {
-        const catCounts = {};
-        ALL_CATEGORIES.forEach(c => { catCounts[c] = 0; });
-        lessons.forEach(l => {
-            (l.exercise_categories_addressed || []).forEach(c => {
-                if (catCounts[c] !== undefined) catCounts[c]++;
-            });
-        });
-        html += '<div class="detail-section"><h4>Category Coverage (Last ' + lessons.length + ' Lessons)</h4><div>';
-        ALL_CATEGORIES.forEach(c => {
-            const count = catCounts[c];
-            html += '<span class="category-check ' + (count > 0 ? 'covered' : 'uncovered') + '">' + CATEGORY_LABELS[c] + ' (' + count + ')</span>';
-        });
-        html += '</div></div>';
-    }
-
-    // View as Student button
-    html += '<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">';
-    html += '<button class="btn-view-student" onclick="viewAsStudent(\'' + studentId + '\')">View Student Portal</button>';
-    html += '</div>';
-
-    html += '</div>';
-    bodyEl.innerHTML = html;
-}
-
-// ============================================================
-// REPERTOIRE VIEW
-// ============================================================
-
-let repertoireData = [];
-let repertoireFilter = 'all';
-let repertoireSortCol = 0;
-let repertoireSortAsc = true;
-
-async function renderRepertoire() {
-    const container = document.getElementById('repertoire-content');
-    container.innerHTML = '<p class="loading-text">Loading repertoire...</p>';
-
-    const students = await getStudents();
-    const sMap = studentNameMap(students);
-
-    let data;
-    try {
-        const res = await sb.from('repertoire').select('*').order('title');
-        data = res.data;
-    } catch (err) {
-        console.error('[Teacher] renderRepertoire fetch error:', err);
-        container.innerHTML = '<p class="text-muted">Error loading repertoire. Check console for details.</p>';
-        return;
-    }
-    repertoireData = (data || []).map(r => ({
-        ...r,
-        studentName: sMap[r.student_id] ? sMap[r.student_id].name : 'Unknown'
-    }));
-
-    repertoireFilter = 'all';
-    repertoireSortCol = 0;
-    repertoireSortAsc = true;
-    renderRepertoireTable(container);
-}
-
-function renderRepertoireTable(container) {
-    let filtered = repertoireData;
-    if (repertoireFilter === 'performance_ready') {
-        filtered = filtered.filter(r => r.status && r.status.toLowerCase().includes('performance') || r.status && r.status.toLowerCase().includes('ready'));
-    } else if (repertoireFilter === 'in_progress') {
-        filtered = filtered.filter(r => r.status && r.status.toLowerCase().includes('progress'));
-    } else if (repertoireFilter === 'assigned') {
-        filtered = filtered.filter(r => r.status && r.status.toLowerCase().includes('assigned'));
-    }
-
-    const cols = ['studentName', 'title', 'composer', 'style', 'learning_phase', 'status', 'timeline'];
-    filtered.sort((a, b) => {
-        let va = (a[cols[repertoireSortCol]] || '').toString().toLowerCase();
-        let vb = (b[cols[repertoireSortCol]] || '').toString().toLowerCase();
-        if (va < vb) return repertoireSortAsc ? -1 : 1;
-        if (va > vb) return repertoireSortAsc ? 1 : -1;
-        return 0;
-    });
-
-    const colLabels = ['Student', 'Piece', 'Composer', 'Style', 'Phase', 'Status', 'Timeline'];
-
-    let html = '<div class="filter-bar">';
-    ['all', 'performance_ready', 'in_progress', 'assigned'].forEach(f => {
-        const label = { all: 'All', performance_ready: 'Performance Ready', in_progress: 'In Progress', assigned: 'Assigned' }[f];
-        html += '<button class="filter-btn ' + (repertoireFilter === f ? 'active' : '') + '" data-filter="' + f + '">' + label + '</button>';
-    });
-    html += '</div>';
-
-    html += '<div class="table-scroll"><table class="data-table" id="rep-table"><thead><tr>';
-    colLabels.forEach((label, i) => {
-        let cls = '';
-        if (i === repertoireSortCol) cls = repertoireSortAsc ? 'sorted-asc' : 'sorted-desc';
-        html += '<th class="' + cls + '" data-col="' + i + '">' + label + '</th>';
-    });
-    html += '</tr></thead><tbody>';
-
-    if (filtered.length === 0) {
-        html += '<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 2rem;">No repertoire found.</td></tr>';
-    }
-
-    filtered.forEach(r => {
-        html += '<tr>';
-        html += '<td><strong>' + escapeHtml(r.studentName) + '</strong></td>';
-        html += '<td>' + escapeHtml(r.title || '') + '</td>';
-        html += '<td>' + escapeHtml(r.composer || '') + '</td>';
-        html += '<td>' + escapeHtml(r.style || '') + '</td>';
-        html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
-        html += '<td>' + escapeHtml(r.status || '') + '</td>';
-        html += '<td>' + escapeHtml(r.timeline ? formatShortDate(r.timeline) : '') + '</td>';
-        html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-
-    container.innerHTML = html;
-
-    // Filter handlers
-    container.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            repertoireFilter = btn.dataset.filter;
-            renderRepertoireTable(container);
-        });
-    });
-
-    // Sort handlers
-    container.querySelectorAll('#rep-table th').forEach(th => {
-        th.addEventListener('click', () => {
-            const col = parseInt(th.dataset.col);
-            if (col === repertoireSortCol) {
-                repertoireSortAsc = !repertoireSortAsc;
-            } else {
-                repertoireSortCol = col;
-                repertoireSortAsc = true;
-            }
-            renderRepertoireTable(container);
-        });
-    });
-}
-
-// ============================================================
-// ANNOUNCEMENTS VIEW
-// ============================================================
-
-let announcementStudents = [];
-
-async function renderAnnouncements() {
-    const container = document.getElementById('announcements-content');
-    container.innerHTML = '<p class="loading-text">Loading announcements...</p>';
-
-    const students = await getStudents();
-    announcementStudents = students;
-
-    let announcements;
-    try {
-        const res = await sb.from('studio_announcements').select('*').order('created_at', { ascending: false });
-        announcements = res.data || [];
-    } catch (err) {
-        console.error('[Teacher] renderAnnouncements fetch error:', err);
-        container.innerHTML = '<p class="text-muted">Error loading announcements. Check console for details.</p>';
-        return;
-    }
-    const today = todayStr();
-
-    const active = announcements.filter(a => !a.expires_at || a.expires_at >= today);
-    const expired = announcements.filter(a => a.expires_at && a.expires_at < today);
-
-    let html = '';
-
-    // Post new announcement form
-    html += '<div class="form-card"><h3>Post New Announcement</h3>';
-    html += '<form id="announcement-form">';
-    html += '<div class="form-row"><label>Title</label><input type="text" id="ann-title" required></div>';
-    html += '<div class="form-row"><label>Body</label><textarea id="ann-body" required></textarea></div>';
-    html += '<div class="form-row-inline">';
-    html += '<div class="form-row"><label>Type</label><select id="ann-type">';
-    html += '<option value="general">General</option><option value="competition">Competition</option><option value="deadline">Deadline</option><option value="event">Event</option><option value="policy">Policy</option>';
-    html += '</select></div>';
-    html += '<div class="form-row"><label>Expires</label><input type="date" id="ann-expires"></div>';
-    html += '</div>';
-    html += '<div class="form-row"><div class="form-check"><input type="checkbox" id="ann-pinned"><label for="ann-pinned">Pin this announcement</label></div></div>';
-    html += '<div class="form-row"><label>Recommended Students (optional)</label>';
-    html += '<div class="checkbox-group" id="ann-students">';
-    students.forEach(s => {
-        html += '<label><input type="checkbox" value="' + s.id + '">' + escapeHtml(s.name) + '</label>';
-    });
-    html += '</div></div>';
-    html += '<button type="submit" class="btn btn-primary">Post Announcement</button>';
-    html += '</form></div>';
-
-    // Active announcements
-    html += '<div class="section-label">Active Announcements (' + active.length + ')</div>';
-    if (active.length === 0) {
-        html += '<p class="loading-text">No active announcements.</p>';
-    }
-    active.forEach(a => {
-        html += renderAnnouncementCard(a, students, false);
-    });
-
-    // Expired
-    if (expired.length > 0) {
-        html += '<div class="section-label" style="cursor: pointer;" id="expired-toggle">Expired / Past (' + expired.length + ') \u25BC</div>';
-        html += '<div id="expired-list" style="display: none;">';
-        expired.forEach(a => {
-            html += renderAnnouncementCard(a, students, true);
-        });
-        html += '</div>';
-    }
-
-    container.innerHTML = html;
-
-    // Form submit
-    document.getElementById('announcement-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await postAnnouncement();
-    });
-
-    // Edit/Delete handlers
-    container.querySelectorAll('.ann-edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => editAnnouncement(btn.dataset.id));
-    });
-    container.querySelectorAll('.ann-delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => deleteAnnouncement(btn.dataset.id));
-    });
-
-    // Expired toggle
-    const expToggle = document.getElementById('expired-toggle');
-    if (expToggle) {
-        expToggle.addEventListener('click', () => {
-            const list = document.getElementById('expired-list');
-            list.style.display = list.style.display === 'none' ? 'block' : 'none';
-        });
-    }
-}
-
-function renderAnnouncementCard(a, students, isExpired) {
-    const sMap = studentNameMap(students);
-    let recNames = '';
-    if (a.recommended_students && a.recommended_students.length > 0) {
-        recNames = a.recommended_students.map(id => sMap[id] ? sMap[id].name : '').filter(Boolean).join(', ');
-    }
-
-    let meta = escapeHtml(a.announcement_type || 'general');
-    if (a.pinned) meta += ' | Pinned';
-    if (a.expires_at) meta += ' | Expires: ' + formatShortDate(a.expires_at);
-    if (a.created_at) meta += ' | Posted: ' + formatShortDate(a.created_at.split('T')[0]);
-
-    let html = '<div class="announcement-card ' + (a.pinned ? 'pinned' : '') + '">';
-    html += '<div class="announcement-title">' + escapeHtml(a.title) + '</div>';
-    html += '<div class="announcement-meta">' + meta + '</div>';
-    html += '<div class="announcement-body">' + escapeHtml(a.body) + '</div>';
-    if (recNames) {
-        html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;">Recommended for: ' + escapeHtml(recNames) + '</p>';
-    }
-    if (!isExpired) {
-        html += '<div class="announcement-actions">';
-        html += '<button class="ann-edit-btn" data-id="' + a.id + '">Edit</button>';
-        html += '<button class="ann-delete-btn delete-btn" data-id="' + a.id + '">Delete</button>';
-        html += '</div>';
-    }
-    html += '</div>';
-    return html;
-}
-
-async function postAnnouncement() {
-    const title = document.getElementById('ann-title').value.trim();
-    const body = document.getElementById('ann-body').value.trim();
-    const type = document.getElementById('ann-type').value;
-    const pinned = document.getElementById('ann-pinned').checked;
-    const expires = document.getElementById('ann-expires').value || null;
-
-    const checked = document.querySelectorAll('#ann-students input:checked');
-    const recStudents = Array.from(checked).map(cb => cb.value);
-
-    if (!title || !body) {
-        showToast('Title and body are required.', 'error');
-        return;
-    }
-
-    const { error } = await sb.from('studio_announcements').insert({
-        title,
-        body,
-        announcement_type: type,
-        pinned,
-        expires_at: expires,
-        recommended_students: recStudents.length > 0 ? recStudents : null
-    });
-
-    if (error) {
-        showToast('Error posting announcement: ' + error.message, 'error');
-    } else {
-        showToast('Announcement posted.');
-        renderAnnouncements();
-    }
-}
-
-async function editAnnouncement(id) {
-    const { data } = await sb.from('studio_announcements').select('*').eq('id', id).single();
-    if (!data) return;
-
-    document.getElementById('ann-title').value = data.title || '';
-    document.getElementById('ann-body').value = data.body || '';
-    document.getElementById('ann-type').value = data.announcement_type || 'general';
-    document.getElementById('ann-pinned').checked = !!data.pinned;
-    document.getElementById('ann-expires').value = data.expires_at || '';
-
-    // Check recommended students
-    document.querySelectorAll('#ann-students input').forEach(cb => {
-        cb.checked = (data.recommended_students || []).includes(cb.value);
-    });
-
-    // Replace form submit with update
-    const form = document.getElementById('announcement-form');
-    const newForm = form.cloneNode(true);
-    form.parentNode.replaceChild(newForm, form);
-    newForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await updateAnnouncement(id);
-    });
-
-    // Scroll to form
-    newForm.scrollIntoView({ behavior: 'smooth' });
-
-    // Change button text
-    newForm.querySelector('button[type="submit"]').textContent = 'Update Announcement';
-}
-
-async function updateAnnouncement(id) {
-    const title = document.getElementById('ann-title').value.trim();
-    const body = document.getElementById('ann-body').value.trim();
-    const type = document.getElementById('ann-type').value;
-    const pinned = document.getElementById('ann-pinned').checked;
-    const expires = document.getElementById('ann-expires').value || null;
-
-    const checked = document.querySelectorAll('#ann-students input:checked');
-    const recStudents = Array.from(checked).map(cb => cb.value);
-
-    const { error } = await sb.from('studio_announcements').update({
-        title,
-        body,
-        announcement_type: type,
-        pinned,
-        expires_at: expires,
-        recommended_students: recStudents.length > 0 ? recStudents : null
-    }).eq('id', id);
-
-    if (error) {
-        showToast('Error updating: ' + error.message, 'error');
-    } else {
-        showToast('Announcement updated.');
-        renderAnnouncements();
-    }
-}
-
-async function deleteAnnouncement(id) {
-    if (!confirm('Delete this announcement?')) return;
-
-    const { error } = await sb.from('studio_announcements').delete().eq('id', id);
-    if (error) {
-        showToast('Error deleting: ' + error.message, 'error');
-    } else {
-        showToast('Announcement deleted.');
-        renderAnnouncements();
-    }
-}
-
-// ============================================================
-// EVENTS VIEW
-// ============================================================
-
-async function renderEvents() {
-    const container = document.getElementById('events-content');
-    container.innerHTML = '<p class="loading-text">Loading events...</p>';
-
-    const students = await getStudents();
-    const sMap = studentNameMap(students);
-    const today = todayStr();
-
-    // Next 60 days
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 60);
-    const futureDateStr = futureDate.toLocaleDateString('en-CA');
-
-    let eventsRes;
-    try {
-        eventsRes = await sb.from('performance_events').select('*').gte('date', today).lte('date', futureDateStr).order('date');
-    } catch (err) {
-        console.error('[Teacher] renderEvents fetch error:', err);
-        container.innerHTML = '<p class="text-muted">Error loading events. Check console for details.</p>';
-        return;
-    }
-
-    const events = eventsRes.data || [];
-
-    let html = '';
-
-    // STUDIO CLASS SESSIONS (recent)
-    let scLogsRes;
-    try {
-        scLogsRes = await sb.from('studio_class_logs').select('*').order('session_date', { ascending: false }).limit(8);
-    } catch (err) {
-        scLogsRes = { data: [] };
-    }
-    const scSessions = scLogsRes.data || [];
-
-    if (scSessions.length > 0) {
-        html += '<div class="section-label">Studio Class Sessions</div>';
-        scSessions.forEach(sc => {
-            const presentList = (sc.students_present || []).join(', ');
-            html += '<div class="event-card" style="cursor: pointer;" onclick="toggleStudioClassDetail(this, \'' + sc.session_date + '\')">';
-            html += '<div class="event-date-col">' + escapeHtml(formatShortDate(sc.session_date)) + '</div>';
-            html += '<div>';
-            html += '<span class="event-type-badge">Studio Class</span>';
-            html += '<strong>' + (sc.students_present || []).length + ' students</strong>';
-            html += ' : ' + escapeHtml(presentList);
-            if (sc.duration_minutes) html += '<span style="color: var(--text-muted); font-size: 13px;"> (' + sc.duration_minutes + ' min)</span>';
-            if (sc.session_overview) {
-                const snippet = sc.session_overview.length > 140 ? sc.session_overview.substring(0, 140) + '...' : sc.session_overview;
-                html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.25rem;">' + escapeHtml(snippet) + '</p>';
-            }
-            html += '</div>';
-            html += '</div>';
-            // Hidden detail panel
-            html += '<div class="sc-detail" data-date="' + sc.session_date + '" style="display:none; padding: 1rem 1.5rem; background: var(--bg-warm); border-radius: var(--radius); margin-bottom: 0.75rem;">';
-            html += '<p class="loading-text">Loading session details...</p>';
-            html += '</div>';
-        });
-        html += '<div style="margin-bottom: 1.5rem;"></div>';
-    }
-
-    // UPCOMING EVENTS
-    html += '<div class="section-label">Upcoming Events</div>';
-
-    // Group events by week
-    if (events.length === 0) {
-        html += '<div class="empty-state"><h2>No upcoming events</h2><p>No performances or juries scheduled in the next 60 days.</p></div>';
-    } else {
-        const weeks = {};
-        events.forEach(ev => {
-            const d = new Date(ev.date + 'T12:00:00');
-            const dayOfWeek = d.getDay();
-            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            const monday = new Date(d);
-            monday.setDate(d.getDate() + mondayOffset);
-            const weekKey = monday.toLocaleDateString('en-CA');
-            if (!weeks[weekKey]) weeks[weekKey] = [];
-            weeks[weekKey].push(ev);
-        });
-
-        Object.keys(weeks).sort().forEach(weekKey => {
-            html += '<div class="event-week-label">' + escapeHtml(formatWeekLabel(weekKey)) + '</div>';
-            weeks[weekKey].forEach(ev => {
-                const st = sMap[ev.student_id];
-                html += '<div class="event-card">';
-                html += '<div class="event-date-col">' + escapeHtml(formatShortDate(ev.date)) + '</div>';
-                html += '<div>';
-                html += '<span class="event-type-badge">' + escapeHtml(ev.event_type || 'Event') + '</span>';
-                html += '<strong>' + escapeHtml(st ? st.name : 'Unknown') + '</strong>';
-                if (ev.title) html += ' : ' + escapeHtml(ev.title);
-                if (ev.location) html += '<span style="color: var(--text-muted); font-size: 13px;"> at ' + escapeHtml(ev.location) + '</span>';
-                if (ev.notes) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.25rem;">' + escapeHtml(ev.notes) + '</p>';
-                html += '</div>';
-                html += '</div>';
-            });
-        });
-    }
-
-    container.innerHTML = html;
-}
-
-async function toggleStudioClassDetail(card, sessionDate) {
-    const detail = card.nextElementSibling;
-    if (!detail || !detail.classList.contains('sc-detail')) return;
-
-    if (detail.style.display === 'none') {
-        detail.style.display = 'block';
-
-        // Load feedback for this session
-        try {
-            const [{ data: feedbackData }, { data: logData }] = await Promise.all([
-                sb.from('studio_class_feedback').select('*, students(name)').eq('studio_class_date', sessionDate),
-                sb.from('studio_class_logs').select('cross_student_themes').eq('session_date', sessionDate)
-            ]);
-
-            let detailHtml = '';
-
-            // Per-student sections
-            (feedbackData || []).forEach(fb => {
-                const name = fb.students ? fb.students.name : 'Unknown';
-                detailHtml += '<div style="margin-bottom: 1rem;">';
-                detailHtml += '<strong>' + escapeHtml(name) + '</strong>';
-                if (fb.repertoire_performed) detailHtml += ' : ' + escapeHtml(fb.repertoire_performed);
-                if (fb.kayla_feedback) {
-                    const preview = fb.kayla_feedback.length > 300 ? fb.kayla_feedback.substring(0, 300) + '...' : fb.kayla_feedback;
-                    detailHtml += '<p style="font-size: 13px; color: var(--text-color); margin-top: 0.25rem; white-space: pre-line;">' + escapeHtml(preview) + '</p>';
-                }
-                detailHtml += '</div>';
-            });
-
-            // Cross-student themes
-            if (logData && logData[0] && logData[0].cross_student_themes) {
-                detailHtml += '<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">';
-                detailHtml += '<strong style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Cross-Student Themes</strong>';
-                const themes = logData[0].cross_student_themes.length > 500 ? logData[0].cross_student_themes.substring(0, 500) + '...' : logData[0].cross_student_themes;
-                detailHtml += '<p style="font-size: 13px; margin-top: 0.25rem; white-space: pre-line;">' + escapeHtml(themes) + '</p>';
-                detailHtml += '</div>';
-            }
-
-            detail.innerHTML = detailHtml || '<p class="text-muted">No feedback recorded for this session.</p>';
-        } catch (err) {
-            detail.innerHTML = '<p class="text-muted">Error loading session details.</p>';
-        }
-    } else {
-        detail.style.display = 'none';
-    }
-}
-
-// ============================================================
-// STUDENT VIEW (View as Student)
-// ============================================================
-
-let svCurrentDetail = null; // tracks which detail panel is open
-
-function closeStudentView() {
-    document.getElementById('page-student-view').style.display = 'none';
-    document.body.style.overflow = '';
-    svCurrentDetail = null;
-}
-
-async function viewAsStudent(studentId) {
-    // Opens the REAL student dashboard in read-only view-as mode, so what the
-    // teacher sees is exactly what the student sees (no drifting recreation).
-    window.open('dashboard.html?view_as=' + encodeURIComponent(studentId), '_blank');
-    return;
-}
-
-async function viewAsStudent_legacyOverlay(studentId) {
-    const overlay = document.getElementById('page-student-view');
-    const body = document.getElementById('sv-body');
-    body.innerHTML = '<p class="loading-text">Loading student dashboard...</p>';
-    overlay.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-
-    // Get student name
-    const students = await getStudents();
-    const student = students.find(s => s.id === studentId);
-    const studentName = student ? student.name.split(' ')[0] : 'Student';
-    document.getElementById('sv-student-name').textContent = student ? student.name : 'Student';
-
-    // Fetch all data in parallel
-    const today = todayStr();
-    const [lessonsRes, plansRes, reflectionsRes, repRes, eventsRes, studioRes, annRes] = await Promise.all([
-        sb.from('lesson_logs').select('*').eq('student_id', studentId).order('date', { ascending: false }).limit(10),
-        sb.from('practice_plans').select('*').eq('student_id', studentId).in('status', ['approved', 'delivered']).order('date_generated', { ascending: false }).limit(5),
-        sb.from('reflections').select('*').eq('student_id', studentId).order('date_submitted', { ascending: false }).limit(5),
-        sb.from('repertoire').select('*').eq('student_id', studentId).order('timeline'),
-        sb.from('performance_events').select('*').eq('student_id', studentId).order('date'),
-        sb.from('studio_class_feedback').select('*').eq('student_id', studentId).order('studio_class_date', { ascending: false }).limit(3),
-        sb.from('studio_announcements').select('*').or('expires_at.is.null,expires_at.gte.' + today)
-    ]);
-
-    const lessons = lessonsRes.data || [];
-    const plans = plansRes.data || [];
-    const reflections = reflectionsRes.data || [];
-    const repertoire = repRes.data || [];
-    const events = eventsRes.data || [];
-    const studioFeedback = studioRes.data || [];
-    const allAnnouncements = annRes.data || [];
-
-    // Filter announcements: show if recommended_students contains this student OR is empty/null
-    const announcements = allAnnouncements.filter(a => {
-        if (!a.recommended_students || a.recommended_students.length === 0) return true;
-        return a.recommended_students.includes(studentId);
-    });
-
-    // Latest items for cards
-    const latestLesson = lessons[0] || null;
-    const latestPlan = plans[0] || null;
-    const latestReflection = reflections[0] || null;
-    const latestStudio = studioFeedback[0] || null;
-
-    // Upcoming events
-    const upcomingEvents = events.filter(e => e.date >= today);
-
-    // Wins/breakthroughs from lessons
-    const wins = lessons.filter(l => l.breakthroughs).slice(0, 5);
-
-    // Build the dashboard
-    let html = '';
-
-    // Welcome
-    html += '<div class="sv-welcome">';
-    html += '<h1>Welcome, ' + escapeHtml(studentName) + '</h1>';
-    html += '<p class="sv-welcome-sub">Here is what is happening in your studio this week.</p>';
-    html += '</div>';
-
-    // Upcoming events banner
-    if (upcomingEvents.length > 0) {
-        html += '<div class="sv-events-banner"><h3>Upcoming</h3>';
-        upcomingEvents.slice(0, 3).forEach(ev => {
-            html += '<div style="margin-bottom: 0.35rem;">';
-            html += '<strong>' + escapeHtml(formatShortDate(ev.date)) + '</strong> ';
-            html += escapeHtml(ev.event_type || 'Event');
-            if (ev.title) html += ': ' + escapeHtml(ev.title);
-            if (ev.location) html += ' <span style="color: var(--text-muted);">at ' + escapeHtml(ev.location) + '</span>';
-            html += '</div>';
-        });
-        html += '</div>';
-    }
-
-    // Dashboard card grid
-    html += '<div class="sv-grid">';
-
-    // Latest Lesson card
-    html += '<div class="sv-card" onclick="svShowDetail(\'lesson\')">';
-    html += '<div class="sv-card-label">Latest Lesson</div>';
-    html += '<div class="sv-card-value">' + (latestLesson ? escapeHtml(formatShortDate(latestLesson.date)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (latestLesson && latestLesson.next_steps ? escapeHtml(latestLesson.next_steps.substring(0, 80)) + (latestLesson.next_steps.length > 80 ? '...' : '') : 'No lessons recorded') + '</div>';
-    html += '</div>';
-
-    // Practice Plan card
-    html += '<div class="sv-card" onclick="svShowDetail(\'plan\')">';
-    html += '<div class="sv-card-label">Practice Plan</div>';
-    html += '<div class="sv-card-value">' + (latestPlan ? escapeHtml(formatShortDate(latestPlan.date_generated)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (latestPlan ? 'Plan available' : 'No practice plans yet') + '</div>';
-    html += '</div>';
-
-    // Reflection card
-    html += '<div class="sv-card" onclick="svShowDetail(\'reflection\')">';
-    html += '<div class="sv-card-label">Reflection</div>';
-    html += '<div class="sv-card-value">' + (latestReflection ? escapeHtml(formatShortDate(latestReflection.date_submitted)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">';
-    if (latestReflection) {
-        const scores = [];
-        if (latestReflection.voice_feeling) scores.push('Voice: ' + latestReflection.voice_feeling + '/10');
-        if (latestReflection.engagement) scores.push('Connection: ' + latestReflection.engagement + '/10');
-        html += scores.length > 0 ? escapeHtml(scores.join(' | ')) : 'Submitted';
-    } else {
-        html += 'No reflections submitted';
-    }
-    html += '</div></div>';
-
-    // Repertoire card
-    html += '<div class="sv-card" onclick="svShowDetail(\'repertoire\')">';
-    html += '<div class="sv-card-label">Repertoire</div>';
-    html += '<div class="sv-card-value">' + repertoire.length + ' piece' + (repertoire.length !== 1 ? 's' : '') + '</div>';
-    html += '<div class="sv-card-summary">' + (repertoire.length > 0 ? repertoire.slice(0, 2).map(r => escapeHtml(r.title)).join(', ') + (repertoire.length > 2 ? ', ...' : '') : 'No repertoire entries') + '</div>';
-    html += '</div>';
-
-    // Performance Feedback card
-    const perfEventsWithNotes = events.filter(e => e.notes && e.notes.length > 20);
-    const juryRes = await sb.from('jury_feedback').select('*').eq('student_id', studentId).order('date', { ascending: false });
-    const juryFeedback = juryRes.data || [];
-    const totalFeedback = perfEventsWithNotes.length + (juryFeedback.length > 0 ? 1 : 0);
-
-    html += '<div class="sv-card" onclick="svShowDetail(\'feedback\')">';
-    html += '<div class="sv-card-label">Performance Feedback</div>';
-    html += '<div class="sv-card-value">' + (totalFeedback > 0 ? totalFeedback + ' event' + (totalFeedback !== 1 ? 's' : '') : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (totalFeedback > 0 ? (perfEventsWithNotes.length > 0 ? escapeHtml(perfEventsWithNotes[0].title || 'Event') : 'Panel feedback available') : 'Feedback will appear here') + '</div>';
-    html += '</div>';
-
-    // Vocal Progress card
-    html += '<div class="sv-card" onclick="svShowDetail(\'wins\')">';
-    html += '<div class="sv-card-label">Vocal Progress</div>';
-    html += '<div class="sv-card-value">' + (wins.length > 0 ? wins.length + ' win' + (wins.length !== 1 ? 's' : '') : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (wins.length > 0 ? escapeHtml(wins[0].breakthroughs.substring(0, 80)) + (wins[0].breakthroughs.length > 80 ? '...' : '') : 'Breakthroughs will appear here') + '</div>';
-    html += '</div>';
-
-    // Studio Class card
-    html += '<div class="sv-card" onclick="svShowDetail(\'studio\')">';
-    html += '<div class="sv-card-label">Studio Class</div>';
-    html += '<div class="sv-card-value">' + (latestStudio ? escapeHtml(formatShortDate(latestStudio.studio_class_date)) : '--') + '</div>';
-    html += '<div class="sv-card-summary">' + (latestStudio ? 'Feedback available' : 'No studio class feedback yet') + '</div>';
-    html += '</div>';
-
-    html += '</div>'; // close sv-grid
-
-    // Detail panels (hidden by default)
-    html += '<div id="sv-detail-area"></div>';
-
-    // Announcements
-    if (announcements.length > 0) {
-        html += '<div class="sv-announcements"><h3>Announcements</h3>';
-        // Pinned first
-        const sorted = [...announcements].sort((a, b) => {
-            if (a.pinned && !b.pinned) return -1;
-            if (!a.pinned && b.pinned) return 1;
-            return new Date(b.created_at) - new Date(a.created_at);
-        });
-        sorted.forEach(a => {
-            html += '<div class="sv-ann-card' + (a.pinned ? ' sv-ann-pinned' : '') + '">';
-            html += '<div class="sv-ann-title">' + escapeHtml(a.title) + '</div>';
-            let meta = escapeHtml(a.announcement_type || 'general');
-            if (a.pinned) meta += ' | Pinned';
-            if (a.created_at) meta += ' | ' + formatShortDate(a.created_at.split('T')[0]);
-            html += '<div class="sv-ann-meta">' + meta + '</div>';
-            html += '<div class="sv-ann-body">' + escapeHtml(a.body) + '</div>';
-            html += '</div>';
-        });
-        html += '</div>';
-    }
-
-    body.innerHTML = html;
-
-    // Store data for detail panels
-    body._svData = {
-        lessons, plans, reflections, repertoire, studioFeedback, wins, studentName, perfEventsWithNotes, juryFeedback, events
-    };
-    svCurrentDetail = null;
-}
-
-function svShowDetail(type) {
-    const area = document.getElementById('sv-detail-area');
-    const body = document.getElementById('sv-body');
-    const data = body._svData;
-    if (!data) return;
-
-    // Toggle: if same detail is open, close it
-    if (svCurrentDetail === type) {
-        area.innerHTML = '';
-        svCurrentDetail = null;
-        return;
-    }
-    svCurrentDetail = type;
-
-    let html = '<div class="sv-detail-wrap">';
-    html += '<button class="btn btn-secondary btn-small" style="margin-bottom: 1rem; font-size: 12px; padding: 0.35rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius, 2px); background: #fff; cursor: pointer; font-family: inherit;" onclick="document.getElementById(\'sv-detail-area\').innerHTML=\'\'; svCurrentDetail=null;">Back to Dashboard</button>';
-
-    if (type === 'lesson') {
-        html += '<h2>Lesson Debriefs</h2>';
-        const approvedLessons = data.lessons.filter(l => l.approved);
-        if (approvedLessons.length === 0) {
-            html += '<p style="color: var(--text-muted);">No lesson debriefs available yet.</p>';
-        } else {
-            approvedLessons.forEach(l => {
-                html += '<div style="margin-bottom: 2rem; padding: 2rem 2.5rem; border: 1px solid var(--border-color); border-radius: 2px; background: var(--bg-light, #fff);">';
-                html += '<p class="plan-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(l.date)) + (l.duration_minutes ? ' · ' + l.duration_minutes + ' min' : '') + '</p>';
-
-                // Section 1: What We Worked On
-                const rw = typeof l.repertoire_worked === 'string' ? JSON.parse(l.repertoire_worked || '[]') : (l.repertoire_worked || []);
-                const exArr = typeof l.exercises === 'string' ? JSON.parse(l.exercises || '[]') : (l.exercises || []);
-                html += '<h3>What We Worked On</h3>';
-                if (rw.length > 0) {
-                    html += '<ul>';
-                    rw.forEach(r => {
-                        const title = typeof r === 'string' ? r.split(' — ')[0].split(' -- ')[0] : (r.title || '');
-                        html += '<li>' + escapeHtml(title) + '</li>';
-                    });
-                    html += '</ul>';
-                }
-                if (exArr.length > 0) {
-                    html += '<p style="margin-top: 0.75rem;"><strong>Exercises:</strong></p><ul>';
-                    exArr.forEach(ex => {
-                        let desc = escapeHtml(ex.name || 'Unnamed');
-                        if (ex.functional_purpose) desc += ': ' + escapeHtml(ex.functional_purpose);
-                        else if (ex.pattern) desc += ': ' + escapeHtml(ex.pattern);
-                        html += '<li>' + desc + '</li>';
-                    });
-                    html += '</ul>';
-                }
-
-                // Section 2: What Shifted
-                const shifted = l.breakthroughs || l.pivots;
-                if (shifted) {
-                    html += '<h3>What Shifted</h3>';
-                    html += markdownToHtml(shifted);
-                }
-
-                // Section 3: Where You Are
-                if (l.motor_learning_phase) {
-                    html += '<h3>Where You Are</h3><p>' + escapeHtml(l.motor_learning_phase) + '</p>';
-                }
-
-                // Section 4: What's Next
-                const nextSteps = l.plan_for_next_lesson || l.next_steps;
-                if (nextSteps) {
-                    html += '<h3>What\'s Next</h3>';
-                    html += markdownToHtml(nextSteps);
-                }
-
-                html += '<p class="plan-signoff" style="margin-top: 1.5rem; font-style: italic; color: var(--text-muted);">Prof. G</p>';
-                html += '</div>';
-            });
-        }
-    } else if (type === 'feedback') {
-        html += '<h2>Performance Feedback</h2>';
-        html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Notes from dress rehearsals, hearings, juries, and other performance events.</p>';
-        const pe = data.perfEventsWithNotes || [];
-        const jf = data.juryFeedback || [];
-        console.log('Performance feedback debug:', { perfEvents: pe.length, jury: jf.length, peData: pe });
-        if (pe.length === 0 && jf.length === 0) {
-            html += '<p style="color: var(--text-muted);">No performance feedback yet.</p>';
-        } else {
-            pe.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-            pe.forEach(e => {
-                html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<h3 style="font-size: 1rem; font-weight: 500;">' + escapeHtml(e.title || 'Performance') + '</h3>';
-                html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(e.date)) + '</p>';
-                e.notes.split(/\n\n+/).filter(p => p.trim()).forEach(p => {
-                    html += '<p style="margin-bottom: 0.5rem;">' + escapeHtml(p.trim()) + '</p>';
-                });
-                html += '</div>';
-            });
-            if (jf.length > 0) {
-                const grouped = {};
-                jf.forEach(j => {
-                    const key = j.date + '|' + j.event_type;
-                    if (!grouped[key]) grouped[key] = { date: j.date, event_type: j.event_type, outcome: j.outcome, comments: [] };
-                    grouped[key].comments.push(j);
-                });
-                Object.values(grouped).sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(g => {
-                    const typeLabel = (g.event_type || 'jury').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    html += '<div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">';
-                    html += '<h3 style="font-size: 1rem; font-weight: 500;">' + escapeHtml(typeLabel) + '</h3>';
-                    html += '<p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(g.date)) + (g.outcome ? ' · ' + escapeHtml(g.outcome) : '') + '</p>';
-                    g.comments.forEach(c => {
-                        html += '<div style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color);">';
-                        html += '<p style="font-weight: 500; font-size: 14px;">' + escapeHtml(c.panelist_name) + (c.panelist_role ? ' <span style="font-weight: 400; color: var(--text-muted);">(' + escapeHtml(c.panelist_role) + ')</span>' : '') + '</p>';
-                        html += '<p style="font-size: 14px;">' + escapeHtml(c.comments) + '</p>';
-                        html += '</div>';
-                    });
-                    html += '</div>';
-                });
-            }
-        }
-    } else if (type === 'plan') {
-        html += '<h2>Practice Plans</h2>';
-        if (data.plans.length === 0) {
-            html += '<p style="color: var(--text-muted);">No practice plans available yet.</p>';
-        } else {
-            data.plans.forEach((p, i) => {
-                html += '<div style="margin-bottom: 2rem; padding: 2rem 2.5rem; border: 1px solid var(--border-color); border-radius: 2px; background: var(--bg-light, #fff);">';
-                html += '<p class="plan-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">' + escapeHtml(formatDate(p.date_generated)) + '</p>';
-                if (p.content) {
-                    html += '<div class="brief-content">' + markdownToHtml(p.content) + '</div>';
-                } else if (p.plan_content) {
-                    html += '<div class="brief-content">' + markdownToHtml(p.plan_content) + '</div>';
-                }
-                html += '</div>';
-            });
-        }
-    } else if (type === 'reflection') {
-        html += '<h2>Reflections</h2>';
-        if (data.reflections.length === 0) {
-            html += '<p style="color: var(--text-muted);">No reflections submitted yet.</p>';
-        } else {
-            data.reflections.forEach(r => {
-                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<p><strong>' + escapeHtml(formatDate(r.date_submitted)) + '</strong></p>';
-                if (r.practice_summary) html += '<p>' + escapeHtml(r.practice_summary) + '</p>';
-                if (r.self_observations) html += '<p style="color: var(--text-muted);">' + escapeHtml(r.self_observations) + '</p>';
-                const scores = [];
-                if (r.voice_feeling) scores.push('Voice feeling: ' + r.voice_feeling + '/10');
-                if (r.artistic_confidence) scores.push('Artistic confidence: ' + r.artistic_confidence + '/10');
-                if (r.engagement) scores.push('Connection: ' + r.engagement + '/10');
-                if (scores.length) html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(scores.join(' | ')) + '</p>';
-                if (r.questions) html += '<p><strong>Questions:</strong> ' + escapeHtml(r.questions) + '</p>';
-                if (r.wins) html += '<p><strong>Wins:</strong> ' + escapeHtml(r.wins) + '</p>';
-                html += '</div>';
-            });
-        }
-    } else if (type === 'repertoire') {
-        html += '<h2>Active Repertoire</h2>';
-        if (data.repertoire.length === 0) {
-            html += '<p style="color: var(--text-muted);">No repertoire entries yet.</p>';
-        } else {
-            html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
-            html += '<th>Piece</th><th>Composer</th><th>Style</th><th>Phase</th><th>Status</th>';
-            html += '</tr></thead><tbody>';
-            data.repertoire.forEach(r => {
-                html += '<tr>';
-                html += '<td><strong>' + escapeHtml(r.title || '') + '</strong></td>';
-                html += '<td>' + escapeHtml(r.composer || '') + '</td>';
-                html += '<td>' + escapeHtml(r.style || '') + '</td>';
-                html += '<td>' + escapeHtml(r.learning_phase || '') + '</td>';
-                html += '<td>' + escapeHtml(r.status || '') + '</td>';
-                html += '</tr>';
-            });
-            html += '</tbody></table></div>';
-        }
-    } else if (type === 'wins') {
-        html += '<h2>Vocal Progress</h2>';
-        html += '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Breakthroughs, wins, and milestones from lessons and studio work.</p>';
-        if (data.wins.length === 0) {
-            html += '<p style="color: var(--text-muted);">No breakthroughs recorded yet. They will appear here as your work develops.</p>';
-        } else {
-            data.wins.forEach(l => {
-                html += '<div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(formatShortDate(l.date)) + '</p>';
-                html += '<p>' + escapeHtml(l.breakthroughs) + '</p>';
-                html += '</div>';
-            });
-        }
-    } else if (type === 'studio') {
-        html += '<h2>Studio Class</h2>';
-        if (data.studioFeedback.length === 0) {
-            html += '<p style="color: var(--text-muted);">No studio class feedback yet.</p>';
-        } else {
-            data.studioFeedback.forEach(f => {
-                html += '<div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">';
-                html += '<p><strong>' + escapeHtml(formatDate(f.studio_class_date)) + '</strong>';
-                if (f.repertoire_performed) html += ' : ' + escapeHtml(f.repertoire_performed);
-                html += '</p>';
-                if (f.performance_observations) html += '<p style="font-size: 13px; margin-top: 0.25rem;"><strong>Performance:</strong> ' + escapeHtml(f.performance_observations) + '</p>';
-                if (f.kayla_feedback) html += '<div class="brief-content">' + markdownToHtml(f.kayla_feedback) + '</div>';
-                if (f.connections_to_technical_work) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Teaching point:</strong> ' + escapeHtml(f.connections_to_technical_work) + '</p>';
-                if (f.peer_feedback) html += '<p style="font-size: 13px; color: var(--text-muted); margin-top: 0.5rem;"><strong>Peer feedback:</strong> ' + escapeHtml(typeof f.peer_feedback === 'string' ? f.peer_feedback : JSON.stringify(f.peer_feedback)) + '</p>';
-                html += '</div>';
-            });
-        }
-    }
-
-    html += '</div>';
-    area.innerHTML = html;
-    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ============================================================
-// LESSON LOG REVIEW / EDIT
-// ============================================================
 
 const LOG_EDITABLE_FIELDS = [
     { key: 'head_observations', label: 'Head (intention + motor learning)' },
@@ -4018,12 +1615,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Close student view with Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.getElementById('page-student-view').style.display === 'block') {
-        closeStudentView();
-    }
-});
 
 // ============================================================
 // BOOT
@@ -4245,13 +1836,7 @@ document.addEventListener('submit', async (e) => {
         btn.textContent = 'Add';
         showToast(jurySlot ? 'Piece added and proposed for jury.' : 'Piece added to repertoire.');
 
-        // Reload the student detail
-        const card = form.closest('.card');
-        if (card) {
-            card.dataset.loaded = 'false';
-            const body = card.querySelector('.card-body');
-            if (body) await loadStudentDetail(body, studentId);
-        }
+        renderStudentsHub();
     } catch (err) {
         btn.disabled = false;
         btn.textContent = 'Add';
@@ -4259,8 +1844,9 @@ document.addEventListener('submit', async (e) => {
     }
 });
 
+
+
 document.addEventListener('DOMContentLoaded', initApp);
 </script>
-
 </body>
 </html>

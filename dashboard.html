@@ -697,7 +697,8 @@ function renderDashboard() {
   document.getElementById('ann-items').innerHTML = anns.map(x =>
     '<p style="margin: 0 0 0.35rem; font-size: 14px;"><span style="color: var(--teacher); font-variant-numeric: tabular-nums; font-size: 12.5px;">' +
     fmtDate(String(x.created_at).slice(0, 10)) + '</span> &nbsp;' +
-    escapeHtml(x.body || x.message || x.content || x.title || '') + '</p>').join('');
+    (x.title ? '<strong>' + escapeHtml(x.title) + '</strong> ' : '') +
+    escapeHtml(x.body || '') + '</p>').join('');
 
   const latest = D.lessons[0];
   document.getElementById('dash-lesson-date').textContent = latest ? fmtDate(latest.date, { weekday: 'short', month: 'short', day: 'numeric' }) : 'No lessons yet';

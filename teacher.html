@@ -289,26 +289,7 @@
 </head>
 <body>
 
-<div id="page-login" style="display: none;">
-    <div class="teacher-login-wrap">
-        <div class="teacher-login-inner">
-            <h2>Teacher Portal</h2>
-            <p>Voice Studio lesson planning, student tracking, and studio management.</p>
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="text" id="login-email" placeholder="kayla@studio.kaylagautereaux.com">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="login-password">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
-                <div class="login-error" id="login-error"></div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Sign-in lives on login.html (passwordless email codes). -->
 
 <nav id="main-nav" style="display: none;">
   <div class="nav-inner">
@@ -482,24 +463,6 @@ async function initApp() {
 // AUTH
 // ============================================================
 
-async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errorEl = document.getElementById('login-error');
-    errorEl.style.display = 'none';
-
-    let loginEmail = email;
-    if (!email.includes('@')) {
-        loginEmail = email + '@studio.kaylagautereaux.com';
-    }
-
-    const { error } = await sb.auth.signInWithPassword({ email: loginEmail, password });
-    if (error) {
-        errorEl.textContent = 'Invalid credentials.';
-        errorEl.style.display = 'block';
-    }
-}
 
 async function signOut() {
     await sb.auth.signOut();
@@ -513,15 +476,14 @@ async function signOut() {
 const PAGE_IDS = ['today', 'inbox', 'studio', 'announcements'];
 
 function showLogin() {
-    document.getElementById('main-nav').style.display = 'none';
-    PAGE_IDS.forEach(p => { document.getElementById('page-' + p).style.display = 'none'; });
-    document.getElementById('page-login').style.display = 'block';
+    // The studio moved to passwordless email codes in Sept 2026; login.html is
+    // the one sign-in page and routes the teacher email back here.
+    window.location.href = 'login.html';
 }
 
 function navigateTo(page) {
     currentPage = page;
     document.getElementById('main-nav').style.display = 'block';
-    document.getElementById('page-login').style.display = 'none';
 
     PAGE_IDS.forEach(p => {
         document.getElementById('page-' + p).style.display = (p === page) ? 'block' : 'none';

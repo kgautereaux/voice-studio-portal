@@ -219,12 +219,6 @@
                 // Bare usernames default to berklee.edu
                 const email = raw.includes('@') ? raw : raw + '@berklee.edu';
 
-                // Teacher accounts sign in on the Studio page
-                if (TEACHER_EMAILS.includes(email)) {
-                    window.location.href = 'teacher.html';
-                    return;
-                }
-
                 const btn = emailForm.querySelector('button[type="submit"]');
                 btn.textContent = 'Sending code...';
                 btn.disabled = true;
@@ -273,7 +267,8 @@
                     return;
                 }
 
-                window.location.href = 'dashboard.html';
+                window.location.href =
+                    TEACHER_EMAILS.includes(currentEmail) ? 'teacher.html' : 'dashboard.html';
             });
 
             resendLink.addEventListener('click', async function(e) {

@@ -329,7 +329,11 @@ document.getElementById('pw-form').addEventListener('submit', async (e) => {
   err.style.display = 'none';
   const email = document.getElementById('pw-email').value.trim().toLowerCase();
   const password = document.getElementById('pw-pass').value;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const pwClient = window.supabase.createClient(
+    'https://ukvkljztinkzmkbtsfuo.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrdmtsanp0aW5rem1rYnRzZnVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTAxMTUsImV4cCI6MjA4OTI4NjExNX0.dh0zSDQyTjvBrArPA7szI_NekBF1_V6CU8e7pLdpV1k'
+  );
+  const { error } = await pwClient.auth.signInWithPassword({ email, password });
   if (error) {
     err.textContent = error.message;
     err.style.display = 'block';

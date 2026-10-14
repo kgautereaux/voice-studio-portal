@@ -308,5 +308,36 @@
 </script>
 
 <script src="js/feedback-widget.js"></script>
+
+<div style="max-width: 380px; margin: 0 auto 3rem; padding: 0 1.5rem; font-size: 13px; text-align: center;">
+  <details>
+    <summary style="cursor: pointer; color: #8a8286;">Trouble receiving the code?</summary>
+    <form id="pw-form" style="margin-top: 0.9rem; text-align: left;">
+      <input type="email" id="pw-email" placeholder="Email" autocomplete="username"
+             style="width: 100%; padding: 0.6rem 0.7rem; margin-bottom: 0.5rem; border: 1px solid #e8e3e0; border-radius: 4px; font: inherit;">
+      <input type="password" id="pw-pass" placeholder="Password" autocomplete="current-password"
+             style="width: 100%; padding: 0.6rem 0.7rem; margin-bottom: 0.6rem; border: 1px solid #e8e3e0; border-radius: 4px; font: inherit;">
+      <button type="submit" style="width: 100%; padding: 0.6rem; background: #6c495b; color: #faf9f7; border: 0; border-radius: 4px; font: inherit; font-weight: 600; cursor: pointer;">Sign in with password</button>
+      <p id="pw-error" style="color: #a04545; margin-top: 0.5rem; display: none;"></p>
+    </form>
+  </details>
+</div>
+<script>
+document.getElementById('pw-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('pw-error');
+  err.style.display = 'none';
+  const email = document.getElementById('pw-email').value.trim().toLowerCase();
+  const password = document.getElementById('pw-pass').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    err.textContent = error.message;
+    err.style.display = 'block';
+    return;
+  }
+  const TEACHERS = ['kgautereaux@gmail.com', 'kgautereaux@berklee.edu', 'kayla@studio.kaylagautereaux.com'];
+  window.location.href = TEACHERS.includes(email) ? 'teacher.html' : 'dashboard.html';
+});
+</script>
 </body>
 </html>

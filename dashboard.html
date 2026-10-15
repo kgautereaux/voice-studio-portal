@@ -452,6 +452,12 @@
       </div>
     </div>
 
+    <div class="panel student" id="insight-panel" hidden style="margin-bottom: 1.25rem;">
+      <p class="eyebrow student">What your log is showing</p>
+      <p id="insight-text" style="margin: 0; font-size: 15px;"></p>
+      <p class="meta" id="studio-line" style="margin: 0.6rem 0 0;"></p>
+    </div>
+
     <div class="stats">
       <div class="stat"><div class="n" id="stat-minutes">0</div><div class="l">Singing minutes, last 7 days</div></div>
       <div class="stat"><div class="n" id="stat-entries">0</div><div class="l">Log entries, last 7 days</div></div>
@@ -562,7 +568,7 @@ async function initApp() {
 
 async function loadAll() {
   const sid = dataStudentId();
-  const [student, lessons, plans, reflections, diary, checkins, rep, jury, ann, threads] = await Promise.all([
+  const [student, lessons, plans, reflections, diary, checkins, rep, jury, ann, threads, stats] = await Promise.all([
     sb.from('students').select('*').eq('id', sid).single(),
     sb.from('lesson_logs')
       .select('id, date, duration_minutes, repertoire_worked, head_observations, heart_observations, hand_observations, warmth_brightness_notes, ease_assessment, motor_learning_phase, breakthroughs, plan_for_next_lesson')
@@ -578,6 +584,7 @@ async function loadAll() {
     sb.from('jury_feedback').select('*').eq('student_id', sid).order('date', { ascending: false }),
     sb.from('studio_announcements').select('*').order('created_at', { ascending: false }).limit(5),
     sb.from('thread_replies').select('*').eq('student_id', sid).order('created_at'),
+    sb.from('studio_stats').select('*').eq('id', 'current').maybeSingle(),
   ]);
   D = {
     student: student.data,
@@ -591,6 +598,7 @@ async function loadAll() {
     jury: jury.data || [],
     ann: (ann.data || []).filter(x => !x.expires_at || x.expires_at >= new Date().toISOString().slice(0, 10)),
     threads: threads.data || [],
+    studio: (stats && stats.data) || null,
   };
   D.selectedLesson = D.lessons.length ? D.lessons[0].id : null;
 }
@@ -1134,6 +1142,7 @@ function checkinDoneThisMonth() {
 
 function renderAnalytics() {
   renderCheckin();
+  renderInsight();
   renderGoalsJuries();
   renderStats();
   renderStrips();
@@ -1248,6 +1257,56 @@ function renderGoalsJuries() {
       </div>`;
     }).join('');
   }
+}
+
+function renderInsight() {
+  const panel = document.getElementById('insight-panel');
+  const pts = D.diary.filter(e => e.minutes && entryCondition(e))
+                     .map(e => ({ m: e.minutes, c: entryCondition(e) }));
+  const days = new Set(D.diary.map(e => e.log_date)).size;
+  let text = '';
+
+  if (pts.length >= 8) {
+    // Where does condition start to fall off? Compare days at or below a
+    // threshold against days above it, and report the largest clean split.
+    const sorted = [...pts].sort((a, b) => a.m - b.m);
+    let best = null;
+    for (let i = 3; i <= sorted.length - 3; i++) {
+      const lo = sorted.slice(0, i), hi = sorted.slice(i);
+      const avg = arr => arr.reduce((s, p) => s + p.c, 0) / arr.length;
+      const drop = avg(lo) - avg(hi);
+      if (!best || drop > best.drop) best = { drop, cut: sorted[i - 1].m, loAvg: avg(lo), hiAvg: avg(hi) };
+    }
+    if (best && best.drop >= 0.4) {
+      text = 'Across ' + days + ' logged days, your voice holds up well through about '
+           + best.cut + ' minutes of singing (condition ' + best.loAvg.toFixed(1)
+           + ' of 5), and sits lower on longer days (' + best.hiAvg.toFixed(1)
+           + '). That edge is yours, not a rule.';
+    } else {
+      text = 'Across ' + days + ' logged days, your condition has stayed steady regardless of '
+           + 'how long you sang. Worth watching as the semester gets heavier.';
+    }
+  } else if (days > 0) {
+    const need = Math.max(0, 8 - pts.length);
+    text = days + ' day' + (days === 1 ? '' : 's') + ' logged so far. '
+         + 'About ' + need + ' more with minutes and condition filled in, and this will '
+         + 'show you where your own limit sits.';
+  } else {
+    text = 'Log a few days of singing and this will start showing you how your voice '
+         + 'responds to the amount you sing.';
+  }
+  document.getElementById('insight-text').textContent = text;
+
+  const st = D.studio;
+  const line = document.getElementById('studio-line');
+  if (st && st.total_minutes > 0) {
+    const hrs = (st.total_minutes / 60).toFixed(1);
+    line.textContent = 'The studio has logged ' + hrs + ' hours of singing this week across '
+                     + st.students_logging + ' singers.';
+  } else {
+    line.textContent = '';
+  }
+  panel.hidden = false;
 }
 
 function renderStats() {

@@ -202,7 +202,10 @@
                     if (msg.includes('signups not allowed') || msg.includes('user not found')) {
                         showError('This email is not registered with the studio. Contact Prof. Gautereaux for access.');
                     } else if (msg.includes('rate limit') || msg.includes('security purposes')) {
-                        showError('A code was sent recently. Check your inbox, or wait a minute before requesting another.');
+                        // A code is already in their inbox and still valid, so let
+                        // them enter it instead of stranding them on this screen.
+                        showError('A code was sent moments ago. Enter that code below, or request a new one shortly.');
+                        return 'recent';
                     } else {
                         showError('Could not send a code: ' + error.message);
                     }
@@ -227,6 +230,15 @@
 
                 btn.textContent = 'Continue';
                 btn.disabled = false;
+
+                if (ok === 'recent') {
+                    currentEmail = email;
+                    emailForm.style.display = 'none';
+                    codeForm.style.display = 'block';
+                    document.getElementById('login-code').focus();
+                    startCooldown(45);
+                    return;
+                }
 
                 if (ok) {
                     currentEmail = email;

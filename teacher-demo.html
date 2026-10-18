@@ -277,6 +277,26 @@
     </div>
 
     <div class="panel">
+      <h2>Lessons without a debrief</h2>
+      <p class="meta">On the calendar, no debrief yet. Say which it is and the reminders stop.</p>
+      <div class="slot gap-slot"><span><strong>Devon Marsh</strong> · Sep 11</span>
+        <span class="gap-set" style="margin-left: auto;">
+          <button class="chip-opt on" data-g="awaiting">Recording missing</button>
+          <button class="chip-opt" data-g="missed">Missed</button>
+          <button class="chip-opt" data-g="resched">Rescheduled</button>
+        </span></div>
+      <div class="slot gap-slot"><span><strong>June Castillo</strong> · Sep 10</span>
+        <span class="gap-set" style="margin-left: auto;">
+          <button class="chip-opt" data-g="awaiting">Recording missing</button>
+          <button class="chip-opt" data-g="missed">Missed</button>
+          <button class="chip-opt on" data-g="resched">Rescheduled</button>
+        </span></div>
+      <div class="gap-moved" style="font-size: 12.5px; padding: 0 0 0.4rem;">
+        <label class="meta">June moved to <input type="date" value="2026-09-19" style="width: auto; font-size: 12.5px; padding: 0.25rem 0.4rem;"></label>
+      </div>
+    </div>
+
+    <div class="panel">
       <h2>Upcoming</h2>
       <div class="slot"><span><strong>June Castillo</strong> · Fri Sep 19, 11:00</span>
         <span class="req">forecast generates Friday 7:00 AM</span>
@@ -507,6 +527,22 @@
   document.querySelectorAll('.notify-set .chip-opt').forEach(c => {
     c.addEventListener('click', () => {
       document.querySelectorAll('.notify-set .chip-opt').forEach(x => x.classList.toggle('on', x === c));
+    });
+  });
+
+  // Lesson gap toggle: pressing the active state again returns the row to
+  // "Recording missing", which is the resting state rather than a choice.
+  document.querySelectorAll('.gap-set').forEach(set => {
+    set.querySelectorAll('.chip-opt').forEach(c => {
+      c.addEventListener('click', () => {
+        const back = c.classList.contains('on');
+        set.querySelectorAll('.chip-opt').forEach(x => x.classList.toggle(
+          'on', back ? x.dataset.g === 'awaiting' : x === c));
+        const moved = set.closest('.gap-slot').nextElementSibling;
+        if (moved && moved.classList.contains('gap-moved')) {
+          moved.style.display = (!back && c.dataset.g === 'resched') ? '' : 'none';
+        }
+      });
     });
   });
 

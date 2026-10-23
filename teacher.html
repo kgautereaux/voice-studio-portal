@@ -786,12 +786,15 @@ async function renderTodayPage() {
     const nameOf = id => { const st = students.find(x => x.id === id); return st ? st.name : null; };
     const today = todayStr();
 
-    const [draftsRes, briefsRes, reflRes, diaryRes, gapsRes] = await Promise.all([
+    const [draftsRes, briefsRes, reflRes, diaryRes, gapsRes, movedRes] = await Promise.all([
         sb.from('lesson_logs').select('id, student_id, date, approved').eq('approved', false).order('date', { ascending: false }).limit(20),
         sb.from('pre_lesson_briefs').select('id, student_id, date').eq('date', today),
         sb.from('reflections').select('*').eq('entry_type', 'lesson_reflection').order('date_submitted', { ascending: false }).limit(40),
         sb.from('voice_use_logs').select('*').gte('log_date', addDaysStr(today, -6)),
         sb.from('lesson_gaps').select('id, student_id, lesson_date, status, moved_to').is('resolved_at', null).order('lesson_date', { ascending: false }),
+        // Every make-up ever scheduled, open or done, so a gap on a make-up
+        // date can say which lesson it was making up.
+        sb.from('lesson_gaps').select('student_id, lesson_date, moved_to').eq('status', 'rescheduled').not('moved_to', 'is', null),
     ]);
     const drafts = (draftsRes.data || []).filter(l => nameOf(l.student_id));
     const briefs = briefsRes.data || [];
@@ -845,25 +848,45 @@ async function renderTodayPage() {
     }
     html += '</div>';
 
-    const gaps = (gapsRes.data || []).filter(g => nameOf(g.student_id));
-    if (gaps.length) {
-        html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.25rem;">Lessons without a debrief</h2>';
-        html += '<p class="text-muted" style="font-size: 12.5px; margin: 0 0 0.25rem;">On the calendar, no debrief yet. Say which it is and the reminders stop.</p>';
-        gaps.forEach(g => {
-            html += '<div class="gap-row" data-gap-id="' + g.id + '">';
-            html += '<strong>' + escapeHtml(nameOf(g.student_id)) + '</strong>';
-            html += '<span class="text-muted">' + escapeHtml(formatShortDate(g.lesson_date)) + '</span>';
-            html += '<span class="gap-toggle" style="margin-left: auto;" role="group" aria-label="What happened with this lesson">';
-            GAP_STATES.forEach(s => {
-                html += '<button type="button" data-gap-status="' + s.key + '" aria-pressed="'
-                     + (g.status === s.key) + '">' + s.label + '</button>';
-            });
-            html += '</span>';
-            html += '<span class="gap-moved" style="flex-basis: 100%;' + (g.status === 'rescheduled' ? '' : 'display:none;') + '">';
-            html += '<label class="text-muted">Moved to <input type="date" data-gap-moved value="' + (g.moved_to || '') + '"></label>';
-            html += '</span>';
-            html += '</div>';
+    // A gap on a make-up date says which lesson it was making up.
+    const makeupFor = {};
+    (movedRes.data || []).forEach(m => { makeupFor[m.student_id + '|' + m.moved_to] = m.lesson_date; });
+    const gapRow = g => {
+        let r = '<div class="gap-row" data-gap-id="' + g.id + '">';
+        r += '<strong>' + escapeHtml(nameOf(g.student_id)) + '</strong>';
+        r += '<span class="text-muted">' + escapeHtml(formatShortDate(g.lesson_date));
+        const orig = makeupFor[g.student_id + '|' + g.lesson_date];
+        if (orig) r += ' (make-up for ' + escapeHtml(formatShortDate(orig)) + ')';
+        r += '</span>';
+        r += '<span class="gap-toggle" style="margin-left: auto;" role="group" aria-label="What happened with this lesson">';
+        GAP_STATES.forEach(s => {
+            r += '<button type="button" data-gap-status="' + s.key + '" aria-pressed="'
+               + (g.status === s.key) + '">' + s.label + '</button>';
         });
+        r += '</span>';
+        r += '<span class="gap-moved" style="flex-basis: 100%;' + (g.status === 'rescheduled' ? '' : 'display:none;') + '">';
+        r += '<label class="text-muted">Make-up on <input type="date" data-gap-moved value="' + (g.moved_to || '') + '"></label>';
+        r += '</span>';
+        return r + '</div>';
+    };
+
+    // To-do: anything still owed something. Forfeited and dated make-ups
+    // leave the list on the next load; a dated make-up waits under Upcoming.
+    const allGaps = (gapsRes.data || []).filter(g => nameOf(g.student_id));
+    const todo = allGaps.filter(g => g.status === 'awaiting_recording' || g.status === 'makeup_owed'
+                                  || (g.status === 'rescheduled' && !g.moved_to));
+    const upcoming = allGaps.filter(g => g.status === 'rescheduled' && g.moved_to)
+                            .sort((a, b) => a.moved_to.localeCompare(b.moved_to));
+    if (todo.length) {
+        html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.25rem;">Lessons without a debrief</h2>';
+        html += '<p class="text-muted" style="font-size: 12.5px; margin: 0 0 0.25rem;">On the calendar, no debrief yet. Forfeited lessons and make-ups with a date leave this list.</p>';
+        todo.forEach(g => { html += gapRow(g); });
+        html += '</div>';
+    }
+    if (upcoming.length) {
+        html += '<div class="card" style="margin-bottom: 1.5rem;"><h2 style="font-size: 1.05rem; margin: 0 0 0.25rem;">Upcoming make-ups</h2>';
+        html += '<p class="text-muted" style="font-size: 12.5px; margin: 0 0 0.25rem;">Checked like any lesson once the date passes. No debrief by then puts it back on the list above.</p>';
+        upcoming.forEach(g => { html += gapRow(g); });
         html += '</div>';
     }
 
@@ -880,10 +903,13 @@ async function renderTodayPage() {
 }
 
 // A lesson on the calendar with no debrief. Default is that the recording has
-// not arrived; the other two say the lesson did not happen as scheduled.
+// not arrived; the others say the lesson did not happen as scheduled. A
+// forfeited lesson is owed nothing; an owed make-up stays on the to-do list
+// until it is rescheduled with a date.
 const GAP_STATES = [
     { key: 'awaiting_recording', label: 'Recording missing' },
-    { key: 'missed', label: 'Missed' },
+    { key: 'forfeited', label: 'Forfeited' },
+    { key: 'makeup_owed', label: 'Make-up owed' },
     { key: 'rescheduled', label: 'Rescheduled' },
 ];
 

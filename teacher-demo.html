@@ -278,21 +278,41 @@
 
     <div class="panel">
       <h2>Lessons without a debrief</h2>
-      <p class="meta">On the calendar, no debrief yet. Say which it is and the reminders stop.</p>
+      <p class="meta">On the calendar, no debrief yet. Forfeited lessons and make-ups with a date leave this list.</p>
       <div class="slot gap-slot"><span><strong>Devon Marsh</strong> · Sep 11</span>
         <span class="gap-set" style="margin-left: auto;">
           <button class="chip-opt on" data-g="awaiting">Recording missing</button>
-          <button class="chip-opt" data-g="missed">Missed</button>
+          <button class="chip-opt" data-g="forfeited">Forfeited</button>
+          <button class="chip-opt" data-g="owed">Make-up owed</button>
           <button class="chip-opt" data-g="resched">Rescheduled</button>
         </span></div>
+      <div class="gap-moved" style="font-size: 12.5px; padding: 0 0 0.4rem; display: none;">
+        <label class="meta">Make-up on <input type="date" style="width: auto; font-size: 12.5px; padding: 0.25rem 0.4rem;"></label>
+      </div>
+      <div class="slot gap-slot"><span><strong>Priya Shah</strong> · Sep 9</span>
+        <span class="gap-set" style="margin-left: auto;">
+          <button class="chip-opt" data-g="awaiting">Recording missing</button>
+          <button class="chip-opt" data-g="forfeited">Forfeited</button>
+          <button class="chip-opt on" data-g="owed">Make-up owed</button>
+          <button class="chip-opt" data-g="resched">Rescheduled</button>
+        </span></div>
+      <div class="gap-moved" style="font-size: 12.5px; padding: 0 0 0.4rem; display: none;">
+        <label class="meta">Make-up on <input type="date" style="width: auto; font-size: 12.5px; padding: 0.25rem 0.4rem;"></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Upcoming make-ups</h2>
+      <p class="meta">Checked like any lesson once the date passes. No debrief by then puts it back on the list above.</p>
       <div class="slot gap-slot"><span><strong>June Castillo</strong> · Sep 10</span>
         <span class="gap-set" style="margin-left: auto;">
           <button class="chip-opt" data-g="awaiting">Recording missing</button>
-          <button class="chip-opt" data-g="missed">Missed</button>
+          <button class="chip-opt" data-g="forfeited">Forfeited</button>
+          <button class="chip-opt" data-g="owed">Make-up owed</button>
           <button class="chip-opt on" data-g="resched">Rescheduled</button>
         </span></div>
       <div class="gap-moved" style="font-size: 12.5px; padding: 0 0 0.4rem;">
-        <label class="meta">June moved to <input type="date" value="2026-09-19" style="width: auto; font-size: 12.5px; padding: 0.25rem 0.4rem;"></label>
+        <label class="meta">Make-up on <input type="date" value="2026-09-19" style="width: auto; font-size: 12.5px; padding: 0.25rem 0.4rem;"></label>
       </div>
     </div>
 
